@@ -6,7 +6,7 @@ window.BBC_SUPABASE = {
   key: 'sb_publishable_VYGjBgN7J3fJVMSq1Mp1ZA_93REskD6',
   // Datos para el aviso legal. Rellénalos con los de la empresa.
   legal: {
-    responsable: '',                // razón social, por ejemplo: Restaurantes Ejemplo S.L.
+    responsable: 'Kevin Molina, Esclavo Part Time',                // razón social, por ejemplo: Restaurantes Ejemplo S.L.
     cif: '',
     direccion: '',
     email: '',                      // correo de contacto para privacidad
