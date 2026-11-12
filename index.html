@@ -1271,14 +1271,14 @@ body.menu-abierto #velo{opacity:1;visibility:visible}
   const ERRS={not_granted:'Claude no tiene permiso en esta página. Actívalo en el menú del artefacto para usar la IA.',sampling_disabled:'La IA no está disponible en esta cuenta.',rate_limited:'Has llegado al límite de uso por ahora. Prueba en un rato.',
     session_expired:'Vuelve a iniciar sesión en Claude.',image_rejected:'No se pudo leer la imagen. Prueba con otra foto, más cerca y con buena luz.',refused:'Claude no pudo responder a esa petición.',
     invalid_json:'No pude ordenar los datos. Inténtalo de nuevo.',prompt_too_large:'El archivo es demasiado grande. Prueba con menos días o una foto.',images_unavailable:'Desde aquí no se pueden enviar fotos a Claude.'};
-  const errIA = e => ERRS[e&&e.code] || 'No se pudo conectar con la IA. Inténtalo de nuevo.';
+  const errIA = e => (e&&e.msgIA) || ERRS[e&&e.code] || 'No se pudo conectar con la IA. Inténtalo de nuevo.';
   const sinIA = () => vacio('La IA no está disponible aquí','Abre la app desde Claude con tu cuenta iniciada para usar el asistente, el escáner y la importación de ventas.','');
 
   /* ---- Asistente ---- */
   const chat=[]; let asCtl=null;
-  const SUGER=['¿Qué platos tienen peor margen y qué harías con cada uno?','¿Qué productos han subido de precio y a qué platos afectan?','¿En qué se nos va la merma este mes?','Propón un precio de carta para la pizza de Halloween con un 25 % de food cost','¿Qué platos llevan gluten y lácteos?'];
+  const SUGER=['¿Qué platos tienen peor margen y qué harías con cada uno?','Enséñame a hacer un escandallo paso a paso con un plato de la carta','¿Qué es el food cost y cómo lo bajo sin subir precios?','¿Qué productos han subido de precio y a qué platos afectan?','¿En qué se nos va la merma este mes y cómo la reduzco?','¿Qué platos llevan gluten y lácteos?'];
   function contexto(){
-    const L=['Datos de la cocina de Boom Boom Ciao (restaurante italiano en Madrid) a '+fFecha(hoy())+'. Precios de compra sin IVA; precio de carta con IVA del '+'10 %.',''];
+    const L=['Datos de la cocina de '+negocio()+' a '+fFecha(hoy())+'. Precios de compra sin IVA; precio de carta con IVA del '+'10 %.',''];
     L.push('PLATOS Y ELABORACIONES (nombre | grupo | coste por ración o unidad | precio carta | food cost | alérgenos | ingredientes):');
     ordenados(S.platos).forEach(p => { const fc=fcDe(p);
       L.push('- '+p.nombre+' | '+grupoDe(p)+' | '+fEur.format(costeUd(p))+(p.base?' por '+UDI[p.unidadBase]+', rinde '+rinde(p):'')+' | '+(p.pvp>0?fEur.format(p.pvp):'—')+' | '+(fc!=null?fNum(fc)+' %':'—')+' | '+(algTxt(algDe(p))||'—')+' | '+
@@ -1294,25 +1294,32 @@ body.menu-abierto #velo{opacity:1;visibility:visible}
     const sm=semanasVentas(); if(sm.length){ L.push('','VENTAS POR SEMANA (platos):'); sm.slice(-6).forEach(w => L.push('- '+w.k+': '+w.total+' platos')); }
     return L.join('\n');
   }
-  const INSTR='Eres el asistente de gestión de cocina de Boom Boom Ciao. Te habla el equipo de cocina. Responde en español de España, con tono cercano y directo, breve y práctico: frases cortas, listas solo si ayudan, cifras con euros y porcentajes. Usa SOLO los datos de abajo; si falta un dato, dilo y explica cómo apuntarlo en la app. No inventes precios, proveedores ni ventas. No puedes cambiar datos de la app: si te piden un cambio, explica dónde hacerlo. Food cost = coste por ración / (precio de carta sin IVA).';
+  const negocio = () => { const m=typeof mios!=='undefined'&&mios.find(x => x.id===rid); return m ? m.nombre : 'Boom Boom Ciao (restaurante italiano en Madrid)'; };
+  const instr = () => 'Eres el asistente de cocina y costes de '+negocio()+': un chatbot didáctico y resolutivo. Te habla el equipo de cocina, con niveles de experiencia distintos. Responde en español de España, cercano y claro.\n'+
+    'Cómo responder:\n1. Empieza por la respuesta o la solución, con las cifras del restaurante.\n2. Explica el porqué en pocas líneas. Cuando haya números, enseña el cálculo paso a paso (por ejemplo: coste por ración ÷ precio sin IVA = food cost).\n'+
+    '3. La primera vez que uses un término técnico (food cost, merma, escandallo, rendimiento, ingeniería de menú, APPCC), explícalo en una frase sencilla.\n4. Termina con el siguiente paso concreto: qué hacer y en qué apartado de la app se hace.\n'+
+    '5. Si la pregunta es ambigua, haz una sola pregunta para aclararla antes de extenderte.\n6. Si te piden aprender algo, enséñalo con un ejemplo real de su carta y propón un ejercicio corto.\n'+
+    'Sé breve y sin relleno: frases cortas y listas solo si ayudan. Formato: texto sencillo, negrita con **así** y listas con guiones; sin títulos, tablas ni bloques de código.\n'+
+    'Para los datos del restaurante usa SOLO los datos de abajo; si falta uno, dilo y explica cómo apuntarlo en la app. No inventes precios, proveedores ni ventas. Sí puedes enseñar técnica y gestión de cocina en general (costes, compras, conservación, organización, seguridad alimentaria), dejando claro qué es dato del restaurante y qué es criterio general.\n'+
+    'No puedes cambiar datos de la app: explica dónde hacerlo. Apartados: Inicio (Panel, Asistente); Carta (Platos, Sala y alérgenos, Ingeniería, Eventos); Precios (Productos, Comparar, Alertas); Cocina (Recetas, Producción, Etiquetas, APPCC); Almacén (Inventario, Pedidos, Compras, Mermas). Food cost = coste por ración ÷ precio de carta sin IVA.';
   function fmt(t){ return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split('\n').map(l => /^\s*[-•]\s+/.test(l)?'<li>'+l.replace(/^\s*[-•]\s+/,'')+'</li>':l).join('\n').replace(/(<li>.*?<\/li>\n?)+/g,m => '<ul>'+m.replace(/\n/g,'')+'</ul>').replace(/\n/g,'<br>'); }
   function pintarChat(){
     const o=$('as-msgs'); if(!o) return;
     o.innerHTML = chat.length ? chat.map((m,k) => '<div class="msg-'+(m.role==='user'?'yo':'ia')+'" data-k="'+k+'">'+(m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):fmt(m.content))+(m.error?'<p class="hint">'+esc(m.error)+'</p>':'')+'</div>').join('')
-      : '<p class="hint">Pregúntame por costes, márgenes, precios, mermas, compras, alérgenos o ventas. Leo los datos de la app en el momento.</p><div class="togs">'+SUGER.map(x => '<button class="tog" type="button" data-sug="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>';
+      : '<p class="hint">Pregúntame por costes, márgenes, precios, mermas, compras, alérgenos o ventas, o pídeme que te enseñe algo paso a paso. Leo los datos de la app en el momento.</p><div class="togs">'+SUGER.map(x => '<button class="tog" type="button" data-sug="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>';
     o.scrollTop=o.scrollHeight;
   }
   function vAsistente(){
     if(!sAPI){ $('vista').innerHTML=sinIA(); return; }
     $('vista').innerHTML='<section class="card chat"><div class="acciones" style="justify-content:space-between"><h2>Asistente</h2><button class="link" type="button" data-act="as-nuevo">Nueva conversación</button></div>'+
       '<div id="as-msgs" class="msgs" aria-live="polite"></div><form id="form-as" class="as-form" novalidate><textarea id="as-input" rows="2" aria-label="Pregunta para el asistente" placeholder="Escribe o dicta tu pregunta"></textarea>'+
-      '<button class="btn primary" type="submit" id="as-env">'+(asCtl?'Detener':'Enviar')+'</button></form><p class="hint">Usa tu cuenta de Claude. Lee los datos de la app, pero no los cambia.</p></section>';
+      '<button class="btn primary" type="submit" id="as-env">'+(asCtl?'Detener':'Enviar')+'</button></form><p class="hint">'+(sb?'':'Usa tu cuenta de Claude. ')+'Lee los datos de la app, pero no los cambia.</p></section>';
     pintarChat();
   }
   function preguntar(q){
     q=q.trim(); if(!q||asCtl) return; chat.push({role:'user',content:q}); const r={role:'assistant',content:''}; chat.push(r); pintarChat();
     let turnos=chat.slice(0,-1).filter(m => m.content).slice(-10); while(turnos.length&&turnos[0].role!=='user') turnos.shift();
-    turnos=turnos.map((m,k) => ({role:m.role,content:k===0?INSTR+'\n\n'+contexto()+'\n\nPREGUNTA: '+m.content:m.content}));
+    turnos=turnos.map((m,k) => ({role:m.role,content:k===0?instr()+'\n\n'+contexto()+'\n\nPREGUNTA: '+m.content:m.content}));
     asCtl=new AbortController(); const env=$('as-env'); if(env) env.textContent='Detener';
     let t0=0; sAPI(turnos,{signal:asCtl.signal,cache:false,onText:x => { r.content=x.text; const now=Date.now(); if(now-t0>80){ t0=now; const el=$('as-msgs'); if(el){ const d=el.querySelector('[data-k="'+(chat.length-1)+'"]'); if(d){ d.innerHTML=fmt(r.content); el.scrollTop=el.scrollHeight; } } } }})
       .then(x => { r.content=x.text; }, e => { if(e&&e.code==='cancelled'){ if(!r.content) r.content='(detenido)'; } else { if(e&&e.text) r.content=e.text; r.error=errIA(e); } })
@@ -1913,6 +1920,7 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
     const d=sbDb(rid); remoto(d); setNivel(ROLNIV[mio.rol]); $('rol').textContent=mio.nombre+' · '+ROLES[mio.rol]; $('btn-restaurar').hidden=nivel!=='admin';
     $('m-cuenta').hidden=false; $('cu-nombre').textContent=yo.nombre; const sel=$('cu-rest'); sel.hidden=mios.length<2; sel.innerHTML=mios.map(x => '<option value="'+esc(x.id)+'"'+(x.id===rid?' selected':'')+'>'+esc(x.nombre)+'</option>').join('');
     $('btn-usuarios').hidden=nivel!=='admin'; cargarMiembros(); d.start();
+    sAPI=iaNube(); sLim={images:{mediaTypes:['image/jpeg','image/png','image/webp'],maxCount:4}}; refrescar();
   }
   function cargarMiembros(){ return sb.from('miembros').select('user_id,rol,nombre,email').eq('restaurante_id',rid).then(q => { if(!q.error){ miembros=(q.data||[]).sort((a,z) => a.nombre.localeCompare(z.nombre,'es')); nombres.clear(); refrescar(); } }, () => {}); }
   $('cu-rest').addEventListener('change', e => { mem('bbc.rest',e.target.value); location.reload(); });
@@ -1942,6 +1950,28 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
     else if(f.id==='form-rest'){ const n=$('us-rest').value.trim(); if(!n){ m.textContent='Escribe el nombre del restaurante.'; return; } m.textContent='Creando…';
       sb.rpc('crear_restaurante',{p_nombre:n}).then(q => { if(q.error) throw q.error; mem('bbc.rest',q.data); location.reload(); }).catch(er => { m.textContent=errTxt(er); }); } });
   document.addEventListener('keydown', e => { if(e.key==='Escape'&&!$('usuarios').hidden) cerrarUsuarios(); });
+  /* IA propia: la app llama a la función "ia" del servidor, que es quien habla con Gemini */
+  function iaNube(){
+    const b64 = bl => new Promise((ok,ko) => { const fr=new FileReader(); fr.onload=() => ok({data:String(fr.result).split(',')[1]||'',mime:bl.type||'image/jpeg'}); fr.onerror=() => ko(new Error('img')); fr.readAsDataURL(bl); });
+    const E = (code,msg) => { const e=new Error(msg||code); e.code=code; if(msg) e.msgIA=msg; return e; };
+    async function llamar(cuerpo,signal){
+      let tok=''; try{ const q=await sb.auth.getSession(); tok=(q.data&&q.data.session&&q.data.session.access_token)||''; }catch(e){}
+      if(!tok) throw E('session_expired','Tu sesión ha caducado. Sal y vuelve a entrar.');
+      let r; try{ r=await fetch(CFG.url+'/functions/v1/ia',{method:'POST',signal:signal,headers:{'Content-Type':'application/json',Authorization:'Bearer '+tok,apikey:CFG.key},body:JSON.stringify(Object.assign({rid:rid},cuerpo))}); }
+      catch(e){ if(e&&e.name==='AbortError') throw E('cancelled'); throw E('red','Sin conexión con la IA. Revisa internet y vuelve a intentarlo.'); }
+      if(!r.ok){ let m=''; try{ m=(await r.json()).error||''; }catch(e){} if(r.status===404) m='La IA todavía no está activada en el servidor.'; throw E(r.status===429?'rate_limited':'unavailable',m||'La IA no está disponible ahora mismo.'); }
+      return r; }
+    const plano = input => typeof input==='string' ? input : input.map(m => (m.role==='user'?'USUARIO':'ASISTENTE')+':\n'+m.content).join('\n\n')+(input.length>1?'\n\nResponde ahora al último mensaje del USUARIO, teniendo en cuenta la conversación.':'');
+    const f = async (input,opts) => { opts=opts||{}; const r=await llamar({modo:'chat',texto:plano(input)},opts.signal); let text='';
+      try{ const rd=r.body.getReader(), dec=new TextDecoder(); for(;;){ const x=await rd.read(); if(x.done) break; text+=dec.decode(x.value,{stream:true}); if(opts.onText) opts.onText({text:text}); } }
+      catch(e){ const er=E(e&&e.name==='AbortError'?'cancelled':'red',e&&e.name==='AbortError'?'':'Se cortó la conexión con la IA.'); er.text=text; throw er; }
+      return {text:text,truncated:false}; };
+    f.json = async (prompt,opts) => { opts=opts||{}; const imgs=await Promise.all((opts.images||[]).map(b64));
+      const r=await llamar({modo:'json',texto:prompt,imagenes:imgs},opts.signal), j=await r.json().catch(() => null); let t=String((j&&j.text)||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'');
+      const a=t.indexOf('{'), z=t.lastIndexOf('}'); try{ return JSON.parse(a>=0&&z>a?t.slice(a,z+1):t); }catch(e){ throw E('invalid_json'); } };
+    f.limits = () => Promise.resolve({images:{mediaTypes:['image/jpeg','image/png','image/webp'],maxCount:4}});
+    return f;
+  }
   function nube(){
     try{ sb=window.supabase.createClient(CFG.url,CFG.key); }catch(e){ local(); return; }
     acceso('cargando'); sb.auth.onAuthStateChange((ev,s) => { setTimeout(() => cambioSesion(s),0); });
