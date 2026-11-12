@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
-<script>window.BBC_SUPABASE={url:'https://qgjsqwkkrgtrfpxschmn.supabase.co',key:'sb_publishable_VYGjBgN7J3fJVMSq1Mp1ZA_93REskD6'};</script>
+<script src="config.js"></script>
 <script src="supabase.js"></script>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
@@ -205,8 +205,8 @@ a.row{color:inherit}
 .lab-f b{font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1.1}
 .lab-f div:last-child b{color:#A3261E}
 #cocina{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;gap:16px;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-#multi,#usuarios,#acceso{position:fixed;inset:0;z-index:21;background:var(--bg);display:flex;flex-direction:column;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-#multi>*,#usuarios>*{width:100%;max-width:820px;margin-inline:auto}
+#multi,#usuarios,#acceso,#capa{position:fixed;inset:0;z-index:21;background:var(--bg);display:flex;flex-direction:column;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#multi>*,#usuarios>*,#capa>*{width:100%;max-width:820px;margin-inline:auto}
 .mx-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .mx-top h2{font-size:1.7rem}
 .mx-fil{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
@@ -255,6 +255,27 @@ a.row{color:inherit}
 .hi-t{overflow-wrap:anywhere}
 .hi-d{margin:0;padding-left:18px;font-size:.88rem;color:var(--muted);display:flex;flex-direction:column;gap:2px}
 .hi-d li{overflow-wrap:anywhere}
+#capa{z-index:45}
+.legal{padding:14px 16px}
+.legal h3{font-size:1rem;margin:14px 0 4px}
+.legal h3:first-child{margin-top:0}
+.legal p{max-width:65ch}
+.ac-pie{display:flex;flex-wrap:wrap;gap:6px 16px}
+#entorno{position:fixed;top:0;left:0;right:0;z-index:60;background:var(--crit);color:#fff;text-align:center;font:600 .72rem/1.6 var(--font-mono,monospace);letter-spacing:.08em;padding-top:env(safe-area-inset-top,0px);pointer-events:none}
+body.sin-red .top{border-bottom-color:var(--crit)}
+.gr-lista{display:flex;flex-direction:column}
+.gr{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-top:1px solid var(--line)}
+.gr:first-child{border-top:0;padding-top:0}
+.gr-c{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.gr-c b{font-size:1.05rem;overflow-wrap:anywhere}
+.gr-k{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.gr-k span{display:flex;flex-direction:column;min-width:0}
+.gr-k small{font-size:.74rem;color:var(--muted)}
+.gr-k b{font-variant-numeric:tabular-nums;font-weight:600}
+.gr-k b.mal{color:var(--crit)}
+@media (max-width:600px){.gr-k{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.m-enl{display:flex;flex-wrap:wrap;gap:6px 14px;padding-top:10px}
+.m-enl button{color:var(--band-oro);font-weight:500}
 .coc-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .coc-top h2{font-size:1.8rem}
 .coc-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;max-width:820px;width:100%;margin:0 auto}
@@ -335,13 +356,15 @@ body.menu-abierto #velo{opacity:1;visibility:visible}
 <aside id="menu" aria-label="Menú principal">
   <div class="m-top"><img src="logo-oro.png" alt="" width="110" height="46"><button class="icon" id="menu-cerrar" type="button" aria-label="Cerrar menú">×</button></div>
   <nav id="menu-nav" aria-label="Secciones"></nav>
-  <div class="m-cuenta" id="m-cuenta" hidden><div class="fila"><b id="cu-nombre"></b><span class="m-bts"><button class="btn small" id="btn-usuarios" type="button" hidden>Usuarios</button><button class="btn small" id="btn-salir" type="button">Salir</button></span></div><select id="cu-rest" aria-label="Restaurante" hidden></select></div>
+  <div class="m-cuenta" id="m-cuenta" hidden><div class="fila"><b id="cu-nombre"></b><span class="m-bts"><button class="btn small" id="btn-usuarios" type="button" hidden>Usuarios</button><button class="btn small" id="btn-salir" type="button">Salir</button></span></div><select id="cu-rest" aria-label="Restaurante" hidden></select><div class="m-enl"><button class="link" id="btn-clave" type="button">Cambiar contraseña</button><button class="link" id="btn-copias" type="button" hidden>Copias automáticas</button><button class="link" id="btn-legal" type="button">Aviso legal</button></div></div>
   <div class="m-pie" id="m-des" hidden><span class="lbl">Último cambio</span><button class="btn small" id="btn-des-menu" type="button">Deshacer</button></div>
   <div class="m-pie" id="m-copia" hidden><span class="lbl">Copia de datos</span><span class="m-bts"><button class="btn small" id="btn-copia" type="button">Descargar</button><button class="btn small" id="btn-restaurar" type="button" hidden>Restaurar</button></span><input id="f-copia" type="file" accept=".json,application/json" hidden></div>
   <div class="m-pie"><span class="lbl">Apariencia</span><button class="btn small" id="btn-tema" type="button">Oscuro</button></div>
 </aside>
 <div id="toast" role="status" hidden></div>
 <div id="cocina" hidden></div>
+<div id="capa" hidden role="dialog" aria-modal="true" aria-label="Información"></div>
+<div id="entorno" hidden>ENTORNO DE PRUEBAS</div>
 <div id="usuarios" hidden role="dialog" aria-modal="true" aria-label="Usuarios"></div>
 <div id="acceso" hidden></div>
 <div id="multi" hidden role="dialog" aria-modal="true" aria-label="Exportar varios"></div>
@@ -437,7 +460,7 @@ body.menu-abierto #velo{opacity:1;visibility:visible}
     const p=pend[key]; if(!p||!p.dirty) return; if(p.saving){ p.again=true; return; }
     p.saving=true; p.dirty=false; let t;
     try{ if(db) t=ref(p.col,p.obj.id).set(limpio(p.obj)); else { persistLocal(); t=Promise.resolve(); } }catch(e){ t=Promise.reject(e); }
-    t.then(() => estado(db?'Cambios guardados':'Guardado solo en este navegador'), e => {
+    t.then(() => estado(db?(db.pend&&db.pend()?'Guardado en este dispositivo. Se subirá al volver la conexión.':'Cambios guardados'):'Guardado solo en este navegador'), e => {
       if(e&&e.code==='invalid_argument'){ soloLectura=true; aviso('Puedes consultar y calcular, pero no tienes permiso para guardar cambios en esta página.'); estado('Solo lectura'); }
       else { p.dirty=true; estado('No se pudo guardar. Se reintentará con tu próximo cambio.'); }
     }).then(() => { p.saving=false; if(p.again){ p.again=false; volcar(key); } });
@@ -502,7 +525,7 @@ body.menu-abierto #velo{opacity:1;visibility:visible}
     pant=LEG[vista+'/'+sub[vista]]||sub[vista];
     if(!listo()) return; pintarListas();
     ({carta:vCarta,precios:vPrecios,recetas:vRecetas,inventario:vInventario,mermas:vMermas,panel:vPanel,sala:vSala,ingenieria:vIng,eventos:vEventos,comparar:vComparar,alertas:vAlertas,
-      produccion:vProduccion,etiquetas:vEtiquetas,appcc:vAppcc,pedidos:vPedidos,compras:vCompras,asistente:vAsistente,proveedores:vProveedores,historial:vHistorial})[pant]();
+      produccion:vProduccion,etiquetas:vEtiquetas,appcc:vAppcc,pedidos:vPedidos,compras:vCompras,asistente:vAsistente,proveedores:vProveedores,historial:vHistorial,grupo:vGrupo})[pant]();
   }
   function refrescar(){
     const a=document.activeElement, ed=a&&$('vista').contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName);
@@ -1158,6 +1181,7 @@ body.menu-abierto #velo{opacity:1;visibility:visible}
         filas:l.map(a => [T(fFecha(a.fecha)),T(a.hora),T(APT[a.tipo]),T(a.punto),T(apValor(a)),T(a.ok?'Correcto':'Incidencia'),T(a.quien),T(a.nota)]),pie:[]}; }
     if(pant==='pedidos'){ const l=pedLineas().sort((a,z) => (a.p.proveedor||'zzz').localeCompare(z.p.proveedor||'zzz','es')||a.p.nombre.localeCompare(z.p.nombre,'es'));
       return {titulo:'Pedido',sub:fFecha(hoy()),cols:[{t:'Proveedor',w:2.2},{t:'Producto',w:3.2},{t:'Pedir',w:1,r:1},{t:'Ud.',w:.6}],filas:l.map(x => [T(x.p.proveedor),T(x.p.nombre),N(x.q,2),T(UDI[x.p.unidad])]),pie:[]}; }
+    if(pant==='grupo'){ return {titulo:'Grupo',sub:fMes(mesM)+' · compras y mermas sin IVA',cols:[{t:'Restaurante',w:2.6},{t:'Platos',w:.9,r:1},{t:'Food cost',w:1.1,r:1},{t:'Fuera obj.',w:1,r:1},{t:'Compras',w:1.4,r:1},{t:'Mermas',w:1.3,r:1},{t:'Merma %',w:1,r:1}],filas:filasGrupo().map(f => [T(f.g.m.nombre),N(f.k.n,0),PC(f.k.fc),N(f.k.fuera,0),E(f.k.compras),E(f.k.mermas),PC(f.k.pm)]),pie:[]}; }
     if(pant==='proveedores'){ return {titulo:'Proveedores',sub:fFecha(hoy()),cols:[{t:'Proveedor',w:2.4},{t:'WhatsApp',w:1.6},{t:'Correo',w:2.6},{t:'Nota',w:2.4}],filas:nombresProv().map(n => { const p=provDe(n)||{}; return [T(n),T(p.whatsapp),T(p.email),T(p.nota)]; }),pie:[]}; }
     if(pant==='compras'){ const l=delMes(S.compras).sort((a,z) => a.fecha.localeCompare(z.fecha));
       return {titulo:'Compras',sub:fMes(mesM)+' · sin IVA',cols:[{t:'Fecha',w:1.4},{t:'Proveedor',w:3},{t:'Albarán',w:2},{t:'Importe',w:1.4,r:1}],filas:l.map(c => [T(fFecha(c.fecha)),T(c.proveedor),T(c.albaran),E(c.importe)]),pie:[['Total de compras',E(suma(l,c => c.importe))]]}; }
@@ -1975,6 +1999,67 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
     else if(a==='hist-volver'){ const h=(hist||[]).find(x => String(x.id)===b.dataset.id); if(!h||!confirmar(b,'¿Seguro? Pulsa otra vez')) return;
       const o=NORM[h.col](Object.assign({},h.antes,{id:h.doc_id})), i=S[h.col].findIndex(x => x.id===h.doc_id); if(i>=0) S[h.col][i]=o; else S[h.col].push(o); guardar(h.col,o,true); sucio();
       toast('Recuperado: '+tituloDoc(h.col,o)); setTimeout(() => { hist=null; if(pant==='historial') vHistorial(); },1800); } });
+  /* ---- Capa común: aviso legal, copias automáticas ---- */
+  function capa(html){ menu(false); const c=$('capa'); c.innerHTML=html; c.hidden=false; document.body.style.overflow='hidden'; const b=c.querySelector('[data-capa="cerrar"]'); if(b) b.focus({preventScroll:true}); }
+  function cerrarCapa(){ $('capa').hidden=true; $('capa').innerHTML=''; if($('acceso').hidden) document.body.style.overflow=''; }
+  const capaTop = (t,s) => '<div class="mx-top"><div><h2>'+esc(t)+'</h2>'+(s?'<p class="hint">'+esc(s)+'</p>':'')+'</div><button class="btn" type="button" data-capa="cerrar">Cerrar</button></div>';
+  document.addEventListener('keydown', e => { if(e.key==='Escape'&&!$('capa').hidden) cerrarCapa(); });
+  function verLegal(){ const L=(CFG&&CFG.legal)||{}, resp=L.responsable||'la empresa titular del restaurante', falta = v => v||'pendiente de completar';
+    capa(capaTop('Aviso legal y privacidad','Cómo se tratan tus datos en esta aplicación')+'<div class="mx-lista legal">'+
+      '<h3>Quién es el responsable</h3><p>'+esc(resp)+(L.cif?' · NIF '+esc(L.cif):'')+'. Dirección: '+esc(falta(L.direccion))+'. Contacto para privacidad: '+esc(falta(L.email))+'.</p>'+
+      '<h3>Qué datos se guardan</h3><p>Tu nombre, tu correo y tu contraseña (cifrada, nadie puede leerla). También queda registro de lo que haces en la app: qué creas, cambias o eliminas y cuándo. La app no pide ni guarda datos de salud, bancarios ni de localización.</p>'+
+      '<h3>Para qué se usan</h3><p>Para darte acceso, saber quién ha hecho cada cambio y gestionar la cocina: costes, compras, inventario, mermas y registros de seguridad alimentaria. No se usan para publicidad ni se venden a nadie.</p>'+
+      '<h3>Con qué base legal</h3><p>La gestión de la relación laboral y el interés legítimo de la empresa en organizar y controlar su actividad.</p>'+
+      '<h3>Quién más interviene</h3><p>Proveedores técnicos que prestan servicio a la empresa: Supabase (base de datos y cuentas'+(L.region?', con servidores en '+esc(L.region):'')+'), GitHub (alojamiento de la aplicación) y Google (asistente y lectura de albaranes; solo recibe los datos de cocina que se le consultan y las fotos de albaranes que se escanean).</p>'+
+      '<h3>Cuánto tiempo</h3><p>Mientras tengas acceso a la aplicación. Cuando dejes de tenerlo, tu cuenta se elimina; el registro de cambios se conserva el tiempo necesario para las obligaciones de la empresa.</p>'+
+      '<h3>Tus derechos</h3><p>Puedes pedir acceso a tus datos, corregirlos, eliminarlos, limitar su uso u oponerte, escribiendo al contacto de privacidad. Si no quedas conforme, puedes reclamar ante la Agencia Española de Protección de Datos (aepd.es).</p>'+
+      '<h3>Uso de la aplicación</h3><p>La cuenta es personal: no compartas tu contraseña. Los datos de costes, precios y proveedores son confidenciales de la empresa y no deben copiarse fuera de ella.</p></div>'); }
+  /* Copias automáticas (una al día, guardadas 30 días) */
+  let copias=null;
+  function verCopias(msg){
+    capa(capaTop('Copias automáticas','Se guarda una copia al día y se conservan 30 días')+'<div class="mx-lista">'+(!copias?'<p class="hint" style="padding:12px 0">Cargando…</p>':copias.length?copias.map(c => '<div class="us-it"><span class="us-n"><b>'+esc(fFecha(c.dia))+'</b><small>'+c.registros+' registros</small></span><button class="btn small" type="button" data-capa="cp-bajar" data-id="'+c.id+'">Descargar</button><button class="btn small" type="button" data-capa="cp-restaurar" data-id="'+c.id+'">Restaurar</button></div>').join(''):'<p class="hint" style="padding:12px 0">Todavía no hay copias. La primera se hace hoy.</p>')+'</div>'+
+      '<p class="hint">Restaurar devuelve cada registro a como estaba ese día. Lo creado después no se borra. Descarga una copia de vez en cuando y guárdala fuera, por si un día falla el servicio.</p><p class="hint" id="cp-msg" role="status">'+esc(msg||'')+'</p>');
+    if(!copias) sb.from('copias').select('id,dia,registros').eq('restaurante_id',rid).order('dia',{ascending:false}).limit(40).then(q => { copias=q.error?[]:(q.data||[]); if(!$('capa').hidden) verCopias(q.error?(/copias|relation|schema/i.test(q.error.message||'')?'Falta activar las copias: ejecuta en Supabase el tercer script.':errTxt(q.error)):''); }, () => { copias=[]; verCopias('Sin conexión.'); });
+  }
+  const copiaDatos = id => sb.from('copias').select('dia,datos').eq('id',id).limit(1).then(q => { if(q.error||!q.data||!q.data[0]) throw q.error||new Error('No se encontró la copia.'); return q.data[0]; });
+  $('capa').addEventListener('click', e => { const b=e.target.closest('[data-capa]'); if(!b) return; const a=b.dataset.capa, m = t => { const el=$('cp-msg'); if(el) el.textContent=t; };
+    if(a==='cerrar') cerrarCapa();
+    else if(a==='cp-bajar'){ m('Preparando…'); copiaDatos(b.dataset.id).then(c => { const d={}; COLS.forEach(k => { d[k]=[]; }); (c.datos||[]).forEach(x => { if(x.col==='ajustes') d.ajustes=x.data; else if(d[x.col]) d[x.col].push(Object.assign({},x.data,{id:x.id})); });
+        m(''); return entregar(new Blob([JSON.stringify({app:'boomboomciao',version:1,fecha:c.dia,datos:d})],{type:'application/json'}),'BoomBoomCiao-copia-'+c.dia+'.json'); }).catch(er => m(errTxt(er))); }
+    else if(a==='cp-restaurar'){ if(!confirmar(b,'¿Seguro? Pulsa otra vez')) return; m('Restaurando…');
+      copiaDatos(b.dataset.id).then(c => db.lote((c.datos||[]).filter(x => x&&x.col&&x.id&&(x.col==='ajustes'||NORM[x.col])).map(x => [x.col,String(x.id),x.data||{}])).then(() => { cerrarCapa(); toast('Datos restaurados a la copia del '+fFecha(c.dia)+'.'); })).catch(er => m(errTxt(er))); } });
+  function copiaDeHoy(){ if(!sb||sinRed) return; const k='bbc.copia.'+rid, h=hoy(); if(mem(k)===h) return; sb.rpc('copia_diaria',{p_rid:rid}).then(q => { if(!q.error) mem(k,h); }, () => {}); }
+
+  /* ---- Panel de grupo: compara los restaurantes a los que tienes acceso de gestión ---- */
+  let grupo=null, grupoMes='';
+  const gestion = () => mios.filter(x => x.rol==='dueno'||x.rol==='encargado');
+  async function cargarGrupo(){ const out=[];
+    for(const m of gestion()){ const d={platos:[],productos:[],compras:[],mermas:[]}; let ini=0;
+      for(;;){ const q=await sb.from('docs').select('col,id,data').eq('restaurante_id',m.id).eq('borrado',false).in('col',['platos','productos','compras','mermas']).order('col').order('id').range(ini,ini+999);
+        if(q.error) throw q.error; (q.data||[]).forEach(x => { if(d[x.col]) d[x.col].push(NORM[x.col](Object.assign({},x.data,{id:x.id}))); }); if(!q.data||q.data.length<1000) break; ini+=1000; }
+      out.push({m:m,d:d}); }
+    return out; }
+  function kpisGrupo(g){ const o={platos:S.platos,productos:S.productos}; let r;
+    try{ S.platos=g.d.platos; S.productos=g.d.productos; sucio(); const pl=S.platos.filter(p => !p.base), fcs=pl.map(fcDe).filter(x => x!=null);
+      r={n:pl.length, fc:fcs.length?suma(fcs,x => x)/fcs.length:null, fuera:pl.filter(p => { const f=fcDe(p); return f!=null&&f>(p.objetivo||30); }).length,
+        compras:suma(g.d.compras.filter(c => c.fecha.slice(0,7)===mesM),c => c.importe), mermas:suma(g.d.mermas.filter(x => x.fecha.slice(0,7)===mesM),valM)}; }
+    finally{ S.platos=o.platos; S.productos=o.productos; sucio(); }
+    r.pm=r.compras>0?r.mermas/r.compras*100:null; return r; }
+  function filasGrupo(){ return (grupo||[]).map(g => ({g:g,k:kpisGrupo(g)})); }
+  function vGrupo(){
+    if(!sb||gestion().length<1){ $('vista').innerHTML=vacio('Panel de grupo no disponible','Lo ven el dueño y los encargados.',''); return; }
+    if(sinRed){ $('vista').innerHTML=vacio('Sin conexión','El panel de grupo necesita internet para leer los demás restaurantes.',''); return; }
+    if(!grupo){ $('vista').innerHTML='<section class="card estado"><strong>Cargando los restaurantes</strong></section>'; cargarGrupo().then(g => { grupo=g; if(pant==='grupo') vGrupo(); }, e => { $('vista').innerHTML=vacio('No se pudo cargar',errTxt(e),''); }); return; }
+    const fs=filasGrupo(), mx=Math.max.apply(null,fs.map(f => f.k.fc||0).concat([1])), tot={c:suma(fs,f => f.k.compras),m:suma(fs,f => f.k.mermas)};
+    $('vista').innerHTML='<div class="bar">'+mesHTML()+'<span class="hint grow">'+fs.length+(fs.length===1?' restaurante':' restaurantes')+'. Compras y mermas del mes, sin IVA.</span><button class="btn" type="button" data-act="grupo-recargar">Actualizar</button>'+expHTML()+'</div>'+
+      '<div class="kpis"><div class="kpi"><span>Compras del grupo</span><b>'+fEur.format(tot.c)+'</b></div><div class="kpi"><span>Mermas del grupo</span><b>'+fEur.format(tot.m)+'</b></div><div class="kpi"><span>Merma sobre compras</span><b>'+(tot.c>0?fNum(tot.m/tot.c*100)+' %':'—')+'</b></div></div>'+
+      '<section class="card"><div class="gr-lista">'+fs.map(f => { const k=f.k, m=f.g.m;
+        return '<div class="gr"><div class="gr-c"><b>'+esc(m.nombre)+'</b>'+(m.id===rid?'<span class="pill">Abierto ahora</span>':'<button class="link" type="button" data-act="grupo-abrir" data-id="'+esc(m.id)+'">Abrir</button>')+'</div>'+
+          '<div class="fila-barra"><span>Food cost medio</span><span class="v">'+(k.fc==null?'—':fNum(k.fc)+' %')+'</span><span class="pista"><i style="width:'+(k.fc?k.fc/mx*100:0)+'%"></i></span></div>'+
+          '<div class="gr-k"><span><small>Platos</small><b>'+k.n+'</b></span><span><small>Fuera de objetivo</small><b'+(k.fuera?' class="mal"':'')+'>'+k.fuera+'</b></span><span><small>Compras</small><b>'+fEur.format(k.compras)+'</b></span><span><small>Mermas</small><b>'+fEur.format(k.mermas)+'</b></span><span><small>Merma / compras</small><b>'+(k.pm==null?'—':fNum(k.pm)+' %')+'</b></span></div></div>'; }).join('')+'</div></section>';
+  }
+  V.addEventListener('click', e => { const b=e.target.closest('[data-act]'); if(!b) return; const a=b.dataset.act;
+    if(a==='grupo-recargar'){ grupo=null; vGrupo(); } else if(a==='grupo-abrir'){ mem('bbc.rest',b.dataset.id); location.hash='#inicio-panel'; location.reload(); } });
   /* ---- Nube propia: usuarios con contraseña, restaurantes y sincronización ---- */
   const CFG=window.BBC_SUPABASE||null; let sb=null, uidAct, yo=null, mios=[], rid=null, esPlat=false, miembros=[];
   const ROLES={dueno:'Dueño',encargado:'Encargado',cocina:'Cocina',consulta:'Solo consulta'}, ROLNIV={dueno:'admin',encargado:'admin',cocina:'interact',consulta:'view'};
@@ -1987,35 +2072,65 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
     if(/fetch|network|load failed/i.test(m)) return 'Sin conexión. Revisa internet y vuelve a intentarlo.';
     return m||'No se pudo completar. Inténtalo de nuevo.'; };
   const canon = o => JSON.stringify(o, (k,v) => (v&&typeof v==='object'&&!Array.isArray(v)) ? Object.keys(v).sort().reduce((a,x) => { a[x]=v[x]; return a; },{}) : v);
+  /* Almacén del dispositivo (IndexedDB): última copia de los datos y cambios pendientes de subir */
+  const idb=(() => { let p; const abrir = () => p||(p=new Promise((ok,ko) => { const q=indexedDB.open('bbc',1); q.onupgradeneeded=() => q.result.createObjectStore('kv'); q.onsuccess=() => ok(q.result); q.onerror=() => ko(q.error); }));
+    const op = (modo,fn) => abrir().then(d => new Promise((ok,ko) => { const tx=d.transaction('kv',modo), rq=fn(tx.objectStore('kv')); tx.oncomplete=() => ok(rq.result); tx.onerror=tx.onabort=() => ko(tx.error); })).catch(() => undefined);
+    return {get:k => op('readonly',s => s.get(k)), set:(k,v) => op('readwrite',s => s.put(v,k)), del:k => op('readwrite',s => s.delete(k))}; })();
+  const esRed = e => (typeof navigator!=='undefined'&&navigator.onLine===false) || !!(e&&!(e.code&&String(e.code).length>=4)&&/fetch|network|load failed|timed? ?out|aborted/i.test(String(e.message||e)));
+  let sinRed=false;
+  function conexion(ok,pendientes){ sinRed=!ok;
+    if(!ok) aviso('Sin conexión. Trabajas con los datos guardados en este dispositivo'+(pendientes?' y hay '+pendientes+(pendientes===1?' cambio pendiente':' cambios pendientes')+' de subir':'')+'. Se sincroniza solo al volver internet.');
+    else { if($('aviso').textContent.indexOf('Sin conexión')===0) aviso(''); if(sb&&rid&&!miembros.length) cargarMiembros(); }
+    document.body.classList.toggle('sin-red',!ok); }
   /* Adaptador: ofrece a la app la misma interfaz de documentos sobre la tabla docs */
   function sbDb(r){
-    const st={}, sello={}, subs={}, dsubs={}; let ultMs=0, tPed=null, ocupado=false, otra=false;
-    const T = () => sb.from('docs'), mapa = c => st[c]||(st[c]=new Map());
+    const st={}, sello={}, subs={}, dsubs={}; let ultMs=0, tPed=null, ocupado=false, otra=false, cola=[], vivo=false, tCache=null, tRe=null;
+    const T = () => sb.from('docs'), mapa = c => st[c]||(st[c]=new Map()), TODAS = () => COLS.concat(['ajustes']);
     const emitir = c => { if(c==='ajustes'){ const d=mapa(c).get('empresa'); (dsubs['ajustes/empresa']||[]).forEach(f => f({exists:!!d,data:() => d})); return; }
       const docs=[]; mapa(c).forEach((d,id) => docs.push({id:id,data:() => d})); (subs[c]||[]).forEach(f => f[0]({metadata:{fromCache:false},docs:docs})); };
     const aplicar = rows => { const cs={}; rows.forEach(x => { const k=x.col+'/'+x.id, ms=Date.parse(x.updated_at)||0; if(ms>ultMs) ultMs=ms; if(sello[k]===x.updated_at) return; sello[k]=x.updated_at;
       const m=mapa(x.col); if(x.borrado){ if(m.delete(x.id)) cs[x.col]=1; } else { const d=x.data||{}; if(!m.has(x.id)||canon(m.get(x.id))!==canon(d)){ m.set(x.id,d); cs[x.col]=1; } } }); return cs; };
     const fallo = e => { const er=new Error((e&&e.message)||'error'); if(e&&(e.code==='42501'||/row-level security|permission denied/i.test(e.message||''))) er.code='invalid_argument'; return er; };
+    const guardaCache = () => { clearTimeout(tCache); tCache=setTimeout(() => { const filas=[]; Object.keys(st).forEach(c => st[c].forEach((d,id) => filas.push([c,id,d]))); idb.set('cache.'+r,{filas:filas,t:Date.now()}); },1200); };
+    const guardaCola = () => { idb.set('cola.'+r,cola); if(sinRed) conexion(false,cola.length); };
     async function todo(){ let ini=0, rows=[]; for(;;){ const q=await T().select('col,id,data,borrado,updated_at').eq('restaurante_id',r).eq('borrado',false).order('col').order('id').range(ini,ini+999);
       if(q.error) throw q.error; rows=rows.concat(q.data||[]); if(!q.data||q.data.length<1000) break; ini+=1000; } return rows; }
+    const subir = x => Promise.resolve(T().upsert({restaurante_id:r,col:x[0],id:x[1],data:x[2],borrado:!!x[3]},{onConflict:'restaurante_id,col,id'})).then(q => { if(q.error) throw q.error; });
+    /* Sube, en orden, lo que se guardó sin conexión. Devuelve false si sigue sin haber red. */
+    async function vaciarCola(){ let perdidos=0;
+      while(cola.length){ try{ await subir(cola[0]); }catch(e){ if(esRed(e)) return false; perdidos++; } cola.shift(); idb.set('cola.'+r,cola); }
+      if(perdidos) toast(perdidos+(perdidos===1?' cambio pendiente no se pudo subir':' cambios pendientes no se pudieron subir')+' por falta de permiso.'); return true; }
+    async function sincronizar(){ if(!(await vaciarCola())) throw new Error('Failed to fetch');
+      const rows=await todo(); Object.keys(st).forEach(c => st[c].clear()); Object.keys(sello).forEach(k => delete sello[k]); ultMs=Date.now()-60000; aplicar(rows); TODAS().forEach(emitir); guardaCache(); conexion(true); }
     async function cambios(){ if(ocupado){ otra=true; return; } ocupado=true;
-      try{ const q=await T().select('col,id,data,borrado,updated_at').eq('restaurante_id',r).gt('updated_at',new Date(Math.max(0,ultMs-20000)).toISOString()).order('updated_at').limit(1000);
-        if(!q.error) Object.keys(aplicar(q.data||[])).forEach(emitir); }catch(e){}
+      try{ if(sinRed||cola.length) await sincronizar();
+        else { const q=await T().select('col,id,data,borrado,updated_at').eq('restaurante_id',r).gt('updated_at',new Date(Math.max(0,ultMs-20000)).toISOString()).order('updated_at').limit(1000);
+          if(q.error){ if(esRed(q.error)) conexion(false,cola.length); } else { const cs=Object.keys(aplicar(q.data||[])); cs.forEach(emitir); if(cs.length) guardaCache(); } } }
+      catch(e){ if(esRed(e)) conexion(false,cola.length); }
       ocupado=false; if(otra){ otra=false; pedir(); } }
     const pedir = () => { clearTimeout(tPed); tPed=setTimeout(cambios,250); };
-    const escribir = (c,id,d,b) => T().upsert({restaurante_id:r,col:c,id:id,data:d,borrado:b},{onConflict:'restaurante_id,col,id'}).then(q => { if(q.error) throw fallo(q.error); if(b) mapa(c).delete(id); else mapa(c).set(id,d); });
+    const encolar = x => { cola=cola.filter(y => !(y[0]===x[0]&&y[1]===x[1])); cola.push(x); conexion(false,cola.length); guardaCola(); };
+    const local = (c,id,d,b) => { if(b) mapa(c).delete(id); else mapa(c).set(id,d); guardaCache(); };
+    const escribir = (c,id,d,b) => { const x=[c,id,d,!!b];
+      if(sinRed||cola.length){ local(c,id,d,b); encolar(x); pedir(); return Promise.resolve(); }
+      return subir(x).then(() => local(c,id,d,b), e => { if(esRed(e)){ local(c,id,d,b); encolar(x); return; } throw fallo(e); }); };
     const docRef = (c,id) => ({id:id, set:d => escribir(c,id,d,false), delete:() => escribir(c,id,{},true), onSnapshot:f => { (dsubs[c+'/'+id]||(dsubs[c+'/'+id]=[])).push(f); }});
     const nid = () => 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
-    return { nube:true,
+    function arrancar(){ if(vivo) return; vivo=true;
+      try{ sb.channel('docs-'+r).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'restaurante_id=eq.'+r},pedir).subscribe(s => { if(s==='SUBSCRIBED') pedir(); }); }catch(e){}
+      setInterval(() => { if(!document.hidden) pedir(); },sinRed?15000:45000);
+      document.addEventListener('visibilitychange', () => { if(!document.hidden) pedir(); }); window.addEventListener('online', pedir); window.addEventListener('offline', () => conexion(false,cola.length)); }
+    return { nube:true, pend:() => cola.length,
       doc:p => { const a=p.split('/'); return docRef(a[0],a[1]); },
       collection:c => ({ doc:id => docRef(c,id||nid()), limit:() => ({ onSnapshot:(f,e) => { (subs[c]||(subs[c]=[])).push([f,e]); } }) }),
-      async lote(filas){ for(let i=0;i<filas.length;i+=200){ const q=await T().upsert(filas.slice(i,i+200).map(x => ({restaurante_id:r,col:x[0],id:x[1],data:x[2],borrado:false})),{onConflict:'restaurante_id,col,id'}); if(q.error) throw fallo(q.error); }
-        filas.forEach(x => mapa(x[0]).set(x[1],x[2])); COLS.concat(['ajustes']).forEach(emitir); },
-      start(){ todo().then(rows => { ultMs=Date.now()-60000; aplicar(rows); COLS.concat(['ajustes']).forEach(emitir);
-          try{ sb.channel('docs-'+r).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'restaurante_id=eq.'+r},pedir).subscribe(s => { if(s==='SUBSCRIBED') pedir(); }); }catch(e){}
-          setInterval(() => { if(!document.hidden) pedir(); },45000);
-          document.addEventListener('visibilitychange', () => { if(!document.hidden) pedir(); }); window.addEventListener('online', pedir);
-        }, () => { COLS.forEach(c => (subs[c]||[]).forEach(f => { if(f[1]) f[1](); })); }); }
+      async lote(filas){ if(sinRed) throw new Error('Failed to fetch'); for(let i=0;i<filas.length;i+=200){ const q=await T().upsert(filas.slice(i,i+200).map(x => ({restaurante_id:r,col:x[0],id:x[1],data:x[2],borrado:false})),{onConflict:'restaurante_id,col,id'}); if(q.error) throw fallo(q.error); }
+        filas.forEach(x => mapa(x[0]).set(x[1],x[2])); TODAS().forEach(emitir); guardaCache(); },
+      async start(){ cola=(await idb.get('cola.'+r))||[];
+        try{ await sincronizar(); arrancar(); }
+        catch(e){ const c=esRed(e)?await idb.get('cache.'+r):null;
+          if(!c){ COLS.forEach(k => (subs[k]||[]).forEach(f => { if(f[1]) f[1](); })); return; }
+          c.filas.forEach(x => mapa(x[0]).set(x[1],x[2])); cola.forEach(x => { if(x[3]) mapa(x[0]).delete(x[1]); else mapa(x[0]).set(x[1],x[2]); });
+          TODAS().forEach(emitir); conexion(false,cola.length); arrancar(); tRe=setInterval(() => { if(sinRed) pedir(); else clearInterval(tRe); },15000); } }
     };
   }
   /* Pantalla de entrada */
@@ -2023,10 +2138,12 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
     const a=$('acceso'); a.hidden=false; let h='<div class="ac-caja"><div class="ac-logo"><img src="logo-oro.png" alt="Boom Boom Ciao" width="150" height="63"></div>';
     if(modo==='entrar') h+='<h2>Entrar</h2><form id="form-entrar" class="col" novalidate><div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div>'+
       '<div class="field"><label for="ac-pass">Contraseña</label><input id="ac-pass" type="password" autocomplete="current-password" required></div><button class="btn primary" type="submit">Entrar</button></form>'+
-      '<button class="link" type="button" data-ac="crear">No tengo cuenta: crear una</button>';
+      '<div class="ac-pie"><button class="link" type="button" data-ac="crear">No tengo cuenta: crear una</button><button class="link" type="button" data-ac="olvido">He olvidado mi contraseña</button>'+(cacheYo()?'<button class="link" type="button" data-ac="sinred">Trabajar sin conexión</button>':'')+'</div>';
+    else if(modo==='olvido') h+='<h2>Recuperar contraseña</h2><p>Escribe tu correo y te enviamos un enlace para poner una contraseña nueva.</p><form id="form-olvido" class="col" novalidate><div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div><button class="btn primary" type="submit">Enviar enlace</button></form><button class="link" type="button" data-ac="entrar">Volver a entrar</button>';
+    else if(modo==='nueva') h+='<h2>Contraseña nueva</h2><form id="form-nueva" class="col" novalidate><div class="field"><label for="ac-pass">Contraseña nueva (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="ac-pass2">Repítela</label><input id="ac-pass2" type="password" autocomplete="new-password" required></div><button class="btn primary" type="submit">Guardar contraseña</button></form>'+(nubeViva?'<button class="link" type="button" data-ac="cerrar">Cancelar</button>':'');
     else if(modo==='crear') h+='<h2>Crear cuenta</h2><form id="form-crear" class="col" novalidate><div class="field"><label for="ac-nombre">Tu nombre</label><input id="ac-nombre" type="text" autocomplete="name" required></div>'+
       '<div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div>'+
-      '<div class="field"><label for="ac-pass">Contraseña (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn primary" type="submit">Crear cuenta</button></form>'+
+      '<div class="field"><label for="ac-pass">Contraseña (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn primary" type="submit">Crear cuenta</button><p class="hint">Al crear la cuenta aceptas el <button class="link" type="button" data-ac="legal">aviso legal y de privacidad</button>.</p></form>'+
       '<button class="link" type="button" data-ac="entrar">Ya tengo cuenta: entrar</button>';
     else if(modo==='espera') h+='<h2>Hola, '+esc(yo.nombre)+'</h2>'+(esPlat
         ? '<p>Todavía no hay ningún restaurante. Crea el primero y quedarás como dueño.</p><form id="form-rest0" class="col" novalidate><div class="field"><label for="ac-rest">Nombre del restaurante</label><input id="ac-rest" type="text" autocomplete="off" value="Boom Boom Ciao" required></div><button class="btn primary" type="submit">Crear restaurante</button></form>'
@@ -2034,38 +2151,53 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
       '<button class="link" type="button" data-ac="salir">Salir de esta cuenta</button>';
     else if(modo==='error') h+='<h2>No se pudo entrar</h2><button class="btn primary" type="button" data-ac="reintentar">Reintentar</button><button class="link" type="button" data-ac="salir">Salir de esta cuenta</button>';
     else h+='<p class="hint">Cargando…</p>';
-    a.innerHTML=h+'<p class="hint" id="ac-msg" role="status">'+esc(msg||'')+'</p></div>';
+    a.innerHTML=h+'<p class="hint" id="ac-msg" role="status">'+esc(msg||'')+'</p>'+(modo==='entrar'?'<button class="link" type="button" data-ac="legal" style="font-weight:500">Aviso legal y privacidad</button>':'')+'</div>';
     const f=a.querySelector('input'); if(f&&modo!=='espera') f.focus({preventScroll:true});
   }
   const acMsg = t => { const m=$('ac-msg'); if(m) m.textContent=t||''; };
   $('acceso').addEventListener('click', e => { const b=e.target.closest('[data-ac]'); if(!b) return; const a=b.dataset.ac;
-    if(a==='crear'||a==='entrar') acceso(a); else if(a==='salir') salirNube(); else if(a==='reintentar'){ acceso('cargando'); entrarNube(); } });
+    if(a==='crear'||a==='entrar'||a==='olvido') acceso(a); else if(a==='legal') verLegal(); else if(a==='sinred') entrarSinRed(cacheYo()); else if(a==='cerrar'){ $('acceso').hidden=true; $('acceso').innerHTML=''; } else if(a==='salir') salirNube(); else if(a==='reintentar'){ acceso('cargando'); entrarNube(); } });
   $('acceso').addEventListener('submit', async e => { e.preventDefault(); const f=e.target, bt=f.querySelector('button[type=submit]'); if(bt.disabled) return;
     const v = id => { const el=$(id); return el?el.value.trim():''; };
     try{
       if(f.id==='form-rest0'){ if(!v('ac-rest')){ acMsg('Escribe el nombre del restaurante.'); return; } bt.disabled=true; acMsg('Creando…'); const q=await sb.rpc('crear_restaurante',{p_nombre:v('ac-rest')}); if(q.error) throw q.error; mem('bbc.rest',q.data); acceso('cargando'); await entrarNube(); return; }
+      if(f.id==='form-nueva'){ const p1=$('ac-pass').value; if(p1.length<8){ acMsg('La contraseña debe tener 8 caracteres o más.'); return; } if(p1!==$('ac-pass2').value){ acMsg('Las dos contraseñas no coinciden.'); return; }
+        bt.disabled=true; acMsg('Guardando…'); const q=await sb.auth.updateUser({password:p1}); if(q.error) throw q.error; recup=false; toast('Contraseña cambiada.');
+        if(nubeViva){ $('acceso').hidden=true; $('acceso').innerHTML=''; } else { acceso('cargando'); await entrarNube(); } return; }
+      if(f.id==='form-olvido'){ const em=v('ac-email'); if(!/^\S+@\S+\.\S+$/.test(em)){ acMsg('Escribe un correo válido.'); return; } bt.disabled=true; acMsg('Enviando…');
+        const q=await sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname}); if(q.error) throw q.error; acceso('entrar','Si ese correo tiene cuenta, te llegará un enlace en unos minutos. Mira también en correo no deseado.'); return; }
       const email=v('ac-email'), pass=$('ac-pass').value;
       if(!/^\S+@\S+\.\S+$/.test(email)){ acMsg('Escribe un correo válido.'); return; }
       if(f.id==='form-crear'){ if(!v('ac-nombre')){ acMsg('Escribe tu nombre.'); return; } if(pass.length<8){ acMsg('La contraseña debe tener 8 caracteres o más.'); return; }
-        bt.disabled=true; acMsg('Creando la cuenta…'); const q=await sb.auth.signUp({email:email,password:pass,options:{data:{nombre:v('ac-nombre')}}}); if(q.error) throw q.error;
+        bt.disabled=true; acMsg('Creando la cuenta…'); const q=await sb.auth.signUp({email:email,password:pass,options:{data:{nombre:v('ac-nombre'),acepta_privacidad:new Date().toISOString()}}}); if(q.error) throw q.error;
         if(!q.data||!q.data.session) acceso('entrar','Cuenta creada. Revisa tu correo, confirma con el enlace y entra con tu contraseña.'); }
       else { if(!pass){ acMsg('Escribe tu contraseña.'); return; } bt.disabled=true; acMsg('Entrando…'); const q=await sb.auth.signInWithPassword({email:email,password:pass}); if(q.error) throw q.error; }
     }catch(er){ acMsg(errTxt(er)); if(bt.isConnected) bt.disabled=false; }
   });
-  function salirNube(){ acMsg('Saliendo…'); Promise.resolve(sb.auth.signOut()).catch(() => {}).then(() => { location.reload(); }); }
-  function cambioSesion(s){ const u=s&&s.user?s.user:null, id=u?u.id:null; if(id===uidAct) return; const antes=uidAct; uidAct=id;
-    if(!id){ if(antes){ location.reload(); return; } acceso('entrar'); return; }
+  let recup=/type=recovery/.test(location.hash+location.search);
+  const cacheYo = () => { try{ const y=JSON.parse(mem('bbc.yo')||'null'); return y&&y.id?y:null; }catch(e){ return null; } };
+  function salirNube(){ acMsg('Saliendo…'); const u=cacheYo(); try{ localStorage.removeItem('bbc.yo'); if(u) localStorage.removeItem('bbc.mios.'+u.id); }catch(e){} mios.forEach(m => idb.del('cache.'+m.id));
+    Promise.resolve(sb.auth.signOut()).catch(() => {}).then(() => { location.reload(); }); }
+  function cambioSesion(s,ev){ const u=s&&s.user?s.user:null, id=u?u.id:null;
+    if(ev==='PASSWORD_RECOVERY'&&id){ recup=true; if(id===uidAct){ acceso('nueva'); return; } }
+    if(id===uidAct) return; const antes=uidAct; uidAct=id;
+    if(!id){ if(antes){ if(sinRed||navigator.onLine===false){ uidAct=antes; return; } location.reload(); return; } const y=cacheYo(); if(y&&navigator.onLine===false){ entrarSinRed(y); return; } acceso('entrar'); return; }
     if(antes){ location.reload(); return; }
     yo={id:id,email:u.email||'',nombre:(u.user_metadata&&u.user_metadata.nombre)||(u.email||'').split('@')[0]};
+    if(recup){ acceso('nueva'); return; }
     acceso('cargando'); entrarNube(); }
+  function entrarSinRed(y){ let l=[]; try{ l=JSON.parse(mem('bbc.mios.'+y.id)||'[]')||[]; }catch(e){}
+    if(!l.length){ acceso('error','Sin conexión, y este dispositivo aún no tiene datos guardados de tu cuenta. Conéctate a internet una vez para poder trabajar sin conexión.'); return; }
+    yo=y; uidAct=y.id; mios=l; esPlat=mem('bbc.plat.'+y.id)==='1'; const g=mem('bbc.rest'), mio=mios.find(x => x.id===g)||mios[0]; rid=mio.id; $('acceso').hidden=true; $('acceso').innerHTML=''; iniciarNube(mio); }
   async function entrarNube(){
     try{ const m=await sb.from('miembros').select('restaurante_id,rol').eq('user_id',yo.id); if(m.error) throw m.error;
       const q=await sb.from('restaurantes').select('id,nombre'); if(q.error) throw q.error; const nm={}; (q.data||[]).forEach(x => { nm[x.id]=x.nombre; });
       mios=(m.data||[]).map(x => ({id:x.restaurante_id,rol:x.rol,nombre:nm[x.restaurante_id]||'Restaurante'})).sort((a,z) => a.nombre.localeCompare(z.nombre,'es'));
       const p=await sb.rpc('puedo_crear'); esPlat=!p.error&&p.data===true;
+      mem('bbc.yo',JSON.stringify(yo)); mem('bbc.mios.'+yo.id,JSON.stringify(mios)); mem('bbc.plat.'+yo.id,esPlat?'1':'0');
       if(!mios.length){ acceso('espera'); return; }
       const g=mem('bbc.rest'), mio=mios.find(x => x.id===g)||mios[0]; rid=mio.id; mem('bbc.rest',rid); $('acceso').hidden=true; $('acceso').innerHTML=''; iniciarNube(mio);
-    }catch(e){ acceso('error',errTxt(e)); }
+    }catch(e){ if(esRed(e)&&cacheYo()&&cacheYo().id===yo.id){ entrarSinRed(yo); return; } acceso('error',errTxt(e)); }
   }
   let nubeViva=false;
   function iniciarNube(mio){
@@ -2073,13 +2205,16 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
     uAPI={profiles:ids => Promise.resolve(ids.reduce((a,i) => { const m=miembros.find(x => x.user_id===i); a[i]={name:m?m.nombre:''}; return a; },{}))};
     const d=sbDb(rid); remoto(d); setNivel(ROLNIV[mio.rol]); $('rol').textContent=mio.nombre+' · '+ROLES[mio.rol]; $('btn-restaurar').hidden=nivel!=='admin';
     $('m-cuenta').hidden=false; $('cu-nombre').textContent=yo.nombre; const sel=$('cu-rest'); sel.hidden=mios.length<2; sel.innerHTML=mios.map(x => '<option value="'+esc(x.id)+'"'+(x.id===rid?' selected':'')+'>'+esc(x.nombre)+'</option>').join('');
-    if(nivel==='admin'&&!SUBS.inicio.some(x => x[0]==='historial')){ SUBS.inicio.push(['historial','Historial']); construirMenu(); ruta(); }
+    if(nivel==='admin'&&!SUBS.inicio.some(x => x[0]==='historial')){ SUBS.inicio.push(['historial','Historial']); if(gestion().length>1) SUBS.inicio.splice(1,0,['grupo','Grupo']); construirMenu(); ruta(); }
+    $('btn-copias').hidden=nivel!=='admin'; setTimeout(copiaDeHoy,4000);
     $('btn-usuarios').hidden=nivel!=='admin'; cargarMiembros(); d.start();
     sAPI=iaNube(); sLim={images:{mediaTypes:['image/jpeg','image/png','image/webp'],maxCount:4}}; refrescar();
   }
   function cargarMiembros(){ return sb.from('miembros').select('user_id,rol,nombre,email').eq('restaurante_id',rid).then(q => { if(!q.error){ miembros=(q.data||[]).sort((a,z) => a.nombre.localeCompare(z.nombre,'es')); nombres.clear(); refrescar(); } }, () => {}); }
   $('cu-rest').addEventListener('change', e => { mem('bbc.rest',e.target.value); location.reload(); });
   $('btn-salir').addEventListener('click', () => { if(sb) salirNube(); });
+  $('btn-clave').addEventListener('click', () => { if(sinRed){ toast('Necesitas conexión para cambiar la contraseña.'); return; } menu(false); acceso('nueva'); });
+  $('btn-legal').addEventListener('click', verLegal); $('btn-copias').addEventListener('click', () => { copias=null; verCopias(); });
   /* Usuarios y restaurantes */
   function abrirUsuarios(){ menu(false); $('usuarios').hidden=false; document.body.style.overflow='hidden'; pintarUsuarios(); cargarMiembros().then(() => { if(!$('usuarios').hidden) pintarUsuarios(); }); }
   function cerrarUsuarios(){ $('usuarios').hidden=true; $('usuarios').innerHTML=''; document.body.style.overflow=''; $('btn-menu').focus(); }
@@ -2129,7 +2264,8 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
   }
   function nube(){
     try{ sb=window.supabase.createClient(CFG.url,CFG.key); }catch(e){ local(); return; }
-    acceso('cargando'); sb.auth.onAuthStateChange((ev,s) => { setTimeout(() => cambioSesion(s),0); });
+    if(CFG.entorno==='pruebas') $('entorno').hidden=false;
+    acceso('cargando'); sb.auth.onAuthStateChange((ev,s) => { setTimeout(() => cambioSesion(s,ev),0); });
   }
   function local(){
     try{ const d=JSON.parse(mem('esc2.datos')||'null'); if(d){ COLS.forEach(c => { S[c]=(d[c]||[]).map(NORM[c]); }); if(d.ajustes) S.ajustes={id:'empresa',nombre:String(d.ajustes.nombre||''),periodo:PER[d.ajustes.periodo]?d.ajustes.periodo:'mensual'}; } }catch(e){} sucio(); COLS.forEach(sombrear);
