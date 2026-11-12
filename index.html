@@ -16,6 +16,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
+<script>window.BBC_SUPABASE={url:'https://qgjsqwkkrgtrfpxschmn.supabase.co',key:'sb_publishable_VYGjBgN7J3fJVMSq1Mp1ZA_93REskD6'};</script>
+<script src="supabase.js"></script>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
@@ -203,8 +205,8 @@ a.row{color:inherit}
 .lab-f b{font-family:var(--font-display);font-weight:400;font-size:1.9rem;line-height:1.1}
 .lab-f div:last-child b{color:#A3261E}
 #cocina{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;gap:16px;padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-#multi{position:fixed;inset:0;z-index:21;background:var(--bg);display:flex;flex-direction:column;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-#multi>*{width:100%;max-width:820px;margin-inline:auto}
+#multi,#usuarios,#acceso{position:fixed;inset:0;z-index:21;background:var(--bg);display:flex;flex-direction:column;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#multi>*,#usuarios>*{width:100%;max-width:820px;margin-inline:auto}
 .mx-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .mx-top h2{font-size:1.7rem}
 .mx-fil{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
@@ -219,6 +221,22 @@ a.row{color:inherit}
 .mx-pie{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .mx-pie .btn{flex:1 1 110px}
 .mx-pie .btn:disabled{opacity:.5;cursor:default}
+#acceso{z-index:40;overflow-y:auto;align-items:center}
+.ac-caja{width:100%;max-width:400px;margin:auto;display:flex;flex-direction:column;gap:14px}
+.ac-caja h2{font-size:2rem}
+.ac-logo{background:var(--band);border-radius:14px;border-bottom:3px solid var(--oro);padding:18px;display:flex;justify-content:center}
+.ac-caja .link{align-self:flex-start}
+.us-it{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.us-it:first-child{border-top:0}
+.us-n{flex:1 1 180px;display:flex;flex-direction:column;min-width:0}
+.us-n b{font-weight:600;overflow-wrap:anywhere}
+.us-n small{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere}
+.us-it select{width:auto;flex:0 1 160px}
+.m-cuenta{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--band-line);padding-top:12px}
+.m-cuenta .fila{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.m-cuenta b{font-weight:600;overflow-wrap:anywhere}
+.m-cuenta select{color:var(--ink)}
+.m-cuenta .btn{background:transparent;border-color:var(--band-line);color:var(--band-ink)}
 .coc-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
 .coc-top h2{font-size:1.8rem}
 .coc-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;max-width:820px;width:100%;margin:0 auto}
@@ -298,11 +316,14 @@ body.menu-abierto #velo{opacity:1;visibility:visible}
 <aside id="menu" aria-label="Menú principal">
   <div class="m-top"><img src="logo-oro.png" alt="" width="110" height="46"><button class="icon" id="menu-cerrar" type="button" aria-label="Cerrar menú">×</button></div>
   <nav id="menu-nav" aria-label="Secciones"></nav>
+  <div class="m-cuenta" id="m-cuenta" hidden><div class="fila"><b id="cu-nombre"></b><span class="m-bts"><button class="btn small" id="btn-usuarios" type="button" hidden>Usuarios</button><button class="btn small" id="btn-salir" type="button">Salir</button></span></div><select id="cu-rest" aria-label="Restaurante" hidden></select></div>
   <div class="m-pie" id="m-copia" hidden><span class="lbl">Copia de datos</span><span class="m-bts"><button class="btn small" id="btn-copia" type="button">Descargar</button><button class="btn small" id="btn-restaurar" type="button" hidden>Restaurar</button></span><input id="f-copia" type="file" accept=".json,application/json" hidden></div>
   <div class="m-pie"><span class="lbl">Apariencia</span><button class="btn small" id="btn-tema" type="button">Oscuro</button></div>
 </aside>
 <div id="toast" role="status" hidden></div>
 <div id="cocina" hidden></div>
+<div id="usuarios" hidden role="dialog" aria-modal="true" aria-label="Usuarios"></div>
+<div id="acceso" hidden></div>
 <div id="multi" hidden role="dialog" aria-modal="true" aria-label="Exportar varios"></div>
 
 <script>
@@ -1783,13 +1804,148 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
   let esLocal=false;
   $('btn-copia').addEventListener('click', () => { const d={app:'boomboomciao',version:1,fecha:new Date().toISOString(),datos:S};
     entregar(new Blob([JSON.stringify(d)],{type:'application/json'}),'BoomBoomCiao-copia-'+hoy()+'.json'); });
-  $('btn-restaurar').addEventListener('click', e => { if(!esLocal) return; if(confirmar(e.currentTarget,'¿Reemplazar todo?')){ delete e.currentTarget.dataset.ok; e.currentTarget.textContent='Restaurar'; $('f-copia').value=''; $('f-copia').click(); } });
-  $('f-copia').addEventListener('change', e => { const f=e.target.files&&e.target.files[0]; if(!f||!esLocal) return;
+  const puedeRest = () => esLocal||(db&&db.nube&&nivel==='admin');
+  $('btn-restaurar').addEventListener('click', e => { if(!puedeRest()) return; if(confirmar(e.currentTarget,esLocal?'¿Reemplazar todo?':'¿Cargar la copia?')){ delete e.currentTarget.dataset.ok; e.currentTarget.textContent='Restaurar'; $('f-copia').value=''; $('f-copia').click(); } });
+  $('f-copia').addEventListener('change', e => { const f=e.target.files&&e.target.files[0]; if(!f||!puedeRest()) return;
     f.text().then(t => { const j=JSON.parse(t), d=j&&j.datos?j.datos:j; if(!d||!Array.isArray(d.platos)||!Array.isArray(d.productos)) throw 0;
-      COLS.forEach(c => { S[c]=(Array.isArray(d[c])?d[c]:[]).map(NORM[c]); });
-      if(d.ajustes) S.ajustes={id:'empresa',nombre:String(d.ajustes.nombre||''),periodo:PER[d.ajustes.periodo]?d.ajustes.periodo:'mensual'};
+      const aj=d.ajustes?{id:'empresa',nombre:String(d.ajustes.nombre||''),periodo:PER[d.ajustes.periodo]?d.ajustes.periodo:'mensual'}:null;
+      if(!esLocal){ const filas=[]; COLS.forEach(c => (Array.isArray(d[c])?d[c]:[]).forEach(x => { if(x&&x.id) filas.push([c,String(x.id),limpio(NORM[c](x))]); })); if(aj) filas.push(['ajustes','empresa',{nombre:aj.nombre,periodo:aj.periodo}]);
+        menu(false); toast('Subiendo la copia…'); return db.lote(filas).then(() => toast('Copia cargada: '+filas.length+' registros.'), () => toast('No se pudo subir la copia. Revisa la conexión y vuelve a intentarlo.')); }
+      COLS.forEach(c => { S[c]=(Array.isArray(d[c])?d[c]:[]).map(NORM[c]); }); if(aj) S.ajustes=aj;
       persistLocal(); sucio(); menu(false); pintar(); toast('Copia restaurada: '+S.platos.length+' fichas y '+S.productos.length+' productos.');
     }).catch(() => toast('Ese archivo no es una copia de Boom Boom Ciao.')); });
+  /* ---- Nube propia: usuarios con contraseña, restaurantes y sincronización ---- */
+  const CFG=window.BBC_SUPABASE||null; let sb=null, uidAct, yo=null, mios=[], rid=null, esPlat=false, miembros=[];
+  const ROLES={dueno:'Dueño',encargado:'Encargado',cocina:'Cocina',consulta:'Solo consulta'}, ROLNIV={dueno:'admin',encargado:'admin',cocina:'interact',consulta:'view'};
+  const errTxt = e => { const m=String((e&&e.message)||e||'');
+    if(/invalid login/i.test(m)) return 'Correo o contraseña incorrectos.';
+    if(/not confirmed/i.test(m)) return 'Confirma tu correo con el enlace que te enviamos y vuelve a entrar.';
+    if(/already (been )?registered/i.test(m)) return 'Ya hay una cuenta con ese correo. Entra con tu contraseña.';
+    if(/rate limit/i.test(m)) return 'Demasiados intentos. Espera unos minutos.';
+    if(/password/i.test(m)&&/(least|short|weak)/i.test(m)) return 'La contraseña es demasiado corta o débil.';
+    if(/fetch|network|load failed/i.test(m)) return 'Sin conexión. Revisa internet y vuelve a intentarlo.';
+    return m||'No se pudo completar. Inténtalo de nuevo.'; };
+  const canon = o => JSON.stringify(o, (k,v) => (v&&typeof v==='object'&&!Array.isArray(v)) ? Object.keys(v).sort().reduce((a,x) => { a[x]=v[x]; return a; },{}) : v);
+  /* Adaptador: ofrece a la app la misma interfaz de documentos sobre la tabla docs */
+  function sbDb(r){
+    const st={}, sello={}, subs={}, dsubs={}; let ultMs=0, tPed=null, ocupado=false, otra=false;
+    const T = () => sb.from('docs'), mapa = c => st[c]||(st[c]=new Map());
+    const emitir = c => { if(c==='ajustes'){ const d=mapa(c).get('empresa'); (dsubs['ajustes/empresa']||[]).forEach(f => f({exists:!!d,data:() => d})); return; }
+      const docs=[]; mapa(c).forEach((d,id) => docs.push({id:id,data:() => d})); (subs[c]||[]).forEach(f => f[0]({metadata:{fromCache:false},docs:docs})); };
+    const aplicar = rows => { const cs={}; rows.forEach(x => { const k=x.col+'/'+x.id, ms=Date.parse(x.updated_at)||0; if(ms>ultMs) ultMs=ms; if(sello[k]===x.updated_at) return; sello[k]=x.updated_at;
+      const m=mapa(x.col); if(x.borrado){ if(m.delete(x.id)) cs[x.col]=1; } else { const d=x.data||{}; if(!m.has(x.id)||canon(m.get(x.id))!==canon(d)){ m.set(x.id,d); cs[x.col]=1; } } }); return cs; };
+    const fallo = e => { const er=new Error((e&&e.message)||'error'); if(e&&(e.code==='42501'||/row-level security|permission denied/i.test(e.message||''))) er.code='invalid_argument'; return er; };
+    async function todo(){ let ini=0, rows=[]; for(;;){ const q=await T().select('col,id,data,borrado,updated_at').eq('restaurante_id',r).eq('borrado',false).order('col').order('id').range(ini,ini+999);
+      if(q.error) throw q.error; rows=rows.concat(q.data||[]); if(!q.data||q.data.length<1000) break; ini+=1000; } return rows; }
+    async function cambios(){ if(ocupado){ otra=true; return; } ocupado=true;
+      try{ const q=await T().select('col,id,data,borrado,updated_at').eq('restaurante_id',r).gt('updated_at',new Date(Math.max(0,ultMs-20000)).toISOString()).order('updated_at').limit(1000);
+        if(!q.error) Object.keys(aplicar(q.data||[])).forEach(emitir); }catch(e){}
+      ocupado=false; if(otra){ otra=false; pedir(); } }
+    const pedir = () => { clearTimeout(tPed); tPed=setTimeout(cambios,250); };
+    const escribir = (c,id,d,b) => T().upsert({restaurante_id:r,col:c,id:id,data:d,borrado:b},{onConflict:'restaurante_id,col,id'}).then(q => { if(q.error) throw fallo(q.error); if(b) mapa(c).delete(id); else mapa(c).set(id,d); });
+    const docRef = (c,id) => ({id:id, set:d => escribir(c,id,d,false), delete:() => escribir(c,id,{},true), onSnapshot:f => { (dsubs[c+'/'+id]||(dsubs[c+'/'+id]=[])).push(f); }});
+    const nid = () => 'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    return { nube:true,
+      doc:p => { const a=p.split('/'); return docRef(a[0],a[1]); },
+      collection:c => ({ doc:id => docRef(c,id||nid()), limit:() => ({ onSnapshot:(f,e) => { (subs[c]||(subs[c]=[])).push([f,e]); } }) }),
+      async lote(filas){ for(let i=0;i<filas.length;i+=200){ const q=await T().upsert(filas.slice(i,i+200).map(x => ({restaurante_id:r,col:x[0],id:x[1],data:x[2],borrado:false})),{onConflict:'restaurante_id,col,id'}); if(q.error) throw fallo(q.error); }
+        filas.forEach(x => mapa(x[0]).set(x[1],x[2])); COLS.concat(['ajustes']).forEach(emitir); },
+      start(){ todo().then(rows => { ultMs=Date.now()-60000; aplicar(rows); COLS.concat(['ajustes']).forEach(emitir);
+          try{ sb.channel('docs-'+r).on('postgres_changes',{event:'*',schema:'public',table:'docs',filter:'restaurante_id=eq.'+r},pedir).subscribe(s => { if(s==='SUBSCRIBED') pedir(); }); }catch(e){}
+          setInterval(() => { if(!document.hidden) pedir(); },45000);
+          document.addEventListener('visibilitychange', () => { if(!document.hidden) pedir(); }); window.addEventListener('online', pedir);
+        }, () => { COLS.forEach(c => (subs[c]||[]).forEach(f => { if(f[1]) f[1](); })); }); }
+    };
+  }
+  /* Pantalla de entrada */
+  function acceso(modo,msg){
+    const a=$('acceso'); a.hidden=false; let h='<div class="ac-caja"><div class="ac-logo"><img src="logo-oro.png" alt="Boom Boom Ciao" width="150" height="63"></div>';
+    if(modo==='entrar') h+='<h2>Entrar</h2><form id="form-entrar" class="col" novalidate><div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div>'+
+      '<div class="field"><label for="ac-pass">Contraseña</label><input id="ac-pass" type="password" autocomplete="current-password" required></div><button class="btn primary" type="submit">Entrar</button></form>'+
+      '<button class="link" type="button" data-ac="crear">No tengo cuenta: crear una</button>';
+    else if(modo==='crear') h+='<h2>Crear cuenta</h2><form id="form-crear" class="col" novalidate><div class="field"><label for="ac-nombre">Tu nombre</label><input id="ac-nombre" type="text" autocomplete="name" required></div>'+
+      '<div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div>'+
+      '<div class="field"><label for="ac-pass">Contraseña (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn primary" type="submit">Crear cuenta</button></form>'+
+      '<button class="link" type="button" data-ac="entrar">Ya tengo cuenta: entrar</button>';
+    else if(modo==='espera') h+='<h2>Hola, '+esc(yo.nombre)+'</h2>'+(esPlat
+        ? '<p>Todavía no hay ningún restaurante. Crea el primero y quedarás como dueño.</p><form id="form-rest0" class="col" novalidate><div class="field"><label for="ac-rest">Nombre del restaurante</label><input id="ac-rest" type="text" autocomplete="off" value="Boom Boom Ciao" required></div><button class="btn primary" type="submit">Crear restaurante</button></form>'
+        : '<p>Tu cuenta está creada, pero aún no tienes acceso a ningún restaurante. Pide a tu encargado que te añada con este correo:</p><p><b style="overflow-wrap:anywhere">'+esc(yo.email)+'</b></p><button class="btn primary" type="button" data-ac="reintentar">Comprobar de nuevo</button>')+
+      '<button class="link" type="button" data-ac="salir">Salir de esta cuenta</button>';
+    else if(modo==='error') h+='<h2>No se pudo entrar</h2><button class="btn primary" type="button" data-ac="reintentar">Reintentar</button><button class="link" type="button" data-ac="salir">Salir de esta cuenta</button>';
+    else h+='<p class="hint">Cargando…</p>';
+    a.innerHTML=h+'<p class="hint" id="ac-msg" role="status">'+esc(msg||'')+'</p></div>';
+    const f=a.querySelector('input'); if(f&&modo!=='espera') f.focus({preventScroll:true});
+  }
+  const acMsg = t => { const m=$('ac-msg'); if(m) m.textContent=t||''; };
+  $('acceso').addEventListener('click', e => { const b=e.target.closest('[data-ac]'); if(!b) return; const a=b.dataset.ac;
+    if(a==='crear'||a==='entrar') acceso(a); else if(a==='salir') salirNube(); else if(a==='reintentar'){ acceso('cargando'); entrarNube(); } });
+  $('acceso').addEventListener('submit', async e => { e.preventDefault(); const f=e.target, bt=f.querySelector('button[type=submit]'); if(bt.disabled) return;
+    const v = id => { const el=$(id); return el?el.value.trim():''; };
+    try{
+      if(f.id==='form-rest0'){ if(!v('ac-rest')){ acMsg('Escribe el nombre del restaurante.'); return; } bt.disabled=true; acMsg('Creando…'); const q=await sb.rpc('crear_restaurante',{p_nombre:v('ac-rest')}); if(q.error) throw q.error; mem('bbc.rest',q.data); acceso('cargando'); await entrarNube(); return; }
+      const email=v('ac-email'), pass=$('ac-pass').value;
+      if(!/^\S+@\S+\.\S+$/.test(email)){ acMsg('Escribe un correo válido.'); return; }
+      if(f.id==='form-crear'){ if(!v('ac-nombre')){ acMsg('Escribe tu nombre.'); return; } if(pass.length<8){ acMsg('La contraseña debe tener 8 caracteres o más.'); return; }
+        bt.disabled=true; acMsg('Creando la cuenta…'); const q=await sb.auth.signUp({email:email,password:pass,options:{data:{nombre:v('ac-nombre')}}}); if(q.error) throw q.error;
+        if(!q.data||!q.data.session) acceso('entrar','Cuenta creada. Revisa tu correo, confirma con el enlace y entra con tu contraseña.'); }
+      else { if(!pass){ acMsg('Escribe tu contraseña.'); return; } bt.disabled=true; acMsg('Entrando…'); const q=await sb.auth.signInWithPassword({email:email,password:pass}); if(q.error) throw q.error; }
+    }catch(er){ acMsg(errTxt(er)); if(bt.isConnected) bt.disabled=false; }
+  });
+  function salirNube(){ acMsg('Saliendo…'); Promise.resolve(sb.auth.signOut()).catch(() => {}).then(() => { location.reload(); }); }
+  function cambioSesion(s){ const u=s&&s.user?s.user:null, id=u?u.id:null; if(id===uidAct) return; const antes=uidAct; uidAct=id;
+    if(!id){ if(antes){ location.reload(); return; } acceso('entrar'); return; }
+    if(antes){ location.reload(); return; }
+    yo={id:id,email:u.email||'',nombre:(u.user_metadata&&u.user_metadata.nombre)||(u.email||'').split('@')[0]};
+    acceso('cargando'); entrarNube(); }
+  async function entrarNube(){
+    try{ const m=await sb.from('miembros').select('restaurante_id,rol').eq('user_id',yo.id); if(m.error) throw m.error;
+      const q=await sb.from('restaurantes').select('id,nombre'); if(q.error) throw q.error; const nm={}; (q.data||[]).forEach(x => { nm[x.id]=x.nombre; });
+      mios=(m.data||[]).map(x => ({id:x.restaurante_id,rol:x.rol,nombre:nm[x.restaurante_id]||'Restaurante'})).sort((a,z) => a.nombre.localeCompare(z.nombre,'es'));
+      const p=await sb.rpc('puedo_crear'); esPlat=!p.error&&p.data===true;
+      if(!mios.length){ acceso('espera'); return; }
+      const g=mem('bbc.rest'), mio=mios.find(x => x.id===g)||mios[0]; rid=mio.id; mem('bbc.rest',rid); $('acceso').hidden=true; $('acceso').innerHTML=''; iniciarNube(mio);
+    }catch(e){ acceso('error',errTxt(e)); }
+  }
+  let nubeViva=false;
+  function iniciarNube(mio){
+    if(nubeViva){ location.reload(); return; } nubeViva=true; miId=yo.id;
+    uAPI={profiles:ids => Promise.resolve(ids.reduce((a,i) => { const m=miembros.find(x => x.user_id===i); a[i]={name:m?m.nombre:''}; return a; },{}))};
+    const d=sbDb(rid); remoto(d); setNivel(ROLNIV[mio.rol]); $('rol').textContent=mio.nombre+' · '+ROLES[mio.rol]; $('btn-restaurar').hidden=nivel!=='admin';
+    $('m-cuenta').hidden=false; $('cu-nombre').textContent=yo.nombre; const sel=$('cu-rest'); sel.hidden=mios.length<2; sel.innerHTML=mios.map(x => '<option value="'+esc(x.id)+'"'+(x.id===rid?' selected':'')+'>'+esc(x.nombre)+'</option>').join('');
+    $('btn-usuarios').hidden=nivel!=='admin'; cargarMiembros(); d.start();
+  }
+  function cargarMiembros(){ return sb.from('miembros').select('user_id,rol,nombre,email').eq('restaurante_id',rid).then(q => { if(!q.error){ miembros=(q.data||[]).sort((a,z) => a.nombre.localeCompare(z.nombre,'es')); nombres.clear(); refrescar(); } }, () => {}); }
+  $('cu-rest').addEventListener('change', e => { mem('bbc.rest',e.target.value); location.reload(); });
+  $('btn-salir').addEventListener('click', () => { if(sb) salirNube(); });
+  /* Usuarios y restaurantes */
+  function abrirUsuarios(){ menu(false); $('usuarios').hidden=false; document.body.style.overflow='hidden'; pintarUsuarios(); cargarMiembros().then(() => { if(!$('usuarios').hidden) pintarUsuarios(); }); }
+  function cerrarUsuarios(){ $('usuarios').hidden=true; $('usuarios').innerHTML=''; document.body.style.overflow=''; $('btn-menu').focus(); }
+  function pintarUsuarios(msg){
+    const mio=mios.find(x => x.id===rid), soyD=mio.rol==='dueno';
+    const ops = sel => Object.keys(ROLES).filter(k => soyD||k==='cocina'||k==='consulta').map(k => '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+ROLES[k]+'</option>').join('');
+    $('usuarios').innerHTML='<div class="mx-top"><div><h2>Usuarios</h2><p class="hint">'+esc(mio.nombre)+'</p></div><button class="btn" type="button" data-us="cerrar">Cerrar</button></div>'+
+      '<div class="mx-lista">'+(miembros.length?miembros.map(m => { const tu=m.user_id===yo.id, fijo=tu||(!soyD&&(m.rol==='dueno'||m.rol==='encargado'));
+        return '<div class="us-it"><span class="us-n"><b>'+esc(m.nombre||'Sin nombre')+(tu?' (tú)':'')+'</b><small>'+esc(m.email)+'</small></span>'+(fijo?'<span class="pill">'+ROLES[m.rol]+'</span>'
+          : '<select data-us="rol" data-id="'+esc(m.user_id)+'" aria-label="Rol de '+esc(m.nombre)+'">'+ops(m.rol)+'</select><button class="btn small danger" type="button" data-us="quitar" data-id="'+esc(m.user_id)+'">Quitar</button>')+'</div>'; }).join(''):'<p class="hint" style="padding:12px 0">Cargando…</p>')+'</div>'+
+      '<form id="form-us" class="mx-fil" novalidate><div class="field"><label for="us-email">Correo de la persona</label><input id="us-email" type="email" inputmode="email" autocomplete="off"></div><div class="field"><label for="us-rol">Rol</label><select id="us-rol">'+ops('cocina')+'</select></div><button class="btn primary" type="submit">Dar acceso</button></form>'+
+      '<p class="hint">Primero la persona crea su cuenta en la app con su correo y contraseña. Después le das acceso aquí. Cocina apunta inventario, mermas, compras, APPCC y producción; Solo consulta no cambia nada.</p>'+
+      (esPlat?'<form id="form-rest" class="mx-fil" novalidate><div class="field"><label for="us-rest">Nuevo restaurante</label><input id="us-rest" type="text" autocomplete="off" placeholder="Nombre"></div><button class="btn" type="submit">Crear restaurante</button></form>':'')+
+      '<p class="hint" id="us-msg" role="status">'+esc(msg||'')+'</p>';
+  }
+  const usRpc = (fn,args,ok) => sb.rpc(fn,args).then(q => { if(q.error) throw q.error; return cargarMiembros().then(() => pintarUsuarios(ok)); }).catch(e => pintarUsuarios(errTxt(e)));
+  $('btn-usuarios').addEventListener('click', abrirUsuarios);
+  $('usuarios').addEventListener('click', e => { const b=e.target.closest('[data-us]'); if(!b||b.tagName==='SELECT') return;
+    if(b.dataset.us==='cerrar') cerrarUsuarios(); else if(b.dataset.us==='quitar'&&confirmar(b,'¿Quitar?')) usRpc('quitar_miembro',{p_rid:rid,p_user:b.dataset.id},'Acceso retirado.'); });
+  $('usuarios').addEventListener('change', e => { const t=e.target; if(t.dataset.us==='rol') usRpc('cambiar_rol',{p_rid:rid,p_user:t.dataset.id,p_rol:t.value},'Rol actualizado.'); });
+  $('usuarios').addEventListener('submit', e => { e.preventDefault(); const f=e.target, m=$('us-msg');
+    if(f.id==='form-us'){ const em=$('us-email').value.trim(); if(!/^\S+@\S+\.\S+$/.test(em)){ m.textContent='Escribe el correo de la persona.'; return; } m.textContent='Guardando…'; usRpc('agregar_miembro',{p_rid:rid,p_email:em,p_rol:$('us-rol').value},'Acceso dado a '+em+'.'); }
+    else if(f.id==='form-rest'){ const n=$('us-rest').value.trim(); if(!n){ m.textContent='Escribe el nombre del restaurante.'; return; } m.textContent='Creando…';
+      sb.rpc('crear_restaurante',{p_nombre:n}).then(q => { if(q.error) throw q.error; mem('bbc.rest',q.data); location.reload(); }).catch(er => { m.textContent=errTxt(er); }); } });
+  document.addEventListener('keydown', e => { if(e.key==='Escape'&&!$('usuarios').hidden) cerrarUsuarios(); });
+  function nube(){
+    try{ sb=window.supabase.createClient(CFG.url,CFG.key); }catch(e){ local(); return; }
+    acceso('cargando'); sb.auth.onAuthStateChange((ev,s) => { setTimeout(() => cambioSesion(s),0); });
+  }
   function local(){
     try{ const d=JSON.parse(mem('esc2.datos')||'null'); if(d){ COLS.forEach(c => { S[c]=(d[c]||[]).map(NORM[c]); }); if(d.ajustes) S.ajustes={id:'empresa',nombre:String(d.ajustes.nombre||''),periodo:PER[d.ajustes.periodo]?d.ajustes.periodo:'mensual'}; } }catch(e){} sucio();
     esLocal=true; $('btn-restaurar').hidden=false; $('m-copia').hidden=false; aviso('Los datos se guardan solo en este dispositivo. Haz copias desde el menú.'); const np=mem('bbc.nivelPrueba'); if(np==='view'||np==='interact') setNivel(np); else $('rol').textContent=NIVTXT.admin; ruta();
@@ -1812,11 +1968,11 @@ const SECN={inicio:'Inicio',carta:'Carta',precios:'Precios',cocina:'Cocina',alma
   const CU=(window.claude&&typeof window.claude.use==='function') ? n => Promise.resolve(window.claude.use(n)).catch(() => null) : () => Promise.resolve(null);
   CU('sample').then(sm => { if(!sm) return; sAPI=sm; refrescar(); sm.limits().then(l => { sLim=l; refrescar(); }, () => {}); });
   CU('db').then(d => {
-    if(!d){ local(); return; }
+    if(!d){ if(CFG&&CFG.url&&window.supabase) nube(); else local(); return; }
     remoto(d);
     CU('user').then(u => { if(!u) return; uAPI=u; u.id().then(i => { miId=i; }, () => {});
       Promise.all([u.canEdit(),u.can('data.write')]).then(r => setNivel(r[0]?'admin':r[1]===false?'view':'interact'), () => {}); });
-  }, local);
+  }, () => { if(CFG&&CFG.url&&window.supabase) nube(); else local(); });
 })();
 </script>
 
