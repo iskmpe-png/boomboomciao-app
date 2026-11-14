@@ -391,3 +391,11 @@
 .tf-n b {
   overflow-wrap: anywhere;
 }
+.ei-n select {
+  max-width: 230px;
+  font-size: 0.86rem;
+  padding: 6px 8px;
+}
+#form-conv {
+  margin: 0;
+}

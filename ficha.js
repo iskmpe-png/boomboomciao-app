@@ -17,10 +17,11 @@ function precioHTML(i, k) {
 function notaIng(i) {
   const pr = prod(i.productoId),
     b = i.merma > 0 && i.cantidad > 0 ? '<span>bruto ' + fNum(bruto(i)) + ' ' + UD[un(i)] + '</span>' : '';
-  if (pr) return (pr.proveedor ? '<span class="chip">' + esc(pr.proveedor) + '</span>' : '') + b;
+  const cv = '<button class="link" type="button" data-act="conv-ud">Cambiar unidad</button>';
+  if (pr) return (pr.proveedor ? '<span class="chip">' + esc(pr.proveedor) + '</span>' : '') + cv + b;
   if (baseDe(i)) return '<span class="chip">Elaboración de la casa</span>' + b;
   if (i.nombre.trim() && i.precio > 0)
-    return '<button class="link" type="button" data-act="guardar-prod">Guardar en Precios</button>' + b;
+    return '<button class="link" type="button" data-act="guardar-prod">Guardar en Precios</button>' + cv + b;
   return b;
 }
 const filaIng = (i, k) =>
@@ -50,7 +51,7 @@ const filaIng = (i, k) =>
 function vFicha() {
   const p = plato();
   $('vista').innerHTML =
-    '<div class="bar"><button class="btn" type="button" data-act="volver">← Carta</button><div class="resumen" aria-live="polite"><b class="g" id="o-racion"></b><span id="o-uni"></span><span class="pill" id="o-pill"></span><span id="o-rec"></span></div>' +
+    '<div class="bar"><button class="btn" type="button" data-act="volver">← ' + (p.base ? 'Elaboraciones' : 'Carta') + '</button><div class="resumen" aria-live="polite"><b class="g" id="o-racion"></b><span id="o-uni"></span><span class="pill" id="o-pill"></span><span id="o-rec"></span></div>' +
     expHTML(1) +
     '</div>' +
     '<div class="dos"><div class="col">' +

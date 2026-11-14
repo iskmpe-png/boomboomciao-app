@@ -2,12 +2,14 @@
 let escImp = null;
 const EI_PROMPT =
   'Eres un lector de escandallos y fichas técnicas de cocina. Devuelve SOLO JSON con esta forma: ' +
-  '{"platos":[{"nombre":"","raciones":1,"pvp":0,"grupo":"","elaboracion":"","ingredientes":[{"nombre":"","cantidad":0,"medida":"g","merma":0,"precio":0,"proveedor":""}]}]}.\n' +
+  '{"platos":[{"nombre":"","tipo":"plato","raciones":1,"rinde":0,"rinde_medida":"g","pvp":0,"grupo":"","elaboracion":"","ingredientes":[{"nombre":"","cantidad":0,"medida":"g","merma":0,"precio":0,"proveedor":""}]}]}.\n' +
   'Reglas:\n- Una entrada en "platos" por cada escandallo, ficha o receta que aparezca. Si no hay ninguno, devuelve la lista vacía.\n' +
+  '- "tipo": "elaboracion" si es una producción interna que no se vende tal cual y sirve de ingrediente para otros platos (una mayonesa, una salsa, una masa, un fondo, un aliño, una crema); "plato" si es algo de la carta. En las elaboraciones, "rinde" es la cantidad total que sale y "rinde_medida" es "g", "ml" o "ud" (pasa kilos a gramos y litros a mililitros); pon 0 si no lo dice.\n' +
   '- "raciones": cuántas raciones salen de las cantidades escritas (1 si no lo dice). "pvp": precio de venta en carta con IVA, 0 si no aparece. "grupo": la carta o familia si aparece (por ejemplo Pizzas, Postres).\n' +
   '- "elaboracion": los pasos de preparación si están escritos, cada paso en una línea; si no, vacío.\n' +
   '- "ingredientes": uno por línea de ingrediente. "cantidad" es la cantidad neta para todas las raciones y "medida" solo puede ser "g", "ml" o "ud": pasa los kilos a gramos y los litros a mililitros.\n' +
-  '- "merma": el porcentaje de merma si aparece, 0 si no. "precio": el precio de compra si aparece, 0 si no: por kilo si la medida es "g", por litro si es "ml" y por unidad si es "ud". No pongas el coste de la línea. "proveedor": el proveedor de ese ingrediente si aparece; si no, vacío.\n' +
+  '- "merma": el porcentaje de merma si aparece, 0 si no. "precio": el precio de compra si aparece, 0 si no: por kilo si la medida es "g", por litro si es "ml" y por unidad si es "ud". No pongas el coste de la línea. Si el ingrediente viene en unidades con peso o volumen escrito (por ejemplo «2 bandejas de 125 g»), pasa la cantidad a gramos o mililitros. "proveedor": el proveedor de ese ingrediente si aparece; si no, vacío.\n' +
+  IA_FORMATOS +
   '- Si un ingrediente o un plato es claramente el mismo que uno de las listas de la casa, escribe su nombre EXACTAMENTE como está en la lista. Si no está, escribe el nombre limpio con mayúscula inicial.\n' +
   '- No inventes nada: si una cantidad no se lee con seguridad, pon 0.\n';
 /* Nombres que ya existen en la app, para que la lectura use los mismos */
@@ -30,7 +32,18 @@ const eiCrea = (nombre) => {
   const n = norm(nombre);
   return (escImp.prods || []).find((q) => q.ok && !q.prodId && norm(q.nombre) === n) || null;
 };
-const eiSueltos = (x) => x.ings.filter((i) => !eiEnlace(i.nombre, x.platoId) && !eiCrea(i.nombre)).length;
+/* Una elaboración que viene en esta misma importación y se va a crear */
+const eiDelLote = (nombre) => {
+  const n = norm(nombre);
+  return escImp.platos.find((y) => y.ok && y.elab && !y.platoId && norm(y.nombre) === n) || null;
+};
+/* Lo que rinde una elaboración: lo leído o, si no viene, la suma de sus ingredientes */
+function eiRinde(x) {
+  if (x.rinde > 0) return { n: x.rinde, ub: x.ub, est: false };
+  const g = x.ings.reduce((t, i) => t + (i.medida === 'ud' ? 0 : i.cantidad), 0);
+  return g > 0 ? { n: r3(g / 1000), ub: 'kg', est: true } : { n: 1, ub: 'kg', est: true };
+}
+const eiSueltos = (x) => x.ings.filter((i) => !eiEnlace(i.nombre, x.platoId) && !eiCrea(i.nombre) && !eiDelLote(i.nombre)).length;
 /* De los ingredientes con precio salen los productos nuevos y los cambios de precio */
 function eiProductos() {
   const vistos = {},
@@ -38,7 +51,7 @@ function eiProductos() {
   escImp.platos.forEach((x) =>
     x.ings.forEach((i) => {
       const k = norm(i.nombre);
-      if (!k || !(i.precio > 0) || vistos[k] || basePorNombre(i.nombre)) return;
+      if (!k || !(i.precio > 0) || vistos[k] || basePorNombre(i.nombre) || eiDelLote(i.nombre)) return;
       vistos[k] = 1;
       const p = prodPorNombre(i.nombre),
         unidad = eiUnidad(i.medida);
@@ -115,7 +128,11 @@ async function importarEscandallos() {
           return;
         }
         const ex = eiPlato(nombre),
+          rm = /^ml$/i.test(String(p.rinde_medida)) ? 'ml' : /^(ud|uds|unidad|unidades)$/i.test(String(p.rinde_medida)) ? 'ud' : 'g',
           x = {
+            elab: ex ? !!ex.base : enElab() || /^elab/i.test(String(p.tipo || '')),
+            rinde: Number(p.rinde) > 0 ? r3(rm === 'ud' ? Number(p.rinde) : Number(p.rinde) / 1000) : 0,
+            ub: eiUnidad(rm),
             nombre,
             raciones: Number(p.raciones) > 0 ? Number(p.raciones) : 0,
             pvp: Number(p.pvp) > 0 ? Math.round(Number(p.pvp) * 100) / 100 : 0,
@@ -154,16 +171,19 @@ async function importarEscandallos() {
 const eiCant = (i) => fNum(i.cantidad, 2) + ' ' + i.medida;
 function eiFila(x, k) {
   const ex = x.platoId ? plato(x.platoId) : null,
-    sueltos = eiSueltos(x);
+    sueltos = eiSueltos(x),
+    rd = eiRinde(x);
   return (
     '<div class="ei" data-k="' + k + '"><input type="checkbox" data-ei="ok" aria-label="Aplicar ' + esc(x.nombre) + '"' + (x.ok ? ' checked' : '') + '>' +
     '<div class="ei-n"><input type="text" data-ei="nombre" aria-label="Nombre del plato" value="' + esc(x.nombre) + '"><small>' +
-    x.ings.length + (x.ings.length === 1 ? ' ingrediente' : ' ingredientes') + (x.raciones ? ' · ' + fNum(x.raciones, 2) + (x.raciones === 1 ? ' ración' : ' raciones') : '') +
-    (x.pvp ? ' · carta ' + fEur.format(x.pvp) : '') + (x.elaboracion ? ' · con elaboración' : '') + '</small></div>' +
+    x.ings.length + (x.ings.length === 1 ? ' ingrediente' : ' ingredientes') +
+    (x.elab ? ' · rinde ' + fNum(rd.n, 2) + ' ' + UDI[rd.ub] + (rd.est ? ' (estimado: revísalo en la ficha)' : '') : (x.raciones ? ' · ' + fNum(x.raciones, 2) + (x.raciones === 1 ? ' ración' : ' raciones') : '') + (x.pvp ? ' · carta ' + fEur.format(x.pvp) : '')) +
+    (x.elaboracion ? ' · con pasos' : '') + '</small>' +
+    (ex ? '' : '<select data-ei="tipo" aria-label="Qué es"><option value="plato"' + (x.elab ? '' : ' selected') + '>Plato de la carta</option><option value="elab"' + (x.elab ? ' selected' : '') + '>Elaboración de la casa</option></select>') + '</div>' +
     '<div class="ei-e">' + (ex ? '<span class="pill crit">Sustituye la ficha</span><small>cambia los ' + ex.ingredientes.length + ' ingredientes de ahora</small>' : '<span class="pill ok">Nuevo</span>') +
     (sueltos ? '<small>' + sueltos + (sueltos === 1 ? ' ingrediente' : ' ingredientes') + ' sin enlazar con Precios</small>' : '') + '</div>' +
     '<details class="ei-d"><summary>Ver ingredientes</summary><ul>' +
-    x.ings.map((i) => '<li><span>' + esc(eiCant(i)) + (i.merma ? ' · merma ' + fNum(i.merma) + ' %' : '') + '</span><b>' + esc(i.nombre) + '</b>' + (eiEnlace(i.nombre, x.platoId) ? '' : eiCrea(i.nombre) ? '<em class="ok">se crea en Precios</em>' : '<em>sin enlazar' + (i.precio ? ' · ' + fEur.format(i.precio) : '') + '</em>') + '</li>').join('') +
+    x.ings.map((i) => '<li><span>' + esc(eiCant(i)) + (i.merma ? ' · merma ' + fNum(i.merma) + ' %' : '') + '</span><b>' + esc(i.nombre) + '</b>' + (eiEnlace(i.nombre, x.platoId) ? '' : eiDelLote(i.nombre) ? '<em class="ok">elaboración de esta importación</em>' : eiCrea(i.nombre) ? '<em class="ok">se crea en Precios</em>' : '<em>sin enlazar' + (i.precio ? ' · ' + fEur.format(i.precio) : '') + '</em>') + '</li>').join('') +
     '</ul></details></div>'
   );
 }
@@ -215,7 +235,9 @@ function eiIngrediente(i, salvo) {
   return Object.assign(base, { nombre: i.nombre, productoId: '', baseId: '', precio: i.precio, unidad: eiUnidad(i.medida) });
 }
 function aplicarEscandallos() {
-  const sel = escImp.platos.filter((x) => x.ok && x.nombre.trim() && x.ings.length);
+  /* Las elaboraciones van primero para que los platos del mismo lote ya las encuentren */
+  const sel = escImp.platos.filter((x) => x.ok && x.nombre.trim() && x.ings.length).sort((a, z) => z.elab - a.elab),
+    tocados = [];
   if (!sel.length) return;
   let nuevos = 0,
     cambiados = 0,
@@ -249,17 +271,32 @@ function aplicarEscandallos() {
     let p = x.platoId ? plato(x.platoId) : null;
     if (p) {
       p.ingredientes = x.ings.map((i) => eiIngrediente(i, p.id));
-      if (x.raciones > 0) p.raciones = x.raciones;
-      if (x.pvp > 0) p.pvp = x.pvp;
+      if (p.base) {
+        if (x.rinde > 0) {
+          p.raciones = x.rinde;
+          p.unidadBase = x.ub;
+        }
+      } else {
+        if (x.raciones > 0) p.raciones = x.raciones;
+        if (x.pvp > 0) p.pvp = x.pvp;
+      }
       if (x.elaboracion) p.elaboracion = x.elaboracion;
       cambiados++;
     } else {
-      p = nPlato({ id: nuevoId('platos'), nombre: x.nombre.trim(), raciones: x.raciones || 1, pvp: x.pvp, grupo: x.grupo, elaboracion: x.elaboracion, ingredientes: [] });
+      const rd = eiRinde(x);
+      p = x.elab
+        ? nPlato({ id: nuevoId('platos'), nombre: x.nombre.trim(), base: true, raciones: rd.n, unidadBase: rd.ub, elaboracion: x.elaboracion, ingredientes: [] })
+        : nPlato({ id: nuevoId('platos'), nombre: x.nombre.trim(), raciones: x.raciones || 1, pvp: x.pvp, grupo: x.grupo, elaboracion: x.elaboracion, ingredientes: [] });
       p.ingredientes = x.ings.map((i) => eiIngrediente(i, p.id));
       S.platos.push(p);
       nuevos++;
     }
     sucio();
+    tocados.push([p, x]);
+  });
+  /* Con todo creado, se repasan los enlaces (una elaboración puede usar otra del mismo lote) y se guarda */
+  tocados.forEach(([p, x]) => {
+    p.ingredientes = x.ings.map((i) => eiIngrediente(i, p.id));
     guardar('platos', p, true);
   });
   escImp = null;
@@ -298,6 +335,8 @@ V.addEventListener('change', (e) => {
     x.nombre = t.value.trim();
     const ex = eiPlato(x.nombre);
     x.platoId = ex ? ex.id : '';
-  }
+    if (ex) x.elab = !!ex.base;
+  } else if (t.dataset.ei === 'tipo') x.elab = t.value === 'elab';
+  if (t.dataset.ei !== 'ok') escImp.prods = eiProductos();
   vEscImp();
 });
