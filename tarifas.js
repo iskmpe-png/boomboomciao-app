@@ -58,6 +58,7 @@ async function importarTarifa() {
     return;
   }
   const provDoc = {}; // proveedor de cada archivo, para las líneas que no lo traen
+  let seguidos = 0;
   for (let k = 0; k < trabajos.length; k++) {
     if (!tarifa) return; // cancelado
     tarifa.paso = 'Leyendo precios: parte ' + (k + 1) + ' de ' + trabajos.length + '…';
@@ -90,14 +91,19 @@ async function importarTarifa() {
         tarifa.avisos.push(errIA(e));
         break;
       }
+      /* Si la IA falla dos veces seguidas no tiene sentido seguir: se enseña el motivo real */
+      tarifa.fallo = errIA(e);
+      if (++seguidos >= 2) break;
       tarifa.avisos.push('Una parte del documento no se pudo leer (' + (k + 1) + ' de ' + trabajos.length + ').');
+      continue;
     }
+    seguidos = 0;
   }
   if (!tarifa) return;
   /* Solo interesan los proveedores que traen algún dato de contacto */
   tarifa.contactos = Object.keys(tarifa.contactos).map((k) => tarifa.contactos[k]).filter((c) => c.whatsapp || c.email || c.nota);
   if (!tarifa.items.length && !tarifa.contactos.length) {
-    tarifa = { estado: 'error', msg: tarifa.avisos.join(' ') || 'No encontré productos con precio ni datos de proveedores en esos archivos.' };
+    tarifa = { estado: 'error', msg: tarifa.fallo || tarifa.avisos.join(' ') || 'No encontré productos con precio ni datos de proveedores en esos archivos.' };
     pintar();
     return;
   }
