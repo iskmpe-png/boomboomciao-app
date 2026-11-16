@@ -14,7 +14,7 @@ const HCAMPO = {
   objetivo: 'Objetivo de food cost %',
   iva: 'IVA %',
   elaboracion: 'Elaboración',
-  grupo: 'Carta o menú',
+  grupo: 'Grupo de la carta',
   descripcion: 'Descripción',
   vino: 'Vino',
   alergenos: 'Alérgenos',

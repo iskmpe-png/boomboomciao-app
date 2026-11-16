@@ -79,6 +79,17 @@ const usosBase = (id) => S.platos.filter((p) => p.ingredientes.some((i) => i.bas
 const rinde = (p) =>
   fNum(p.raciones, 2) + ' ' + (p.base ? UDI[p.unidadBase] : p.raciones === 1 ? 'ración' : 'raciones');
 const ordenados = (l) => l.slice().sort((a, z) => a.nombre.localeCompare(z.nombre, 'es'));
+/* Grupos de la carta: primero los que ha ordenado el encargado, luego los que solo existen en alguna ficha */
+function gruposCarta() {
+  const l = S.ajustes.grupos.slice(),
+    extra = {};
+  S.platos.forEach((p) => {
+    const g = p.grupo.trim();
+    if (!p.base && g && l.indexOf(g) < 0) extra[g] = 1;
+  });
+  return l.concat(Object.keys(extra).sort((a, z) => a.localeCompare(z, 'es')));
+}
+const SIN_GRUPO = 'Platos'; // así se llama, por dentro, lo que no tiene grupo
 const grupoDe = (p) => (p.base ? G_BASE : p.grupo.trim() || 'Platos');
 function abierto(crear) {
   let v = S.inventarios.filter((x) => !x.cerrado)[0];

@@ -106,7 +106,7 @@ const S = {
   proveedores: [],
   manual: [],
   dudas: [],
-  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual' },
+  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [] },
 };
 const COLS = [
   'platos',

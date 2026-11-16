@@ -36,12 +36,7 @@ function pintarListas() {
   $('dl-proveedores').innerHTML = proveedores()
     .map((n) => '<option value="' + esc(n) + '"></option>')
     .join('');
-  const gr = {};
-  S.platos.forEach((p) => {
-    if (p.grupo) gr[p.grupo] = 1;
-  });
-  $('dl-grupos').innerHTML = Object.keys(gr)
-    .sort()
+  $('dl-grupos').innerHTML = gruposCarta()
     .map((n) => '<option value="' + esc(n) + '"></option>')
     .join('');
 }

@@ -113,11 +113,7 @@ function local() {
         S[c] = (d[c] || []).map(NORM[c]);
       });
       if (d.ajustes)
-        S.ajustes = {
-          id: 'empresa',
-          nombre: String(d.ajustes.nombre || ''),
-          periodo: PER[d.ajustes.periodo] ? d.ajustes.periodo : 'mensual',
-        };
+        S.ajustes = nAjustes(d.ajustes);
     }
   } catch (e) {}
   sucio();
@@ -172,7 +168,11 @@ function remoto(d) {
     (s) => {
       if (!s.exists || busy('ajustes', 'empresa')) return;
       const x = s.data() || {};
-      S.ajustes = { id: 'empresa', nombre: String(x.nombre || ''), periodo: PER[x.periodo] ? x.periodo : 'mensual' };
+      const antes = S.ajustes.grupos.join('|');
+      S.ajustes = nAjustes(x);
+      dlSucio = true;
+      /* Si otro dispositivo cambió los grupos de la carta, se vuelve a pintar la lista */
+      if (antes !== S.ajustes.grupos.join('|') && pant === 'carta' && !abierta && !escImp) pintar();
     },
     () => {},
   );

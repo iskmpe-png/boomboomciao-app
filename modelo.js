@@ -1,4 +1,13 @@
 /* ---- Normalizadores ---- */
+/* Ajustes del restaurante. "grupos" son las subdivisiones de la carta, en el orden que elige el encargado */
+const nAjustes = (a) => ({
+  id: 'empresa',
+  nombre: String((a && a.nombre) || ''),
+  periodo: a && PER[a.periodo] ? a.periodo : 'mensual',
+  grupos: (a && Array.isArray(a.grupos) ? a.grupos : [])
+    .map((g) => String(g || '').trim().slice(0, 60))
+    .filter((g, i, l) => g && l.indexOf(g) === i),
+});
 const nPlato = (p) => ({
   id: p.id,
   nombre: String(p.nombre || ''),

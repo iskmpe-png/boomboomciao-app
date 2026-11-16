@@ -94,7 +94,7 @@ function vFicha() {
         '<div class="field"><label for="p-iva">IVA %</label><input class="num" id="p-iva" data-p="iva" type="text" inputmode="decimal" value="' +
         esc(String(p.iva).replace('.', ',')) +
         '"></div>' +
-        '<div class="field wide"><label for="p-grupo">Carta o menú</label><input id="p-grupo" data-p="grupo" type="text" list="dl-grupos" autocomplete="off" placeholder="Ej. Carta, Brunch, Menú Nochevieja" value="' +
+        '<div class="field wide"><label for="p-grupo">Grupo de la carta</label><input id="p-grupo" data-p="grupo" type="text" list="dl-grupos" autocomplete="off" placeholder="Ej. Pizzas, Pastas, Brunch" value="' +
         esc(p.grupo) +
         '"></div>') +
     (p.base

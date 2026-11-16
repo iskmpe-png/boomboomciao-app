@@ -37,11 +37,7 @@ V.addEventListener('input', (e) => {
 V.addEventListener('change', (e) => {
   const t = e.target;
   if (nuevoChange(e)) return;
-  if (t.id === 'f-grupo') {
-    grp = t.value;
-    lim.carta = 20;
-    listaCarta();
-  } else if (t.id === 'f-prov') {
+  if (t.id === 'f-prov') {
     prov = t.value;
     lim.precios = 25;
     finEdicion();
@@ -198,7 +194,7 @@ V.addEventListener('click', (e) => {
       raciones: 1,
       objetivo: 30,
       iva: 10,
-      grupo: !enElab() && grp && grp !== G_BASE ? grp : '',
+      grupo: !enElab() && grp && grp !== SIN_GRUPO ? grp : '',
       base: enElab(),
       ingredientes: [{}],
     });
