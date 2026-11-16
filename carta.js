@@ -43,10 +43,14 @@ function vCarta() {
       : '<div class="field corto"><label for="f-grupo">Carta o menú</label><select id="f-grupo"><option value="">Todo</option>' +
         ks.map((n) => '<option' + (n === grp ? ' selected' : '') + '>' + esc(n) + '</option>').join('') +
         '</select></div>') +
-    '<button class="btn" type="button" data-act="ei-importar">Importar escandallos</button>' +
-    '<button class="btn primary" type="button" data-act="nuevo-plato">' + (elab ? 'Nueva' : 'Nuevo') + '</button>' +
+    (selModo === 'carta'
+      ? ''
+      : '<button class="btn" type="button" data-act="sel-ini" data-m="carta">Seleccionar</button>' +
+        '<button class="btn" type="button" data-act="ei-importar">Importar escandallos</button>' +
+        '<button class="btn primary" type="button" data-act="nuevo-plato">' + (elab ? 'Nueva' : 'Nuevo') + '</button>') +
     expHTML(1) +
     '</div>' +
+    (selModo === 'carta' ? selBarHTML() : '') +
     (elab ? '<p class="hint">Lo que producís en casa. Cada elaboración se puede elegir como ingrediente en cualquier escandallo y aparece también en Precios con su coste.</p>' : '') +
     '<div class="kpis" id="kpis"></div><section class="card"><div class="rows" id="lista-carta"></div></section>';
   listaCarta();
@@ -54,9 +58,11 @@ function vCarta() {
 function listaCarta() {
   const l = filtradosCarta(),
     pl = l.filter((p) => !p.base),
-    fcs = pl.map(fcDe).filter((x) => x != null);
+    todo = !enElab() && !grp && !norm(fil.carta),
+    /* Con la carta entera a la vista, los menús cuentan como un plato más en la media */
+    fcs = pl.map(fcGen).filter((x) => x != null).concat(todo ? fcMenus() : []);
   const fuera = pl.filter((p) => {
-    const fc = fcDe(p);
+    const fc = fcGen(p);
     return fc != null && fc > (p.objetivo > 0 ? p.objetivo : 30);
   }).length;
   $('kpis').hidden = enElab();
@@ -68,15 +74,16 @@ function listaCarta() {
     '</b></div><div class="kpi"><span class="lbl">Fuera de objetivo</span><b>' +
     fuera +
     '</b></div>';
+  selCuenta();
   $('lista-carta').innerHTML = l.length
     ? l
         .slice(0, lim.carta)
         .map((p) => {
           const c = costeUd(p);
           return (
-            '<button class="row" type="button" data-act="abrir" data-id="' +
-            esc(p.id) +
-            '"><span class="n"><b>' +
+            (selModo === 'carta'
+              ? '<button class="row selrow" type="button" data-act="sel" data-id="' + esc(p.id) + '" aria-pressed="' + selIds.has(p.id) + '"><span class="n"><b>' + selCaja()
+              : '<button class="row" type="button" data-act="abrir" data-id="' + esc(p.id) + '"><span class="n"><b>') +
             esc(p.nombre || 'Sin nombre') +
             '</b><span>' +
             (p.base ? 'Rinde ' + rinde(p) + (usosBase(p.id) ? ' · en ' + usosBase(p.id) + (usosBase(p.id) === 1 ? ' ficha' : ' fichas') : '') : esc(grupoDe(p)) + (p.pvp > 0 ? ' · carta ' + fEur.format(p.pvp) : '')) +

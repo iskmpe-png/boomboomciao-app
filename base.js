@@ -50,7 +50,7 @@ const SUBS = {
     ['elaboraciones', 'Elaboraciones'],
     ['sala', 'Sala y alérgenos'],
     ['ingenieria', 'Ingeniería'],
-    ['eventos', 'Eventos'],
+    ['eventos', 'Menús'],
   ],
   precios: [
     ['productos', 'Productos'],

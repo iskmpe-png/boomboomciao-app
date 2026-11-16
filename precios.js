@@ -24,12 +24,13 @@ function listaProd() {
         .join('') + '</div>'
     : '';
   $('lista-prod').innerHTML = l.length
-    ? l.slice(0, lim.precios).map(filaProd).join('') + masHTML('precios', l.length)
+    ? l.slice(0, lim.precios).map(selModo === 'precios' ? selFilaProd : filaProd).join('') + masHTML('precios', l.length)
     : '<p class="hint" style="padding:10px 0">' +
       (S.productos.length ? 'Ningún producto coincide.' : 'Todavía no hay productos. Añade el primero.') +
       '</p>';
   $('n-prod').textContent =
-    l.length + (l.length === 1 ? ' producto' : ' productos') + ' · toca uno para cambiar su precio';
+    l.length + (l.length === 1 ? ' producto' : ' productos') + (selModo === 'precios' ? ' · toca los que quieras cambiar' : ' · toca uno para cambiar su precio');
+  selCuenta();
 }
 function vPrecios() {
   if (tarifa) {
@@ -45,13 +46,17 @@ function vPrecios() {
       .map((n) => '<option' + (n === prov ? ' selected' : '') + '>' + esc(n) + '</option>')
       .join('') +
     '</select></div>' +
-    '<button class="btn" type="button" data-act="tf-importar">Importar Excel o fotos</button>' +
-    '<button class="btn primary" type="button" data-act="add-prod">' +
-    (addProd ? 'Cerrar' : 'Añadir') +
-    '</button>' +
+    (selModo === 'precios'
+      ? ''
+      : '<button class="btn" type="button" data-act="sel-ini" data-m="precios">Seleccionar</button>' +
+        '<button class="btn" type="button" data-act="tf-importar">Importar Excel o fotos</button>' +
+        '<button class="btn primary" type="button" data-act="add-prod">' +
+        (addProd ? 'Cerrar' : 'Añadir') +
+        '</button>') +
     expHTML() +
     '</div>' +
-    (addProd
+    (selModo === 'precios' ? selBarHTML() : '') +
+    (addProd && selModo !== 'precios'
       ? '<form id="form-prod" class="editor" style="margin:0" novalidate>' +
         '<div class="field"><label for="np-nombre">Producto</label><input id="np-nombre" type="text" autocomplete="off" placeholder="Ej. Fior di latte"></div>' +
         '<div class="field"><label for="np-proveedor">Proveedor</label><input id="np-proveedor" type="text" list="dl-proveedores" autocomplete="off" placeholder="Ej. Makro"></div>' +

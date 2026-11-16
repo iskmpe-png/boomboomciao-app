@@ -12,7 +12,7 @@ function finEdicion() {
   const pct = ((p.precio - e.precio) / e.precio) * 100,
     af = S.platos.filter((pl) => !pl.base && usaProd(pl, p.id)),
     fuera = af.filter((pl) => {
-      const fc = fcDe(pl);
+      const fc = fcGen(pl);
       return fc != null && fc > (pl.objetivo || 30);
     });
   toast(

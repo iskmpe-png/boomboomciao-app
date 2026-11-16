@@ -399,3 +399,55 @@
 #form-conv {
   margin: 0;
 }
+
+/* Selección múltiple */
+.selbar {
+  background: var(--sunken);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  align-items: flex-end;
+}
+.selbar > b {
+  align-self: center;
+  margin-right: auto;
+}
+.selbox {
+  position: relative;
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-right: 10px;
+  vertical-align: -3px;
+  border: 2px solid var(--accent);
+  border-radius: 5px;
+  background: var(--surface);
+}
+.selrow[aria-pressed='true'] .selbox {
+  background: var(--accent);
+}
+.selrow[aria-pressed='true'] .selbox::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 5px;
+  height: 10px;
+  border: solid var(--on-accent);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.selrow[aria-pressed='true'] {
+  background: var(--sunken);
+}
+/* Menús */
+.ev-solo {
+  font-size: 0.84rem;
+  margin-top: 4px;
+}
+#ev-lineas .v small {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--muted);
+  font-weight: 400;
+}
