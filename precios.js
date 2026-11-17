@@ -3,15 +3,26 @@ function filtradosProd(k) {
   const f = norm(fil[k]),
     pk = idx().pk;
   return ordenados(S.productos).filter(
-    (p) => (k !== 'precios' || !prov || p.proveedor === prov) && (!f || pk.get(p.id).indexOf(f) >= 0),
+    (p) => enArea(p) && (k !== 'precios' || !prov || p.proveedor === prov) && (k !== 'precios' || estadoProd(p)) && (!f || pk.get(p.id).indexOf(f) >= 0),
   );
+}
+/* Filtro «Mostrar» de Precios */
+let estProd = '';
+function estadoProd(p) {
+  if (!estProd) return true;
+  if (estProd === 'sube') return p.anterior > 0 && p.precio > p.anterior + 0.004;
+  if (estProd === 'sinuso') return !usos(p.id);
+  if (estProd === 'sinprov') return !p.proveedor.trim();
+  if (estProd === 'sinprecio') return !(p.precio > 0);
+  if (estProd === 'viejo') return !p.actualizado || Date.now() - new Date(p.actualizado) > 90 * 864e5;
+  return true;
 }
 const metaProd = (p) => (p.proveedor || 'Sin proveedor') + (p.actualizado ? ' · ' + fFecha(p.actualizado) : '');
 function listaProd() {
   const l = filtradosProd('precios');
   /* Las elaboraciones de la casa se enseñan al final, como un producto más con su coste */
   const f = norm(fil.precios),
-    casa = prov ? [] : ordenados(S.platos.filter((b) => b.base && b.nombre && (!f || norm(b.nombre).indexOf(f) >= 0)));
+    casa = prov || estProd ? [] : ordenados(S.platos.filter((b) => b.base && b.nombre && enArea(b) && (!f || norm(b.nombre).indexOf(f) >= 0)));
   $('lista-casa').hidden = !casa.length;
   $('lista-casa').innerHTML = casa.length
     ? '<span class="hint">' + casa.length + (casa.length === 1 ? ' elaboración de la casa' : ' elaboraciones de la casa') + ' · su precio es lo que cuesta producirla</span><div class="rows">' +
@@ -46,14 +57,17 @@ function vPrecios() {
       .map((n) => '<option' + (n === prov ? ' selected' : '') + '>' + esc(n) + '</option>')
       .join('') +
     '</select></div>' +
+    '<div class="field corto"><label for="f-est">Mostrar</label><select id="f-est">' +
+    [['', 'Todos'], ['sube', 'Han subido de precio'], ['sinuso', 'Sin usar en fichas'], ['sinprov', 'Sin proveedor'], ['sinprecio', 'Sin precio'], ['viejo', 'Precio de hace +3 meses']]
+      .map((o) => '<option value="' + o[0] + '"' + (o[0] === estProd ? ' selected' : '') + '>' + o[1] + '</option>')
+      .join('') +
+    '</select></div>' +
     (selModo === 'precios'
       ? ''
-      : '<button class="btn" type="button" data-act="sel-ini" data-m="precios">Seleccionar</button>' +
-        '<button class="btn" type="button" data-act="tf-importar">Importar Excel o fotos</button>' +
-        '<button class="btn primary" type="button" data-act="add-prod">' +
+      : '<button class="btn primary" type="button" data-act="add-prod">' +
         (addProd ? 'Cerrar' : 'Añadir') +
-        '</button>') +
-    expHTML() +
+        '</button>' +
+        expHTML(0, mOp('sel-ini', 'Seleccionar varios', ' data-m="precios"') + mOp('tf-importar', 'Importar Excel, PDF o fotos'))) +
     '</div>' +
     (selModo === 'precios' ? selBarHTML() : '') +
     (addProd && selModo !== 'precios'
@@ -83,6 +97,7 @@ function inputPrecios(e) {
 }
 function crearProd(nombre, proveedor, precio, unidad) {
   const p = nProd({
+    area: areaNueva(),
     id: nuevoId('productos'),
     nombre: nombre.trim(),
     proveedor: proveedor.trim(),

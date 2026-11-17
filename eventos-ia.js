@@ -35,15 +35,23 @@ function nuevoInput2(e) {
     return true;
   }
   if (t.dataset.vil && ventasImp) {
-    const l = ventasImp.lineas[+t.closest('[data-k]').dataset.k];
+    const l = ventasImp.lineas[+t.closest('[data-k]').dataset.k],
+      c = t.dataset.vil;
     if (l) {
-      if (t.dataset.vil === 'n') l.n = Math.round(parse(t.value));
-      else l.pid = t.value;
-      $('vi-n').textContent =
-        suma(
-          ventasImp.lineas.filter((x) => x.pid),
-          (x) => x.n,
-        ) + ' platos vendidos';
+      if (c === 'n') l.n = Math.round(parse(t.value));
+      else if (c === 'precio') l.precio = Math.round(parse(t.value) * 100) / 100;
+      else if (c === 'alias') l.alias = t.checked;
+      else if (c === 'renombrar') l.renombrar = t.checked;
+      else if (c === 'pid') {
+        l.pid = t.value;
+        /* Elegido a mano: deja de ser una sugerencia y se recuerda el nombre del TPV */
+        if (l.como === 'parecido' || !l.como) l.como = l.pid && l.pid !== '__nuevo' ? 'manual' : l.como;
+        const y = scrollY;
+        vIng();
+        scrollTo(0, y);
+        return true;
+      }
+      if ($('vi-n')) $('vi-n').textContent = 'Sumar ' + vendidos() + ' platos vendidos';
     }
     return true;
   }
@@ -100,6 +108,13 @@ function nuevoClick2(b, a) {
   }
   if (a === 'ventas-importar') {
     importarVentas();
+    return true;
+  }
+  if (a === 'vi-crear-todos' && ventasImp) {
+    ventasImp.lineas.forEach((l) => {
+      if (!l.pid) l.pid = '__nuevo';
+    });
+    vIng();
     return true;
   }
   if (a === 'vi-cancelar') {

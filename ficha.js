@@ -51,9 +51,12 @@ const filaIng = (i, k) =>
 function vFicha() {
   const p = plato();
   $('vista').innerHTML =
-    '<div class="bar"><button class="btn" type="button" data-act="volver">← ' + (p.base ? 'Elaboraciones' : 'Carta') + '</button><div class="resumen" aria-live="polite"><b class="g" id="o-racion"></b><span id="o-uni"></span><span class="pill" id="o-pill"></span><span id="o-rec"></span></div>' +
+    '<div class="bar"><button class="btn" type="button" data-act="volver">← ' + (p.base ? 'Elaboraciones' : 'Carta') + '</button>' +
     expHTML(1) +
     '</div>' +
+    /* Cabecera de la ficha: foto, nombre y lo que cuesta */
+    '<section class="card ficha-cab">' + fotoCaja(p, true) + '<div class="ficha-cab-t"><h2 id="f-titulo">' + esc(p.nombre || (p.base ? 'Elaboración nueva' : 'Plato nuevo')) + '</h2>' +
+    '<div class="resumen" aria-live="polite"><b class="g" id="o-racion"></b><span id="o-uni"></span><span class="pill" id="o-pill"></span><span id="o-rec"></span></div></div></section>' +
     '<div class="dos"><div class="col">' +
     '<section class="card"><details' +
     (!p.nombre || (window.matchMedia && matchMedia('(min-width:860px)').matches) ? ' open' : '') +
@@ -94,7 +97,8 @@ function vFicha() {
         '<div class="field"><label for="p-iva">IVA %</label><input class="num" id="p-iva" data-p="iva" type="text" inputmode="decimal" value="' +
         esc(String(p.iva).replace('.', ',')) +
         '"></div>' +
-        '<div class="field wide"><label for="p-grupo">Grupo de la carta</label><input id="p-grupo" data-p="grupo" type="text" list="dl-grupos" autocomplete="off" placeholder="Ej. Pizzas, Pastas, Brunch" value="' +
+        '<div class="field"><label for="p-area">Zona</label><select id="p-area" data-p="area"><option value="">Cocina</option><option value="barra"' + (p.area === 'barra' ? ' selected' : '') + '>Barra</option></select></div>' +
+        '<div class="field"><label for="p-grupo">Grupo de la carta</label><input id="p-grupo" data-p="grupo" type="text" list="dl-grupos" autocomplete="off" placeholder="Ej. Pizzas, Pastas, Brunch" value="' +
         esc(p.grupo) +
         '"></div>') +
     (p.base
@@ -211,7 +215,8 @@ function inputFicha(e) {
       vFicha();
       return;
     }
-    p[dp] = dp === 'nombre' || dp === 'grupo' || dp === 'descripcion' || dp === 'vino' ? t.value : parse(t.value);
+    p[dp] = dp === 'nombre' || dp === 'grupo' || dp === 'descripcion' || dp === 'vino' || dp === 'area' ? t.value : parse(t.value);
+    if (dp === 'nombre' && $('f-titulo')) $('f-titulo').textContent = t.value || 'Sin nombre';
     calcular();
     guardar('platos', p);
     return;

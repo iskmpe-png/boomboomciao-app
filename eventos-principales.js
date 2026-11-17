@@ -37,6 +37,18 @@ V.addEventListener('input', (e) => {
 V.addEventListener('change', (e) => {
   const t = e.target;
   if (nuevoChange(e)) return;
+  if (t.id === 'f-est') {
+    estProd = t.value;
+    lim.precios = 50;
+    listaProd();
+    return;
+  }
+  if (t.id === 'f-ord') {
+    ordCarta = t.value;
+    lim.carta = 20;
+    listaCarta();
+    return;
+  }
   if (t.id === 'f-prov') {
     prov = t.value;
     lim.precios = 25;
@@ -144,9 +156,14 @@ function confirmar(b, txt) {
   return false;
 }
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.exp'))
+  /* Se cierra al tocar fuera o al elegir una opción */
+  const dentro = e.target.closest('.exp'),
+    opcion = e.target.closest('.exp-m button, .exp-m a');
+  if (!dentro || opcion)
     document.querySelectorAll('.exp-m').forEach((m) => {
       m.hidden = true;
+      const b = m.previousElementSibling;
+      if (b) b.setAttribute('aria-expanded', 'false');
     });
 });
 V.addEventListener('click', (e) => {
@@ -163,7 +180,11 @@ V.addEventListener('click', (e) => {
   if (permClick(b, a) || nuevoClick2(b, a) || nuevoClick(b, a)) return;
   if (a === 'exp-menu') {
     const m = b.nextElementSibling;
+    document.querySelectorAll('.exp-m').forEach((o) => {
+      if (o !== m) o.hidden = true;
+    });
     m.hidden = !m.hidden;
+    b.setAttribute('aria-expanded', String(!m.hidden));
   } else if (a === 'multi') {
     b.parentNode.hidden = true;
     abrirMulti();
@@ -194,7 +215,8 @@ V.addEventListener('click', (e) => {
       raciones: 1,
       objetivo: 30,
       iva: 10,
-      grupo: !enElab() && grp && grp !== SIN_GRUPO ? grp : '',
+      grupo: !enElab() && grp && grp !== SIN_GRUPO && grp !== MENUS ? grp : '',
+      area: areaNueva(),
       base: enElab(),
       ingredientes: [{}],
     });
@@ -241,6 +263,7 @@ V.addEventListener('click', (e) => {
       });
     }
     borrar('platos', p.id);
+    if (fotoDe(p.id)) borrar('fotos', p.id);
     platoId = null;
     abierta = false;
     vCarta();

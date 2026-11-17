@@ -10,7 +10,7 @@ function reducir(file, max) {
       cv.height = Math.round(im.height * k);
       cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
       URL.revokeObjectURL(u);
-      cv.toBlob((b) => (b ? ok(b) : ko(new Error('img'))), 'image/jpeg', 0.85);
+      cv.toBlob((b) => (b ? ok(b) : ko(new Error('img'))), 'image/jpeg', 0.88);
     };
     im.onerror = () => {
       URL.revokeObjectURL(u);

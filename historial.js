@@ -22,6 +22,9 @@ const HCAMPO = {
   minimo: 'Stock mínimo',
   familia: 'Grupo para comparar',
   soloMenu: 'Solo en menú',
+  area: 'Zona',
+  alias: 'Nombres en el TPV',
+  enCarta: 'En la carta',
   cantidad: 'Cantidad',
   merma: 'Merma %',
   fecha: 'Fecha',
@@ -54,7 +57,7 @@ const HCAMPO = {
   platos: 'Platos',
   n: 'Cantidad',
 };
-const HSKIP = { actualizado: 1, historial: 1, anterior: 1, creado: 1, por: 1, id: 1, semanas: 1, importes: 1 };
+const HSKIP = { img: 1, actualizado: 1, historial: 1, anterior: 1, creado: 1, por: 1, id: 1, semanas: 1, importes: 1 };
 const hn = (x) =>
   x.nombre ||
   (prod(x.productoId) || {}).nombre ||

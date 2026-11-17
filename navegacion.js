@@ -1,6 +1,14 @@
 /* ---- Navegación ---- */
 function ruta() {
   let h = (location.hash || '').replace('#', '');
+  /* El asistente ya no es una pantalla: es el chat flotante */
+  if (h === 'inicio-asistente') {
+    h = 'inicio-panel';
+    try {
+      history.replaceState(null, '', '#inicio-panel');
+    } catch (e) {}
+    setTimeout(abrirChat, 0);
+  }
   h = ALIAS[h] || h;
   const ps = h.split('-'),
     n = SUBS[ps[0]] ? ps[0] : 'inicio';

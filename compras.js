@@ -82,7 +82,7 @@ function vCompras() {
     mesHTML() +
     '<div class="resumen"><b class="g" id="c-total"></b><span id="c-n"></span></div>' +
     (sLim && sLim.images
-      ? '<button class="btn primary" type="button" data-act="escanear">Escanear albarán</button>'
+      ? '<button class="btn primary" type="button" data-act="escanear">Leer albarán (foto o PDF)</button>'
       : '') +
     expHTML() +
     '</div>' +

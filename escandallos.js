@@ -260,7 +260,7 @@ function aplicarEscandallos() {
         p.actualizado = ahora;
         precios++;
       } else {
-        p = nProd({ id: nuevoId('productos'), nombre: q.nombre, proveedor: q.proveedor.trim(), precio: q.precio, unidad: q.unidad, actualizado: ahora });
+        p = nProd({ area: areaNueva(), id: nuevoId('productos'), nombre: q.nombre, proveedor: q.proveedor.trim(), precio: q.precio, unidad: q.unidad, actualizado: ahora });
         S.productos.push(p);
         prodNuevos++;
       }
@@ -285,8 +285,8 @@ function aplicarEscandallos() {
     } else {
       const rd = eiRinde(x);
       p = x.elab
-        ? nPlato({ id: nuevoId('platos'), nombre: x.nombre.trim(), base: true, raciones: rd.n, unidadBase: rd.ub, elaboracion: x.elaboracion, ingredientes: [] })
-        : nPlato({ id: nuevoId('platos'), nombre: x.nombre.trim(), raciones: x.raciones || 1, pvp: x.pvp, grupo: x.grupo, elaboracion: x.elaboracion, ingredientes: [] });
+        ? nPlato({ area: areaNueva(), id: nuevoId('platos'), nombre: x.nombre.trim(), base: true, raciones: rd.n, unidadBase: rd.ub, elaboracion: x.elaboracion, ingredientes: [] })
+        : nPlato({ area: areaNueva(), id: nuevoId('platos'), nombre: x.nombre.trim(), raciones: x.raciones || 1, pvp: x.pvp, grupo: x.grupo, elaboracion: x.elaboracion, ingredientes: [] });
       p.ingredientes = x.ings.map((i) => eiIngrediente(i, p.id));
       S.platos.push(p);
       nuevos++;

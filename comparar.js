@@ -1,7 +1,8 @@
 /* ---- Comparar proveedores ---- */
 function comparables() {
   const out = [];
-  idx().fam.forEach((l, fam) => {
+  idx().fam.forEach((l0, fam) => {
+    const l = l0.filter(enArea);
     if (l.length < 2) return;
     const byU = {};
     l.forEach((p) => {

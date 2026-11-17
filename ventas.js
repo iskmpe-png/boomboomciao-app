@@ -40,146 +40,281 @@ function semanasVentas() {
     .sort()
     .map((k) => m[k]);
 }
+/* Clave para comparar nombres: sin tildes, sin espacios ni signos y sin letras repetidas.
+   «Regina Boom Boom» y «Regginna Boomboom» dan la misma: «reginabomboom». */
+const claveNombre = (s) =>
+  norm(s)
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/(.)\1+/g, '$1');
+function distancia(a, b) {
+  const m = a.length,
+    n = b.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+/* De 0 a 1: cuánto se parecen dos nombres de plato */
+function parecido(a, b) {
+  const x = claveNombre(a),
+    y = claveNombre(b);
+  if (!x || !y) return 0;
+  if (x === y) return 1;
+  const corto = x.length < y.length ? x : y,
+    largo = corto === x ? y : x;
+  /* «Margherita» dentro de «Pizza Margherita» */
+  if (corto.length >= 5 && largo.indexOf(corto) >= 0) return 0.86;
+  return 1 - distancia(x, y) / Math.max(x.length, y.length);
+}
+/* Busca el plato de la carta que corresponde a un artículo del TPV */
+function platoDeArticulo(art, sugerido) {
+  const pl = S.platos.filter((p) => !p.base),
+    n = norm(art);
+  let p = pl.find((x) => x.alias.some((a) => norm(a) === n));
+  if (p) return { p, como: 'alias' };
+  p = pl.find((x) => norm(x.nombre) === n);
+  if (p) return { p, como: 'exacto' };
+  if (sugerido) {
+    p = pl.find((x) => norm(x.nombre) === norm(sugerido));
+    if (p) return { p, como: 'parecido' };
+  }
+  let mejor = null,
+    m = 0;
+  pl.forEach((x) => {
+    const s = Math.max(parecido(art, x.nombre), ...x.alias.map((a) => parecido(art, a)));
+    if (s > m) {
+      m = s;
+      mejor = x;
+    }
+  });
+  return m >= 0.8 ? { p: mejor, como: 'parecido' } : { p: null, como: '' };
+}
+/* Los TPV escriben en mayúsculas: «REGINA BOOM BOOM» pasa a «Regina Boom Boom» */
+const bonito = (s) => {
+  s = String(s || '').trim().replace(/\s+/g, ' ');
+  return s && s === s.toUpperCase() ? s.toLowerCase().replace(/(^|[\s(-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()) : s;
+};
+const VENTAS_PROMPT =
+  'Es un informe de ventas del TPV de un restaurante (cierre de caja, listado de artículos vendidos o exportación). Devuelve SOLO JSON:\n' +
+  '{"desde":"AAAA-MM-DD" o null,"hasta":"AAAA-MM-DD" o null,"lineas":[{"articulo":"nombre como aparece","unidades":número total vendido,"importe":total vendido en euros con IVA o null,"precio":precio de venta de una unidad con IVA o null,"plato":"nombre EXACTO de la lista de platos si es claramente el mismo plato aunque esté escrito distinto, si no \\"\\""}]}\n' +
+  'Reglas:\n- Suma las unidades del mismo artículo. Incluye todos los artículos, también bebidas y extras.\n' +
+  '- No incluyas totales, subtotales, impuestos, formas de pago, propinas ni descuentos generales.\n' +
+  '- Si el informe solo da el importe, calcula el precio dividiendo entre las unidades.\n' +
+  '- Para "plato", acepta diferencias de tildes, espacios, letras repetidas o abreviaturas (por ejemplo «Regina Boom Boom» y «Regginna Boomboom» son el mismo plato). Si dudas, deja "".\n';
 async function importarVentas() {
   if (!sAPI) {
     toast('La IA no está disponible aquí.');
     return;
   }
-  const f = (await pedirArchivo('.csv,.txt,.xlsx,.xls,image/*', false))[0];
-  if (!f) return;
-  ventasImp = { estado: 'leyendo', archivo: f.name };
+  const fs = await pedirArchivo('.csv,.tsv,.txt,.xlsx,.xls,.ods,.pdf,image/*', true);
+  if (!fs.length) return;
+  ventasImp = { estado: 'leyendo', archivo: fs.map((f) => f.name).join(', '), paso: 'Abriendo los archivos…' };
   vIng();
-  try {
-    const lista = ordenados(S.platos.filter((p) => !p.base))
-      .map((p) => p.nombre)
-      .join('; ');
-    const pr =
-      'Es un informe de ventas del TPV de un restaurante (puede ser un cierre de caja, un listado de artículos vendidos o una exportación). Devuelve SOLO JSON:\n' +
-      '{"desde":"AAAA-MM-DD" o null,"hasta":"AAAA-MM-DD" o null,"lineas":[{"articulo":"nombre como aparece","unidades":número total vendido,"plato":"nombre EXACTO de la lista de platos si es el mismo plato, si no \\"\\""}]}\n' +
-      'Suma las unidades del mismo artículo. Incluye todos los artículos, también bebidas (con plato ""). Platos de la carta: ' +
-      lista;
-    let d;
-    const img = /^image\//.test(f.type);
-    if (img) {
-      if (!sLim || !sLim.images) throw { code: 'images_unavailable' };
-      d = await sAPI.json(pr, { images: [await reducir(f, 2000)], cache: false });
-    } else {
-      let txt;
-      if (/\.xlsx?$/i.test(f.name)) {
-        const X = await cargarXLSX(),
-          wb = X.read(await f.arrayBuffer(), { type: 'array' });
-        txt = wb.SheetNames.slice(0, 3)
-          .map((n) => X.utils.sheet_to_csv(wb.Sheets[n]))
-          .join('\n');
-      } else txt = await f.text();
-      d = await sAPI.json(pr + '\n\nARCHIVO "' + f.name + '":\n' + txt.slice(0, 120000), { cache: false });
+  const lista =
+    'Platos de la carta: ' +
+    ordenados(S.platos.filter((p) => !p.base))
+      .map((p) => p.nombre + (p.alias.length ? ' (en el TPV: ' + p.alias.join(', ') + ')' : ''))
+      .join('; ')
+      .slice(0, 12000) +
+    '\n';
+  const trabajos = [],
+    avisos = [];
+  for (const f of fs) {
+    try {
+      const d = await leerDocumento(f);
+      d.textos.forEach((t) => trocear(t, 9000).forEach((c) => trabajos.push({ texto: c, f: f.name })));
+      d.imagenes.forEach((i) => trabajos.push({ imagenes: [i], f: f.name }));
+    } catch (e) {
+      avisos.push((e && e.message) || 'No se pudo abrir «' + f.name + '».');
     }
-    const lineas = (Array.isArray(d && d.lineas) ? d.lineas : [])
-      .map((l) => {
-        const p =
-          S.platos.filter((x) => !x.base && norm(x.nombre) === norm(l.plato))[0] ||
-          S.platos.filter((x) => !x.base && norm(x.nombre) === norm(l.articulo))[0];
-        return { art: String(l.articulo || ''), n: Math.round(Number(l.unidades) || 0), pid: p ? p.id : '' };
-      })
-      .filter((l) => l.n > 0);
-    const ok = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s : '');
-    ventasImp = {
-      estado: 'revisar',
-      archivo: f.name,
-      desde: ok(d && d.desde) || ok(d && d.hasta) || hoy(),
-      hasta: ok(d && d.hasta) || ok(d && d.desde) || hoy(),
-      lineas: lineas,
-    };
-  } catch (e) {
-    ventasImp = { estado: 'error', msg: errIA(e) };
   }
+  if (!ventasImp) return;
+  const porArt = {},
+    fechas = [];
+  let fallo = '',
+    seguidos = 0;
+  for (let k = 0; k < trabajos.length; k++) {
+    if (!ventasImp) return;
+    ventasImp.paso = 'Leyendo las ventas: parte ' + (k + 1) + ' de ' + trabajos.length + '…';
+    if (pant === 'ingenieria') vIng();
+    const t = trabajos[k];
+    try {
+      const d = await sAPI.json(VENTAS_PROMPT + lista + (t.texto ? '\nINFORME (las columnas van separadas por ;):\n' + t.texto : '\nLee la foto adjunta.'), { images: t.imagenes || [], cache: false });
+      seguidos = 0;
+      if (d && d.desde) fechas.push(d.desde);
+      if (d && d.hasta) fechas.push(d.hasta);
+      (Array.isArray(d && d.lineas) ? d.lineas : []).forEach((l) => {
+        const art = String((l && l.articulo) || '').trim().slice(0, 120),
+          n = Number(l && l.unidades) || 0;
+        if (!art || !(n > 0)) return;
+        const x = porArt[norm(art)] || (porArt[norm(art)] = { art: art, n: 0, importe: 0, precio: 0, sug: '' });
+        x.n += n;
+        x.importe += Number(l.importe) || 0;
+        x.precio = x.precio || Number(l.precio) || 0;
+        x.sug = x.sug || String(l.plato || '');
+      });
+    } catch (e) {
+      fallo = errIA(e);
+      if (e && (e.code === 'rate_limited' || e.code === 'session_expired' || ++seguidos >= 2)) break;
+      avisos.push('Una parte no se pudo leer (' + (k + 1) + ' de ' + trabajos.length + ').');
+    }
+  }
+  if (!ventasImp) return;
+  const lineas = Object.keys(porArt).map((k) => {
+    const x = porArt[k],
+      m = platoDeArticulo(x.art, x.sug),
+      pr = x.precio || (x.importe > 0 ? x.importe / x.n : 0);
+    return { art: x.art, n: Math.round(x.n), pid: m.p ? m.p.id : '', como: m.como, precio: Math.round(pr * 100) / 100, alias: true, renombrar: false };
+  });
+  if (!lineas.length) {
+    ventasImp = { estado: 'error', msg: fallo || avisos.join(' ') || 'No encontré artículos vendidos en esos archivos.' };
+    if (pant === 'ingenieria') vIng();
+    return;
+  }
+  const ok = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s : ''),
+    fs2 = fechas.map(ok).filter(Boolean).sort();
+  ventasImp = {
+    estado: 'revisar',
+    archivo: fs.map((f) => f.name).join(', '),
+    desde: fs2[0] || hoy(),
+    hasta: fs2[fs2.length - 1] || hoy(),
+    grupoNuevo: '',
+    avisos: avisos,
+    lineas: lineas,
+  };
   if (pant === 'ingenieria') vIng();
+}
+const vendidos = () =>
+  suma(
+    ventasImp.lineas.filter((x) => x.pid),
+    (x) => x.n,
+  );
+function filaVenta(l, k) {
+  const pl = ordenados(S.platos.filter((p) => !p.base)),
+    p = l.pid && l.pid !== '__nuevo' ? plato(l.pid) : null,
+    distinto = p && norm(p.nombre) !== norm(l.art) && !p.alias.some((a) => norm(a) === norm(l.art));
+  return (
+    '<div class="row invrow vrow" data-k="' + k + '"><div class="n"><b>' + esc(l.art) +
+    (l.como === 'parecido' ? ' <span class="pill warn">¿Es este?</span>' : l.como === 'alias' ? ' <span class="pill ok">Reconocido</span>' : '') +
+    (l.precio > 0 ? ' <span class="hint">· ' + fEur.format(l.precio) + '</span>' : '') + '</b>' +
+    '<select data-vil="pid" aria-label="Plato de la carta para ' + esc(l.art) + '"><option value="">No es un plato</option><option value="__nuevo"' + (l.pid === '__nuevo' ? ' selected' : '') + '>+ Crear plato nuevo</option>' +
+    pl.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === l.pid ? ' selected' : '') + '>' + esc(x.nombre) + '</option>').join('') +
+    '</select>' +
+    (distinto
+      ? '<label class="check"><input type="checkbox" data-vil="alias"' + (l.alias ? ' checked' : '') + '> Recordar que en el TPV se llama así</label>' +
+        '<label class="check"><input type="checkbox" data-vil="renombrar"' + (l.renombrar ? ' checked' : '') + '> Cambiar el nombre de mi plato a «' + esc(bonito(l.art)) + '»</label>'
+      : '') +
+    (l.pid === '__nuevo'
+      ? '<div class="vi-nuevo"><label class="mini"><span>Precio carta €</span><input class="num" data-vil="precio" type="text" inputmode="decimal" value="' + esc(show(l.precio)) + '"></label></div>'
+      : '') +
+    '</div><div class="q"><input class="num" data-vil="n" type="text" inputmode="numeric" aria-label="Unidades" value="' + l.n + '"><span>ud</span></div></div>'
+  );
 }
 function vVentasImp() {
   const e = ventasImp;
   if (e.estado === 'leyendo')
-    return (
-      '<section class="card estado"><strong>Leyendo las ventas…</strong><span>' + esc(e.archivo) + '</span></section>'
-    );
+    return '<section class="card estado"><strong>Leyendo las ventas…</strong><span>' + esc(e.paso || e.archivo) + '</span><button class="btn" type="button" data-act="vi-cancelar">Cancelar</button></section>';
   if (e.estado === 'error')
     return (
-      '<section class="card estado"><strong>No se pudo leer</strong><span>' +
-      esc(e.msg) +
-      '</span><div class="acciones"><button class="btn" type="button" data-act="vi-cancelar">Cerrar</button></div></section>'
+      '<section class="card estado"><strong>No se pudo leer</strong><span>' + esc(e.msg) +
+      '</span><div class="acciones" style="justify-content:center"><button class="btn primary" type="button" data-act="ventas-importar">Probar otra vez</button><button class="btn" type="button" data-act="vi-cancelar">Cerrar</button></div></section>'
     );
   const dup = S.ventas.some((v) => v.importes.some((x) => x.desde === e.desde && x.hasta === e.hasta)),
-    pl = ordenados(S.platos.filter((p) => !p.base)),
-    n = suma(
-      e.lineas.filter((l) => l.pid),
-      (l) => l.n,
-    );
+    idx3 = e.lineas.map((l, k) => [l, k]),
+    revisar = idx3.filter(([l]) => l.como === 'parecido' && l.pid),
+    faltan = idx3.filter(([l]) => !l.pid || l.pid === '__nuevo'),
+    bien = idx3.filter(([l]) => l.pid && l.pid !== '__nuevo' && l.como !== 'parecido'),
+    sinCrear = faltan.filter(([l]) => !l.pid).length,
+    nuevos = e.lineas.filter((l) => l.pid === '__nuevo').length;
   return (
-    '<form id="form-ventas" class="col" novalidate><section class="card"><h2>Revisa las ventas</h2><p class="hint">' +
-    esc(e.archivo) +
-    '. Lo que no sea un plato de la carta (bebidas, extras) se ignora.</p>' +
-    '<div class="ficha"><div class="field"><label for="vi-desde">Desde</label><input id="vi-desde" data-vig="desde" type="date" value="' +
-    esc(e.desde) +
-    '"></div><div class="field"><label for="vi-hasta">Hasta</label><input id="vi-hasta" data-vig="hasta" type="date" value="' +
-    esc(e.hasta) +
-    '"></div></div>' +
+    '<form id="form-ventas" class="col" novalidate><section class="card"><h2>Revisa las ventas</h2><p class="hint">' + esc(e.archivo) + '</p>' +
+    '<div class="ficha"><div class="field"><label for="vi-desde">Desde</label><input id="vi-desde" data-vig="desde" type="date" value="' + esc(e.desde) +
+    '"></div><div class="field"><label for="vi-hasta">Hasta</label><input id="vi-hasta" data-vig="hasta" type="date" value="' + esc(e.hasta) + '"></div></div>' +
     (dup ? '<p class="aviso">Ya importaste ventas de estas mismas fechas. Si guardas, se sumarán otra vez.</p>' : '') +
+    (e.avisos && e.avisos.length ? '<p class="aviso">' + esc(e.avisos.join(' ')) + ' Revisa que no falte nada.</p>' : '') +
     '</section>' +
-    '<section class="card"><h3 id="vi-n">' +
-    n +
-    ' platos vendidos</h3><div class="rows">' +
-    e.lineas
-      .map(
-        (l, k) =>
-          '<div class="row invrow" data-k="' +
-          k +
-          '"><div class="n"><b>' +
-          esc(l.art) +
-          '</b><select data-vil="pid" aria-label="Plato de la carta"><option value="">No es un plato</option>' +
-          pl
-            .map(
-              (p) =>
-                '<option value="' +
-                esc(p.id) +
-                '"' +
-                (p.id === l.pid ? ' selected' : '') +
-                '>' +
-                esc(p.nombre) +
-                '</option>',
-            )
-            .join('') +
-          '</select></div>' +
-          '<div class="q"><input class="num" data-vil="n" type="text" inputmode="numeric" aria-label="Unidades" value="' +
-          l.n +
-          '"><span>ud</span></div></div>',
-      )
-      .join('') +
-    '</div></section>' +
-    '<div class="acciones"><button class="btn primary" type="submit">Sumar a las ventas</button><button class="btn" type="button" data-act="vi-cancelar">Descartar</button></div></form>'
+    (revisar.length
+      ? '<section class="card"><h3>Revisa estos (' + revisar.length + ')</h3><p class="hint">Se parecen a un plato tuyo pero no se llaman igual. Si es el mismo, la app recordará el nombre del TPV para la próxima vez; también puedes cambiar el nombre de tu plato al del informe.</p><div class="rows">' +
+        revisar.map(([l, k]) => filaVenta(l, k)).join('') + '</div></section>'
+      : '') +
+    (faltan.length
+      ? '<section class="card"><h3>No están en tu carta (' + faltan.length + ')</h3><p class="hint">Puedes crearlos como platos nuevos con el precio del informe. Lo que no sea un plato (bebidas sueltas, extras) déjalo en «No es un plato».</p>' +
+        '<div class="acciones">' + (sinCrear ? '<button class="btn small" type="button" data-act="vi-crear-todos">Crear todos como platos</button>' : '') +
+        (nuevos
+          ? '<div class="field corto"><label for="vi-grupo">Grupo de los nuevos</label><select id="vi-grupo" data-vig="grupoNuevo"><option value="">Sin grupo</option>' +
+            gruposCarta().map((g) => '<option' + (g === e.grupoNuevo ? ' selected' : '') + '>' + esc(g) + '</option>').join('') + '</select></div>'
+          : '') +
+        '</div><div class="rows">' + faltan.map(([l, k]) => filaVenta(l, k)).join('') + '</div></section>'
+      : '') +
+    (bien.length
+      ? '<section class="card"><details' + (revisar.length || faltan.length ? '' : ' open') + '><summary>Reconocidos (' + bien.length + ')</summary><div class="rows">' +
+        bien.map(([l, k]) => filaVenta(l, k)).join('') + '</div></details></section>'
+      : '') +
+    '<div class="acciones"><button class="btn primary" type="submit" id="vi-n">Sumar ' + vendidos() + ' platos vendidos</button><button class="btn" type="button" data-act="vi-cancelar">Descartar</button></div></form>'
   );
 }
 function guardarVentas() {
   const e = ventasImp,
     mes = (e.hasta || e.desde || hoy()).slice(0, 7),
     wk = semana(e.hasta || e.desde || hoy());
-  let v = S.ventas.filter((x) => x.id === mes)[0];
-  if (!v) {
-    v = nVenta({ id: mes });
-    S.ventas.push(v);
-  }
-  let n = 0;
-  const w = v.semanas[wk] || (v.semanas[wk] = {});
-  e.lineas.forEach((l) => {
-    if (!l.pid || !(l.n > 0)) return;
-    v.unidades[l.pid] = (Number(v.unidades[l.pid]) || 0) + l.n;
-    w[l.pid] = (Number(w[l.pid]) || 0) + l.n;
-    n += l.n;
+  let n = 0,
+    creados = 0,
+    nombres = 0;
+  enLote(() => {
+    /* Primero los platos nuevos y los nombres del TPV, después las unidades */
+    e.lineas.forEach((l) => {
+      if (!(l.n > 0)) return;
+      if (l.pid === '__nuevo') {
+        const p = nPlato({ id: nuevoId('platos'), nombre: bonito(l.art), pvp: l.precio, grupo: e.grupoNuevo, area: areaNueva(), alias: norm(bonito(l.art)) === norm(l.art) ? [] : [l.art] });
+        S.platos.push(p);
+        guardar('platos', p, true);
+        l.pid = p.id;
+        creados++;
+        return;
+      }
+      const p = plato(l.pid);
+      if (!p || norm(p.nombre) === norm(l.art)) return;
+      let ch = false;
+      if (l.renombrar) {
+        if (!p.alias.some((a) => norm(a) === norm(p.nombre))) p.alias.push(p.nombre);
+        p.nombre = bonito(l.art);
+        ch = true;
+      } else if (l.alias && !p.alias.some((a) => norm(a) === norm(l.art))) {
+        p.alias.push(l.art);
+        ch = true;
+      }
+      if (ch) {
+        guardar('platos', p, true);
+        nombres++;
+      }
+    });
+    let v = S.ventas.filter((x) => x.id === mes)[0];
+    if (!v) {
+      v = nVenta({ id: mes });
+      S.ventas.push(v);
+    }
+    const w = v.semanas[wk] || (v.semanas[wk] = {});
+    e.lineas.forEach((l) => {
+      if (!l.pid || l.pid === '__nuevo' || !(l.n > 0)) return;
+      v.unidades[l.pid] = (Number(v.unidades[l.pid]) || 0) + l.n;
+      w[l.pid] = (Number(w[l.pid]) || 0) + l.n;
+      n += l.n;
+    });
+    v.importes.push({ desde: e.desde, hasta: e.hasta, n: n, archivo: e.archivo, creado: new Date().toISOString() });
+    guardar('ventas', v, true);
   });
-  v.importes.push({ desde: e.desde, hasta: e.hasta, n: n, archivo: e.archivo, creado: new Date().toISOString() });
-  guardar('ventas', v, true);
   ventasImp = null;
   mesM = mes;
+  sucio();
   vIng();
-  toast(n + ' platos sumados a ' + fMes(mes).toLowerCase());
+  toast(
+    n + ' platos sumados a ' + fMes(mes).toLowerCase() +
+      (creados ? '. ' + creados + (creados === 1 ? ' plato nuevo en la carta' : ' platos nuevos en la carta') : '') +
+      (nombres ? '. ' + nombres + (nombres === 1 ? ' nombre actualizado' : ' nombres actualizados') : '') + '.',
+  );
 }
 function semanasHTML() {
   const sm = semanasVentas().slice(-6);

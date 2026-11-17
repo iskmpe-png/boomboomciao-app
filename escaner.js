@@ -1,29 +1,43 @@
 /* ---- Escáner de albaranes ---- */
 let escaneo = null;
 async function escanear() {
-  if (!sAPI || !sLim || !sLim.images) {
-    toast('Desde aquí no se pueden leer fotos con la IA.');
+  if (!sAPI) {
+    toast('La lectura de albaranes necesita la IA activada.');
     return;
   }
-  const fs = (
-    await pedirArchivo((sLim.images.mediaTypes || ['image/jpeg', 'image/png']).join(',') + ',image/*', true)
-  ).slice(0, Math.min(4, sLim.images.maxCount || 1));
+  /* Fotos o PDF (escaneado o digital). Varias fotos = varias páginas del mismo albarán. */
+  const fs = await pedirArchivo('image/*,.pdf', true);
   if (!fs.length) return;
   escaneo = { estado: 'leyendo', n: fs.length };
   vCompras();
   try {
-    const imgs = await Promise.all(fs.map((f) => reducir(f, 2000)));
+    const textos = [],
+      imgs = [];
+    for (const f of fs) {
+      const d = await leerDocumento(f);
+      textos.push(...d.textos);
+      imgs.push(...d.imagenes);
+    }
     const pr =
-      'Estas ' +
-      imgs.length +
-      ' imágenes son las páginas de UN albarán o factura de proveedor de un restaurante en España. Extrae los datos y responde SOLO con JSON con esta forma exacta:\n' +
+      'Esto es UN albarán o factura de proveedor de un restaurante en España' + (imgs.length > 1 ? ', en varias páginas' : '') + '. Extrae los datos y responde SOLO con JSON con esta forma exacta:\n' +
       '{"proveedor":"nombre comercial del proveedor","fecha":"AAAA-MM-DD","albaran":"número de albarán o factura","base_imponible":número sin IVA o null,"total":número con IVA o null,"lineas":[{"descripcion":"texto de la línea tal cual","producto":"nombre EXACTO de la lista de productos si es claramente el mismo producto, si no \\"\\"","cantidad":número,"unidad":"kg"|"l"|"ud","precio":precio por kg, litro o unidad SIN IVA,"importe":importe de la línea sin IVA}]}\n' +
-      'Reglas: números con punto decimal. Si la línea viene en cajas, bandejas, docenas u otros formatos, convierte a kg, litros o unidades sueltas cuando el albarán lo indique, y da el precio por kilo, litro o unidad suelta: «Huevos caja 30 ud 6,00» son 30 "ud" a 0,20; «Rúcula bandeja 125 g 1,50» son 0,125 "kg" a 12,00. Si no se puede saber, usa "ud". Si un dato no se lee, pon null. No inventes líneas.\n' +
+      'Reglas: números con punto decimal. Si la línea viene en cajas, bandejas, docenas u otros formatos, convierte a kg, litros o unidades sueltas cuando el albarán lo indique, y da el precio por kilo, litro o unidad suelta: «Huevos caja 30 ud 6,00» son 30 "ud" a 0,20; «Rúcula bandeja 125 g 1,50» son 0,125 "kg" a 12,00. Si no se puede saber, usa "ud". Si un dato no se lee, pon null. No inventes líneas. No incluyas como línea los totales, el IVA, los portes ni los descuentos generales.\n' +
       'Proveedores conocidos: ' +
       proveedores().join(', ') +
       '\nProductos conocidos: ' +
-      S.productos.map((p) => p.nombre + (p.proveedor ? ' (' + p.proveedor + ')' : '')).join('; ');
-    const d = await sAPI.json(pr, { images: imgs, cache: false });
+      S.productos.map((p) => p.nombre + (p.proveedor ? ' (' + p.proveedor + ')' : '')).join('; ').slice(0, 15000) +
+      (textos.length ? '\n\nTEXTO DEL DOCUMENTO (las columnas van separadas por ;):\n' + textos.join('\n').slice(0, 30000) : '');
+    /* Hasta 4 páginas por consulta; si hay más, se leen por tandas y se juntan las líneas */
+    let d = null;
+    const tandas = [];
+    for (let k = 0; k < Math.max(1, imgs.length); k += 4) tandas.push(imgs.slice(k, k + 4));
+    for (let k = 0; k < tandas.length; k++) {
+      const r = await sAPI.json(pr + (tandas.length > 1 ? '\nEstas son las páginas ' + (k * 4 + 1) + ' a ' + (k * 4 + tandas[k].length) + ' de ' + imgs.length + '.' : ''), { images: tandas[k], cache: false });
+      if (!d) d = r || {};
+      else if (r && Array.isArray(r.lineas)) d.lineas = (Array.isArray(d.lineas) ? d.lineas : []).concat(r.lineas);
+      if (d && r && !d.total && r.total) d.total = r.total;
+      if (d && r && !d.base_imponible && r.base_imponible) d.base_imponible = r.base_imponible;
+    }
     const prov = String((d && d.proveedor) || '').trim(),
       pvx = proveedores().filter((x) => norm(x) === norm(prov))[0] || prov;
     const lineas = (Array.isArray(d && d.lineas) ? d.lineas : []).map((l) => {
@@ -102,14 +116,14 @@ function vEscaneo() {
     return (
       '<section class="card estado"><strong>Leyendo el albarán…</strong><span>' +
       e.n +
-      (e.n === 1 ? ' foto' : ' fotos') +
+      (e.n === 1 ? ' archivo' : ' archivos') +
       '. Tarda unos segundos.</span></section>'
     );
   if (e.estado === 'error')
     return (
       '<section class="card estado"><strong>No se pudo leer</strong><span>' +
       esc(e.msg) +
-      '</span><div class="acciones"><button class="btn primary" type="button" data-act="escanear">Probar otra foto</button><button class="btn" type="button" data-act="sc-cancelar">Cancelar</button></div></section>'
+      '</span><div class="acciones"><button class="btn primary" type="button" data-act="escanear">Probar con otro archivo</button><button class="btn" type="button" data-act="sc-cancelar">Cancelar</button></div></section>'
     );
   return (
     '<form id="form-scan" class="col" novalidate><section class="card"><h2>Revisa el albarán</h2><p class="hint">Comprueba lo que leyó la IA antes de guardar. Puedes corregir cualquier dato.</p>' +

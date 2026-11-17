@@ -88,6 +88,7 @@ function filaProd(p) {
       ')</label><input class="num" id="ep-m" data-c="minimo" type="text" inputmode="decimal" placeholder="0" value="' +
       esc(show(p.minimo)) +
       '"></div>' +
+      '<div class="field"><label for="ep-z">Zona</label><select id="ep-z" data-c="area"><option value="">Cocina</option><option value="barra"' + (p.area === 'barra' ? ' selected' : '') + '>Barra</option></select></div>' +
       '<div class="field"><label for="ep-f">Grupo para comparar</label><input id="ep-f" data-c="familia" type="text" autocomplete="off" placeholder="' + esc(famAuto(p.nombre)) + '" value="' + esc(p.familia) + '"></div>' +
       '<div class="acciones"><button class="btn primary small" type="button" data-act="cerrar-prod">Listo</button><button class="btn small" type="button" data-act="conv-ud" data-id="' + esc(p.id) + '">Cambiar unidad</button><button class="link" type="button" data-act="borrar-prod" style="color:var(--crit)">Eliminar</button></div>' +
       '<div class="full col" style="gap:8px"><span class="lbl">Alérgenos</span><div class="togs">' +

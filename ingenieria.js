@@ -13,7 +13,7 @@ const CLASEP = {
 };
 function clasesIng() {
   const v = ventasMes(false),
-    d = ordenados(S.platos.filter((p) => !p.base && p.pvp > 0)).map((p) => ({
+    d = ordenados(S.platos.filter((p) => !p.base && p.pvp > 0 && enArea(p))).map((p) => ({
       p: p,
       n: v ? Number(v.unidades[p.id]) || 0 : 0,
       m: margenUd(p),

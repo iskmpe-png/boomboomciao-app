@@ -42,7 +42,6 @@ const UD = { kg: 'g', l: 'ml', ud: 'ud' },
 const SUBS = {
   inicio: [
     ['panel', 'Panel'],
-    ['asistente', 'Asistente'],
     ['manual', 'Manual'],
   ],
   carta: [
@@ -106,6 +105,7 @@ const S = {
   proveedores: [],
   manual: [],
   dudas: [],
+  fotos: [],
   ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [] },
 };
 const COLS = [
@@ -121,6 +121,7 @@ const COLS = [
   'proveedores',
   'manual',
   'dudas',
+  'fotos',
 ];
 const cargado = {};
 let vista = 'inicio',
@@ -133,6 +134,7 @@ let vista = 'inicio',
   conCostes = false;
 const fil = { carta: '', precios: '', inv: '', sala: '' },
   lim = { carta: 20, precios: 25, inv: 20, mermas: 25, sala: 20, appcc: 25, compras: 25, hist: 30, tarifa: 40 };
+let ordCarta = ''; // '', 'fc' o 'coste'
 let grp = '',
   prov = '',
   editProd = null,
@@ -158,6 +160,11 @@ function mem(k, v) {
   } catch (e) {}
   return null;
 }
+/* Zona de trabajo de este dispositivo: 'cocina', 'barra' o '' (todo). La recuerda cada persona. */
+let area = mem('bbc.area');
+if (area !== 'barra' && area !== '') area = 'cocina';
+const enArea = (x) => !area || (area === 'barra' ? x.area === 'barra' : x.area !== 'barra');
+const areaNueva = () => (area === 'barra' ? 'barra' : '');
 let tt;
 function toast(t) {
   const el = $('toast');

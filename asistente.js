@@ -183,7 +183,7 @@ const instr = () =>
   PENDIENTE +
   ' para que el encargado la añada al manual.\n' +
   'Sé breve y sin relleno. Formato: texto sencillo, negrita con **así** y listas con guiones; sin títulos, tablas ni bloques de código.\n' +
-  'No puedes cambiar datos de la app: explica dónde hacerlo. Apartados: Inicio (Panel, Asistente, Manual); Carta (Platos, Sala y alérgenos, Ingeniería, Eventos); Precios (Productos, Comparar, Alertas); Cocina (Recetas, Producción, Etiquetas, APPCC); Almacén (Inventario, Pedidos, Compras, Proveedores, Mermas).';
+  'No puedes cambiar datos de la app: explica dónde hacerlo. Apartados: Inicio (Panel, Manual, Historial); Carta (Platos, Elaboraciones, Sala y alérgenos, Ingeniería, Menús); el asistente es el chat del botón redondo de abajo a la derecha. Arriba se elige la zona: Cocina o Barra; Precios (Productos, Comparar, Alertas); Cocina (Recetas, Producción, Etiquetas, APPCC); Almacén (Inventario, Pedidos, Compras, Proveedores, Mermas).';
 function fmt(t) {
   return esc(t)
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
@@ -216,19 +216,8 @@ function pintarChat() {
   o.scrollTop = o.scrollHeight;
 }
 function vAsistente() {
-  if (!sAPI) {
-    $('vista').innerHTML = sinIA();
-    return;
-  }
-  $('vista').innerHTML =
-    '<section class="card chat"><div class="acciones" style="justify-content:space-between"><h2>Asistente</h2><button class="link" type="button" data-act="as-nuevo">Nueva conversación</button></div>' +
-    '<div id="as-msgs" class="msgs" aria-live="polite"></div><form id="form-as" class="as-form" novalidate><textarea id="as-input" rows="2" aria-label="Pregunta para el asistente" placeholder="Escribe o dicta tu pregunta"></textarea>' +
-    '<button class="btn primary" type="submit" id="as-env">' +
-    (asCtl ? 'Detener' : 'Enviar') +
-    '</button></form><p class="hint">' +
-    (sb ? '' : 'Usa tu cuenta de Claude. ') +
-    'Lee los datos de la app y el manual de la casa, pero no cambia nada. Si no sabe una norma del restaurante, apunta la pregunta para el encargado.</p></section>';
-  pintarChat();
+  abrirChat();
+  location.replace('#inicio-panel');
 }
 function preguntar(q) {
   q = q.trim();
@@ -286,7 +275,7 @@ function preguntar(q) {
     .then(() => {
       asCtl = null;
       if (!r.content && !r.error) r.error = 'Sin respuesta.';
-      if (pant === 'asistente') {
+      if ($('as-msgs')) {
         pintarChat();
         const b = $('as-env');
         if (b) b.textContent = 'Enviar';

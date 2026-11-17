@@ -57,6 +57,7 @@ function calcEv() {
       p = idx().pl.get(x.id);
     if (o && p) o.innerHTML = fEur.format(x.n * costeUd(p)) + (c > 0 ? '<small>' + fNum(((x.n * costeUd(p)) / c) * 100, 0) + ' % del menú</small>' : '');
   });
+  if ($('ev-niv')) $('ev-niv').innerHTML = nivelHTML(e);
   $('ev-compra').innerHTML = l.length
     ? '<ul class="ri">' +
       l
@@ -99,7 +100,7 @@ function vEventos() {
   if (!e) {
     evId = null;
     $('vista').innerHTML =
-      '<div class="bar"><span class="hint grow">Menús cerrados y eventos: junta varios platos, pon el precio por persona y verás el food cost del menú entero. Marca «Solo en menú» en los platos que no se venden sueltos para que no disparen el food cost general.</span><button class="btn primary" type="button" data-act="ev-nuevo">Nuevo</button>' +
+      '<div class="bar"><span class="hint grow">Junta varios platos, pon el precio por persona y verás el food cost del menú entero. Para crear uno rápido: en Platos, «Más › Seleccionar varios», marca los platos y «Crear un menú con ellos».</span><button class="btn primary" type="button" data-act="ev-nuevo">Nuevo</button>' +
       expHTML() +
       '</div>' +
       (S.eventos.length
@@ -138,7 +139,8 @@ function vEventos() {
     esc(show(e.pax)) +
     '"></div><div class="field"><label for="ev-precio">Precio por persona €</label><input class="num" id="ev-precio" data-ev="precio" type="text" inputmode="decimal" placeholder="con IVA" value="' +
     esc(show(e.precio)) +
-    '"></div></div></section>' +
+    '"></div>' +
+    '<label class="check wide" for="ev-encarta"><input type="checkbox" id="ev-encarta"' + (e.enCarta ? ' checked' : '') + '> Mostrar en la carta con su precio por persona</label></div></section>' +
     '<section class="card"><h3>Platos del menú</h3><div class="rows" id="ev-lineas">' +
     e.platos
       .map((x, k) => {
@@ -150,6 +152,7 @@ function vEventos() {
           esc(p ? p.nombre : 'Plato eliminado') +
           '</b><span>raciones por persona' + evSuelto(p) + '</span>' +
           (p && !p.base ? '<label class="check ev-solo"><input type="checkbox" data-evsolo="' + k + '"' + (p.soloMenu ? ' checked' : '') + '> Solo en menú</label>' : '') +
+          (p ? ingsMenuHTML(p, x.n) : '') +
           '</div><div class="q"><input class="num" data-evn="' +
           k +
           '" type="text" inputmode="decimal" aria-label="Raciones por persona" value="' +
@@ -162,6 +165,6 @@ function vEventos() {
     '<div class="acciones"><select id="ev-sel" aria-label="Plato para añadir" style="flex:1 1 180px">' +
     opcionesPlatos('') +
     '</select><button class="btn" type="button" data-act="ev-add">Añadir plato</button></div></section></div>' +
-    '<div class="col"><section class="card"><h3>Lista de la compra</h3><div id="ev-compra"></div><div class="acciones"><a class="btn primary small" id="ev-wa" target="_blank" rel="noopener">Enviar por WhatsApp</a><button class="btn danger small" type="button" data-act="ev-borrar">Eliminar menú</button></div></section></div></div>';
+    '<div class="col"><section class="card"><h3>Food cost nivelado</h3><div id="ev-niv"></div></section><section class="card"><h3>Lista de la compra</h3><div id="ev-compra"></div><div class="acciones"><a class="btn primary small" id="ev-wa" target="_blank" rel="noopener">Enviar por WhatsApp</a><button class="btn danger small" type="button" data-act="ev-borrar">Eliminar menú</button></div></section></div></div>';
   calcEv();
 }

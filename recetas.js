@@ -52,14 +52,17 @@ function vRecetas() {
     esc(show(r3(p.raciones * factor))) +
     '"></div>' +
     '<button class="btn" type="button" data-act="modo-cocina">Modo cocina</button>' +
-    '<a class="btn primary" id="r-wa" target="_blank" rel="noopener">WhatsApp</a><a class="btn" id="r-gm" target="_blank" rel="noopener">Gmail</a><button class="btn" type="button" data-act="copiar-receta">Copiar</button>' +
-    expHTML(1) +
+    expHTML(
+      1,
+      '<a id="r-wa" target="_blank" rel="noopener">Enviar por WhatsApp</a><a id="r-gm" target="_blank" rel="noopener">Enviar por correo</a>' + mOp('copiar-receta', 'Copiar el texto'),
+      'Compartir',
+    ) +
     '</div>' +
-    '<section class="card"><div><h2 style="font-size:1.9rem">' +
+    '<section class="card"><div class="receta-cab">' + fotoCaja(p, true) + '<div><h2 style="font-size:1.9rem">' +
     esc(p.nombre || 'Sin nombre') +
     '</h2><p class="hint" id="r-rinde">Rinde ' +
     rindeF(p) +
-    '</p></div>' +
+    '</p></div></div>' +
     '<div id="r-lista">' +
     listaRecetaHTML(p) +
     '</div>' +

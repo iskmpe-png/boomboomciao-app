@@ -3,36 +3,41 @@ let selModo = ''; // '', 'carta' o 'precios'
 const selIds = new Set();
 const selCaja = (id) => '<i class="selbox" aria-hidden="true"></i>';
 function selBarHTML() {
+  const bt = (act, txt, cls, attrs) => '<button class="btn small' + (cls ? ' ' + cls : '') + '" type="button" data-act="' + act + '"' + (attrs || '') + '>' + txt + '</button>';
+  /* Mover de zona: se ofrece la otra (o las dos si se ve todo) */
+  const zona = (area !== 'barra' ? bt('sel-zona', 'Pasar a Barra', '', ' data-a="barra"') : '') + (area !== 'cocina' ? bt('sel-zona', 'Pasar a Cocina', '', ' data-a=""') : '');
+  let acc = '';
   if (selModo === 'carta')
-    return (
-      '<div class="bar selbar"><b id="sel-n"></b><button class="btn small" type="button" data-act="sel-todos">Marcar todos</button>' +
-      (enElab()
-        ? '<button class="btn primary small" type="button" data-act="sel-mover" data-a="plato">Pasar a Platos</button><button class="btn small" type="button" data-act="sel-a-prod">Pasar a Productos</button>'
-        : '<div class="field corto"><label for="sel-grupo">Grupo</label><select id="sel-grupo">' + gruposCarta().map((g) => '<option>' + esc(g) + '</option>').join('') + '<option value="">Sin grupo</option></select></div>' +
-          '<button class="btn primary small" type="button" data-act="sel-grupo">Poner en el grupo</button>' +
-          '<button class="btn small" type="button" data-act="sel-mover" data-a="elab">Pasar a Elaboraciones</button>') +
-      '<button class="btn small" type="button" data-act="sel-fin">Terminar</button></div>'
-    );
-  if (selModo === 'precios')
-    return (
-      '<div class="bar selbar"><b id="sel-n"></b><button class="btn small" type="button" data-act="sel-todos">Marcar todos</button>' +
-      '<div class="field corto"><label for="sel-campo">Cambiar</label><select id="sel-campo"><option value="proveedor">Proveedor</option><option value="familia">Grupo para comparar</option></select></div>' +
-      '<div class="field"><label for="sel-valor">Nuevo valor</label><input id="sel-valor" type="text" list="dl-proveedores" autocomplete="off" placeholder="Ej. Makro"></div>' +
-      '<button class="btn primary small" type="button" data-act="sel-aplicar">Cambiar en todos</button>' +
-      '<button class="btn small" type="button" data-act="sel-a-elab">Pasar a Elaboraciones</button>' +
-      '<button class="btn small" type="button" data-act="sel-fin">Terminar</button></div>'
-    );
-  return '';
+    acc = enElab()
+      ? bt('sel-mover', 'Pasar a Platos', 'primary', ' data-a="plato"') + bt('sel-a-prod', 'Pasar a Productos') + zona
+      : '<div class="selgrupo"><select id="sel-grupo" aria-label="Grupo de la carta">' + gruposCarta().map((g) => '<option>' + esc(g) + '</option>').join('') + '<option value="">Sin grupo</option></select>' +
+        bt('sel-grupo', 'Poner en el grupo', 'primary') + '</div>' +
+        bt('sel-menu', 'Crear un menú con ellos') + bt('sel-mover', 'Pasar a Elaboraciones', '', ' data-a="elab"') + zona;
+  else if (selModo === 'precios')
+    acc =
+      '<div class="selgrupo"><select id="sel-campo" aria-label="Qué cambiar"><option value="proveedor">Proveedor</option><option value="familia">Grupo para comparar</option></select>' +
+      '<input id="sel-valor" type="text" list="dl-proveedores" autocomplete="off" aria-label="Nuevo valor" placeholder="Nuevo proveedor">' +
+      bt('sel-aplicar', 'Cambiar', 'primary') + '</div>' +
+      bt('sel-a-elab', 'Pasar a Elaboraciones') + zona;
+  else return '';
+  /* Barra fija abajo, como en las apps del móvil: no tapa la lista mientras se marca */
+  return (
+    '<div class="selbar"><div class="selbar-top"><b id="sel-n"></b>' + bt('sel-todos', 'Todos') +
+    '<details class="selacc"><summary class="btn primary small">Acciones</summary><div class="selbar-acc">' + acc + bt('sel-borrar', 'Eliminar', 'peligro') + '</div></details>' +
+    bt('sel-fin', 'Terminar') + '</div></div>'
+  );
 }
 /* Fila de producto mientras se selecciona: se marca, no se edita */
 const selFilaProd = (p) =>
   '<button class="row selrow" type="button" data-act="sel" data-id="' + esc(p.id) + '" aria-pressed="' + selIds.has(p.id) + '"><span class="n"><b>' + selCaja() + esc(p.nombre) + '</b><span>' + esc(metaProd(p)) +
   '</span></span><span class="d"><b>' + fEur.format(p.precio) + '</b><span class="hint">' + UDP[p.unidad].slice(1) + '</span></span></button>';
 function selCuenta() {
+  document.body.classList.toggle('seleccionando', !!selModo);
   const n = $('sel-n');
-  if (n) n.textContent = selIds.size + (selIds.size === 1 ? ' seleccionado' : ' seleccionados');
+  if (n) n.textContent = selIds.size + (selIds.size === 1 ? ' marcado' : ' marcados');
 }
 function selFin() {
+  document.body.classList.remove('seleccionando');
   if (!selModo) return;
   selModo = '';
   selIds.clear();
@@ -131,6 +136,7 @@ function selProdAElab() {
     const b =
       ya ||
       nPlato({
+        area: p.area,
         id: nuevoId('platos'),
         nombre: p.nombre,
         base: true,
@@ -180,7 +186,7 @@ function selElabAProd() {
       saltados++;
       return;
     }
-    const p = nProd({ id: nuevoId('productos'), nombre: b.nombre, proveedor: '', precio: r3(costeUd(b)), unidad: b.unidadBase, alergenos: b.alergenos, actualizado: ahora });
+    const p = nProd({ area: b.area, id: nuevoId('productos'), nombre: b.nombre, proveedor: '', precio: r3(costeUd(b)), unidad: b.unidadBase, alergenos: b.alergenos, actualizado: ahora });
     S.productos.push(p);
     S.platos.forEach((pl) => {
       let toca = false;
@@ -207,11 +213,80 @@ function selElabAProd() {
       (saltados ? ' ' + saltados + ' no se movieron porque ya hay un producto con ese nombre.' : ''),
   );
 }
+/* Cambia de zona (cocina o barra) todo lo marcado */
+function selZona(dest) {
+  const prods = selModo === 'precios',
+    l = (prods ? S.productos : S.platos).filter((x) => selIds.has(x.id) && x.area !== dest);
+  if (!selIds.size) {
+    toast('Marca primero lo que quieres mover.');
+    return;
+  }
+  enLote(() => l.forEach((x) => {
+    x.area = dest;
+    guardar(prods ? 'productos' : 'platos', x, true);
+  }));
+  const n = selIds.size;
+  selFin();
+  sucio();
+  pintar();
+  toast((n === 1 ? '1 elemento pasado' : n + ' elementos pasados') + ' a ' + (dest === 'barra' ? 'Barra' : 'Cocina') + (area && area !== (dest || 'cocina') ? ': cambia la zona arriba para verlos.' : '.'));
+}
+/* Borra de una vez todo lo marcado. Las fichas que usaban un producto o una elaboración
+   borrados se quedan con su nombre y su último precio, como al borrar uno solo. */
+function selBorrar() {
+  const prods = selModo === 'precios',
+    l = prods ? S.productos.filter((p) => selIds.has(p.id)) : S.platos.filter((p) => selIds.has(p.id));
+  if (!l.length) return;
+  const ids = new Set(l.map((x) => x.id));
+  enLote(() => {
+    S.platos.forEach((pl) => {
+      if (!prods && ids.has(pl.id)) return;
+      let ch = false;
+      pl.ingredientes.forEach((i) => {
+        const o = prods ? (ids.has(i.productoId) ? prod(i.productoId) : null) : ids.has(i.baseId) ? plato(i.baseId) : null;
+        if (!o) return;
+        i.nombre = o.nombre;
+        if (prods) {
+          i.precio = o.precio;
+          i.unidad = o.unidad;
+          i.productoId = '';
+        } else {
+          i.precio = r3(costeUd(o));
+          i.unidad = o.unidadBase;
+          i.baseId = '';
+        }
+        ch = true;
+      });
+      if (ch) guardar('platos', pl, true);
+    });
+    /* Los platos borrados salen también de los menús */
+    if (!prods)
+      S.eventos.forEach((ev) => {
+        const n = ev.platos.length;
+        ev.platos = ev.platos.filter((x) => !ids.has(x.id));
+        if (ev.platos.length !== n) guardar('eventos', ev, true);
+      });
+    l.forEach((x) => {
+      borrar(prods ? 'productos' : 'platos', x.id);
+      if (!prods && fotoDe(x.id)) borrar('fotos', x.id);
+    });
+  });
+  selFin();
+  sucio();
+  pintar();
+  pintaDeshacer(true);
+  toast((l.length === 1 ? '1 eliminado' : l.length + ' eliminados') + '. Puedes recuperarlos con «Deshacer».');
+}
 V.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act]');
   if (!b) return;
   const a = b.dataset.act;
-  if (a === 'sel-grupo') selGrupo();
+  if (a === 'sel-zona') selZona(b.dataset.a);
+  else if (a === 'sel-menu') selMenu();
+  else if (a === 'sel-borrar') {
+    if (!selIds.size) toast('Marca primero lo que quieres eliminar.');
+    else if (confirmar(b, 'Eliminar ' + selIds.size + ': pulsa otra vez')) selBorrar();
+  } else if (a === 'sel-grupo') selGrupo();
   else if (a === 'sel-a-elab') selProdAElab();
   else if (a === 'sel-a-prod') {
     if (!selIds.size) toast('Marca primero las elaboraciones que quieres pasar a productos.');
@@ -247,7 +322,7 @@ V.addEventListener('change', (e) => {
   if (e.target.id !== 'sel-campo') return;
   const prov = e.target.value === 'proveedor';
   $('sel-valor').setAttribute('list', prov ? 'dl-proveedores' : '');
-  $('sel-valor').placeholder = prov ? 'Ej. Makro' : 'Ej. huevo (vacío = automático)';
+  $('sel-valor').placeholder = prov ? 'Nuevo proveedor' : 'Ej. huevo (vacío = automático)';
 });
 /* Al cambiar de pantalla se sale de la selección */
 window.addEventListener('hashchange', selFin);

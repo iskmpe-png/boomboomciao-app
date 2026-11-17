@@ -60,6 +60,7 @@ function pintar() {
     )
     .join('');
   pant = LEG[vista + '/' + sub[vista]] || sub[vista];
+  if (typeof chatFab === 'function') chatFab();
   if (!listo()) return;
   pintarListas();
   ({
@@ -98,8 +99,15 @@ function refrescar() {
 }
 const vacio = (t, d, btn) =>
   '<section class="card estado"><strong>' + t + '</strong><span>' + d + '</span>' + (btn || '') + '</section>';
-const expHTML = (varios) =>
-  '<div class="exp"><button class="btn" type="button" data-act="exp-menu" aria-haspopup="true">Exportar</button><div class="exp-m" hidden><button type="button" data-exp="png">Imagen PNG</button><button type="button" data-exp="pdf">PDF</button><button type="button" data-exp="xlsx">Excel</button>' +
+/* Un solo botón desplegable para las acciones secundarias de cada pantalla y para exportar.
+   «extra» son otras opciones (botones con data-act) que van arriba; «etq» es el texto del botón. */
+const mOp = (act, txt, attrs) => '<button type="button" data-act="' + act + '"' + (attrs || '') + '>' + txt + '</button>';
+const expHTML = (varios, extra, etq) =>
+  '<div class="exp"><button class="btn" type="button" data-act="exp-menu" aria-haspopup="true" aria-expanded="false">' +
+  (etq || (extra ? 'Más' : 'Exportar')) +
+  '<svg class="flecha" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="exp-m" hidden>' +
+  (extra ? extra + '<span class="exp-sep">Exportar</span>' : '') +
+  '<button type="button" data-exp="png">Imagen PNG</button><button type="button" data-exp="pdf">PDF</button><button type="button" data-exp="xlsx">Excel</button>' +
   (varios ? '<button type="button" data-act="multi">Varios a la vez…</button>' : '') +
   '</div></div>';
 const masHTML = (k, total) =>
@@ -113,6 +121,7 @@ const masHTML = (k, total) =>
 function opcionesPlatos(sel) {
   const g = {};
   ordenados(S.platos).forEach((p) => {
+    if (!enArea(p) && p.id !== sel) return;
     const n = grupoDe(p);
     (g[n] || (g[n] = [])).push(p);
   });

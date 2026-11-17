@@ -18,6 +18,9 @@ const nPlato = (p) => ({
   elaboracion: String(p.elaboracion || ''),
   base: !!p.base,
   soloMenu: !!p.soloMenu,
+  area: p.area === 'barra' ? 'barra' : '',
+  /* Otros nombres con los que sale en el TPV (para reconocerlo en los informes de ventas) */
+  alias: (Array.isArray(p.alias) ? p.alias : []).map((a) => String(a || '').trim().slice(0, 80)).filter(Boolean).slice(0, 12),
   unidadBase: uni(p.unidadBase),
   grupo: String(p.grupo || ''),
   descripcion: String(p.descripcion || ''),
@@ -44,6 +47,7 @@ const nProd = (p) => ({
   alergenos: Array.isArray(p.alergenos) ? p.alergenos.map(String) : [],
   minimo: Number(p.minimo) || 0,
   familia: String(p.familia || ''),
+  area: p.area === 'barra' ? 'barra' : '',
   anterior: Number(p.anterior) || 0,
   historial: (Array.isArray(p.historial) ? p.historial : [])
     .slice(-12)
@@ -107,12 +111,15 @@ const nVenta = (v) => ({
   semanas: mapa(v.semanas),
   importes: Array.isArray(v.importes) ? v.importes : [],
 });
+/* Foto de un plato: una miniatura JPEG pequeña guardada como texto, con el id del plato */
+const nFoto = (f) => ({ id: f.id, img: /^data:image\/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$/.test(String(f.img || '')) ? String(f.img) : '' });
 const nPlan = (v) => ({ id: v.id, items: mapa(v.items), hecho: mapa(v.hecho) });
 const nEvento = (e) => ({
   id: e.id,
   nombre: String(e.nombre || ''),
   pax: Number(e.pax) || 0,
   precio: Number(e.precio) || 0,
+  enCarta: !!e.enCarta,
   platos: (Array.isArray(e.platos) ? e.platos : []).map((x) => ({ id: String(x.id || ''), n: Number(x.n) || 0 })),
 });
 const nProv = (p) => ({
@@ -142,6 +149,7 @@ const NORM = {
   compras: nCompra,
   appcc: nAppcc,
   ventas: nVenta,
+  fotos: nFoto,
   planes: nPlan,
   eventos: nEvento,
 };
