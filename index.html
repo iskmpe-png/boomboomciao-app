@@ -36,12 +36,14 @@
   </header>
   <div class="subs" id="subs" hidden></div>
   <p class="aviso" id="aviso" hidden></p>
+  <div class="recs" id="recordatorio" hidden aria-live="polite"></div>
   <main id="vista" class="col"><section class="card estado"><strong>Cargando la cocina</strong><span>Platos, precios, inventario y mermas.</span></section></main>
   <p class="hint" id="guardado" aria-live="polite"></p>
   <datalist id="dl-productos"></datalist>
   <datalist id="dl-solo-prod"></datalist>
   <datalist id="dl-proveedores"></datalist>
   <datalist id="dl-grupos"></datalist>
+  <datalist id="dl-equipo"></datalist>
 </div>
 <button class="btn" id="btn-deshacer" type="button" hidden></button>
 <div id="velo"></div>
@@ -52,7 +54,7 @@
   <div class="m-pie" id="m-des" hidden><span class="lbl">Último cambio</span><button class="btn small" id="btn-des-menu" type="button">Deshacer</button></div>
   <div class="m-pie" id="m-copia" hidden><span class="lbl">Copia de datos</span><span class="m-bts"><button class="btn small" id="btn-copia" type="button">Descargar</button><button class="btn small" id="btn-restaurar" type="button" hidden>Restaurar</button></span><input id="f-copia" type="file" accept=".json,application/json" hidden></div>
   <div class="m-pie"><span class="lbl">Apariencia</span><button class="btn small" id="btn-tema" type="button">Oscuro</button></div>
-  <div class="m-pie"><span class="lbl">Versión</span><span id="m-ver">Albahaca 1.0</span></div>
+  <div class="m-pie"><span class="lbl">Versión</span><span id="m-ver">Albahaca 1.1</span></div>
 </aside>
 <div id="toast" role="status" hidden></div>
 <div id="cocina" hidden></div>
@@ -93,6 +95,7 @@
 <script src="compras.js"></script>
 <script src="ficha-extra.js"></script>
 <script src="informes-extra.js"></script>
+<script src="detalle.js"></script>
 <script src="eventos-ampliacion.js"></script>
 <script src="permisos.js"></script>
 <script src="nombres.js"></script>
@@ -128,12 +131,14 @@
 <script src="fotos.js"></script>
 <script src="menus-carta.js"></script>
 <script src="zonas.js"></script>
+<script src="recordatorios.js"></script>
 <script src="manual.js"></script>
 <script src="primeros-pasos.js"></script>
 <script src="buscador.js"></script>
 <script src="limite-ia.js"></script>
 <script src="sesion.js"></script>
 <script src="almacen-local.js"></script>
+<script src="archivos.js"></script>
 <script src="sincronizacion.js"></script>
 <script src="acceso.js"></script>
 <script src="usuarios.js"></script>

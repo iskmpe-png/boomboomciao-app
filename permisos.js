@@ -27,6 +27,7 @@ const ACT2 = new Set([
   'tf-importar',
   'conv-ud',
   'sel-ini',
+  'arch-zip',
   'vi-crear-todos',
   'sel-borrar',
   'sel-grupo',
@@ -67,7 +68,7 @@ const ACT2 = new Set([
   'ventas-importar',
   'vi-guardar',
 ]);
-const ACT1 = new Set(['cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
+const ACT1 = new Set(['arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
 const FORMNIV = {
   'form-prod': 2,
   'form-merma': 1,

@@ -106,7 +106,7 @@ const S = {
   manual: [],
   dudas: [],
   fotos: [],
-  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [] },
+  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [], diasAlbaranes: 30, archivados: [] },
 };
 const COLS = [
   'platos',
@@ -140,6 +140,7 @@ let grp = '',
   editProd = null,
   addProd = false,
   invSub = 'conteo',
+  invSel = '', // inventario cerrado que se está viendo en el historial
   mesM = hoy().slice(0, 7);
 const pend = {};
 

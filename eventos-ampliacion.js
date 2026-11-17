@@ -150,17 +150,26 @@ function nuevoSubmit(f) {
       $('co-imp').focus();
       return true;
     }
+    const rec = $('co-rec').value.trim();
+    if (!rec) {
+      msg.textContent = 'Escribe quién recibió la mercancía.';
+      $('co-rec').focus();
+      return true;
+    }
+    const files = [...$('co-arch').files];
     const c = nCompra({
       id: nuevoId('compras'),
       fecha: fe,
       proveedor: pv,
       albaran: $('co-alb').value.trim(),
       importe: imp,
+      recibe: rec,
       creado: new Date().toISOString(),
       por: miId || '',
     });
     S.compras.push(c);
     guardar('compras', c, true);
+    if (files.length) adjuntarA(c, files).then(() => pant === 'compras' && listaCompras());
     if (fe.slice(0, 7) !== mesM) {
       mesM = fe.slice(0, 7);
       vCompras();
@@ -327,8 +336,34 @@ function nuevoClick(b, a) {
     return true;
   }
   if (a === 'co-borrar') {
-    borrar('compras', b.closest('.row').dataset.id);
+    if (!confirmar(b, 'Pulsa otra vez')) return true;
+    const id = b.closest('[data-id]').dataset.id,
+      c = S.compras.find((x) => x.id === id);
+    /* Las pruebas se quedan en el almacén hasta el ZIP del mes, por si hay que recuperar la compra */
+    borrar('compras', id);
     listaCompras();
+    if (c && c.archivos.length) toast('Compra eliminada. Sus archivos se guardan hasta que pase el plazo del archivo.');
+    return true;
+  }
+  if (a === 'arch-ver') {
+    verArchivo(b.closest('[data-id]').dataset.id, +b.dataset.k);
+    return true;
+  }
+  if (a === 'arch-add') {
+    const c = S.compras.find((x) => x.id === b.closest('[data-id]').dataset.id);
+    if (c)
+      pedirArchivo('image/*,.pdf,.xlsx,.xls,.csv', true).then((fs) =>
+        adjuntarA(c, fs).then((n) => {
+          if (n) {
+            toast(n === 1 ? 'Prueba guardada.' : n + ' pruebas guardadas.');
+            listaCompras();
+          }
+        }),
+      );
+    return true;
+  }
+  if (a === 'arch-zip') {
+    zipDelMes(b.dataset.m);
     return true;
   }
   if (a === 'modo-cocina') {

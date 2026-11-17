@@ -61,6 +61,7 @@ function pintar() {
     .join('');
   pant = LEG[vista + '/' + sub[vista]] || sub[vista];
   if (typeof chatFab === 'function') chatFab();
+  if (typeof pintaRecordatorio === 'function') pintaRecordatorio();
   if (!listo()) return;
   pintarListas();
   ({

@@ -303,7 +303,16 @@ function guardarVentas() {
       w[l.pid] = (Number(w[l.pid]) || 0) + l.n;
       n += l.n;
     });
-    v.importes.push({ desde: e.desde, hasta: e.hasta, n: n, archivo: e.archivo, creado: new Date().toISOString() });
+    v.importes.push({
+      desde: e.desde,
+      hasta: e.hasta,
+      n: n,
+      archivo: e.archivo,
+      creado: new Date().toISOString(),
+      por: miId || '',
+      /* Detalle por plato de este informe: permite exportar un día o una semana concreta */
+      lineas: e.lineas.filter((l) => l.pid && l.pid !== '__nuevo' && l.n > 0).map((l) => [l.pid, l.n]),
+    });
     guardar('ventas', v, true);
   });
   ventasImp = null;

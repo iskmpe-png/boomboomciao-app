@@ -78,6 +78,9 @@ async function escanear() {
       importe: r3(Number(d && d.base_imponible) || suma(lineas, (l) => l.importe) || 0),
       total: Number(d && d.total) || 0,
       lineas: lineas,
+      /* Los archivos leídos se guardan como prueba de la compra */
+      archivos: fs,
+      recibe: miNombre(),
     };
   } catch (e) {
     escaneo = { estado: 'error', msg: errIA(e) };
@@ -138,7 +141,11 @@ function vEscaneo() {
     '"></div>' +
     '<div class="field"><label for="sc-imp">Importe sin IVA €</label><input class="num" id="sc-imp" data-scg="importe" type="text" inputmode="decimal" value="' +
     esc(show(e.importe)) +
-    '"></div></div>' +
+    '"></div>' +
+    '<div class="field"><label for="sc-rec">Recibido por *</label><input id="sc-rec" data-scg="recibe" type="text" list="dl-equipo" autocomplete="off" value="' + esc(e.recibe || '') + '"></div></div>' +
+    (e.archivos && e.archivos.length
+      ? '<p class="hint">' + ICO_CLIP + ' Se guardará ' + (e.archivos.length === 1 ? 'el archivo' : 'los ' + e.archivos.length + ' archivos') + ' como prueba: ' + esc(e.archivos.map((f) => f.name).join(', ')) + '</p>'
+      : '') +
     (e.total ? '<p class="hint">Total con IVA en el albarán: ' + fEur.format(e.total) + '</p>' : '') +
     '</section>' +
     '<section class="card"><h3>' +
@@ -186,13 +193,20 @@ function vEscaneo() {
     '<div class="acciones"><button class="btn primary" type="submit">Guardar compra</button><button class="btn" type="button" data-act="sc-cancelar">Descartar</button></div></form>'
   );
 }
-function guardarEscaneo() {
+async function guardarEscaneo() {
   const e = escaneo;
+  if (e.guardando) return;
   if (!e.proveedor.trim()) {
     toast('Escribe el proveedor.');
     $('sc-prov').focus();
     return;
   }
+  if (!String(e.recibe || '').trim()) {
+    toast('Escribe quién recibió la mercancía.');
+    $('sc-rec').focus();
+    return;
+  }
+  e.guardando = true;
   let act = 0,
     nue = 0;
   const lineas = [];
@@ -217,9 +231,25 @@ function guardarEscaneo() {
     albaran: e.albaran,
     importe: e.importe || suma(lineas, (l) => l.cantidad * l.precio),
     lineas: lineas,
+    recibe: String(e.recibe).trim(),
     creado: new Date().toISOString(),
     por: miId || '',
   });
+  /* Primero la prueba: así la compra se guarda ya con su foto o documento */
+  if (e.archivos && e.archivos.length) {
+    const b = q($('vista'), '#form-scan [type="submit"]');
+    if (b) {
+      b.disabled = true;
+      b.textContent = 'Guardando la prueba…';
+    }
+    for (const f of e.archivos) {
+      try {
+        c.archivos.push(await subirArchivo(c, c.archivos.length, await prepararArchivo(f)));
+      } catch (er) {
+        toast(er.message || 'No se pudo guardar un archivo.');
+      }
+    }
+  }
   S.compras.push(c);
   guardar('compras', c, true);
   escaneo = null;

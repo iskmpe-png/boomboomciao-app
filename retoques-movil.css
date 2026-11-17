@@ -639,3 +639,170 @@ table.nivel tfoot td {
   text-align: left;
   border-radius: 14px;
 }
+
+/* ======== Compras con desglose ======== */
+.grupoh.dia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+  font-size: 1.1rem;
+}
+.grupoh.dia small {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+details.compra {
+  border-top: 1px solid var(--line);
+  padding: 0;
+}
+details.compra > summary {
+  list-style: none;
+  cursor: pointer;
+  border-top: 0;
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  color: inherit;
+  margin: 0;
+}
+details.compra > summary::-webkit-details-marker {
+  display: none;
+}
+details.compra[open] > summary {
+  background: var(--sunken);
+  border-radius: 10px;
+}
+.compra-d {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 6px 4px 14px;
+}
+.clip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+.compra-d .btn svg {
+  margin-right: 4px;
+  vertical-align: -3px;
+}
+details.nueva-compra > summary {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--accent);
+  cursor: pointer;
+}
+details.nueva-compra[open] > summary {
+  margin-bottom: 12px;
+}
+.visor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+}
+.visor img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+/* ======== Recordatorios de pedido ======== */
+.recs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rec {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line));
+}
+.rec.urgente {
+  background: color-mix(in srgb, var(--crit) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--crit) 50%, var(--line));
+}
+.rec-t {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rec-t span {
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.rec-b {
+  display: flex;
+  gap: 8px;
+}
+.pv-dias .dias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dia {
+  position: relative;
+}
+.dia input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+.dia span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+.dia input:checked + span {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.dia input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+details.compra > summary {
+  font-size: 1rem;
+  font-weight: 400;
+}
+details.compra > summary .n b {
+  font-size: 1rem;
+}
+.compra-d table.nivel,
+#vista table.nivel {
+  font-size: 0.84rem;
+}
+.compra-d table.nivel th,
+.compra-d table.nivel td {
+  padding: 6px 4px;
+}
+.compra-d table.nivel td:first-child {
+  min-width: 110px;
+}

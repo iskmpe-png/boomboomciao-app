@@ -65,7 +65,7 @@ function vIng() {
     mesHTML() +
     '<span class="hint grow">Importa el informe del TPV o escribe a mano cuántos platos se vendieron en el mes.</span>' +
     (sAPI ? '<button class="btn primary" type="button" data-act="ventas-importar">Importar ventas</button>' : '') +
-    expHTML() +
+    expHTML(0, mOp('ven-exp', 'Ventas de un día, semana o mes…')) +
     '</div><div class="kpis" id="ing-k"></div>' +
     '<section class="card"><div class="rows" id="lista-ing">' +
     (r.d.length

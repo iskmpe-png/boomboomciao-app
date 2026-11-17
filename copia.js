@@ -30,7 +30,7 @@ $('f-copia').addEventListener('change', (e) => {
             if (x && x.id) filas.push([c, String(x.id), limpio(NORM[c](x))]);
           }),
         );
-        if (aj) filas.push(['ajustes', 'empresa', { nombre: aj.nombre, periodo: aj.periodo, grupos: aj.grupos }]);
+        if (aj) filas.push(['ajustes', 'empresa', { nombre: aj.nombre, periodo: aj.periodo, grupos: aj.grupos, diasAlbaranes: aj.diasAlbaranes, archivados: aj.archivados }]);
         menu(false);
         toast('Subiendo la copia…');
         return db.lote(filas).then(

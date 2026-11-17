@@ -7,6 +7,9 @@ const nAjustes = (a) => ({
   grupos: (a && Array.isArray(a.grupos) ? a.grupos : [])
     .map((g) => String(g || '').trim().slice(0, 60))
     .filter((g, i, l) => g && l.indexOf(g) === i),
+  /* Archivo de albaranes: días que se guardan y meses ya descargados en ZIP */
+  diasAlbaranes: Number(a && a.diasAlbaranes) >= 7 ? Math.min(365, Number(a.diasAlbaranes)) : 30,
+  archivados: (a && Array.isArray(a.archivados) ? a.archivados : []).filter((m) => /^\d{4}-\d{2}$/.test(m)),
 });
 const nPlato = (p) => ({
   id: p.id,
@@ -85,6 +88,20 @@ const nCompra = (c) => ({
   importe: Number(c.importe) || 0,
   creado: String(c.creado || ''),
   por: String(c.por || ''),
+  /* Quién recibió la mercancía (obligatorio) y las pruebas guardadas en el archivo de albaranes */
+  recibe: String(c.recibe || ''),
+  archivos: (Array.isArray(c.archivos) ? c.archivos : [])
+    .filter((a) => a && typeof a.ruta === 'string')
+    .map((a) => ({
+      ruta: a.ruta,
+      nombre: String(a.nombre || ''),
+      tipo: ['foto', 'pdf', 'hoja'].indexOf(a.tipo) >= 0 ? a.tipo : 'foto',
+      tam: Number(a.tam) || 0,
+      subido: String(a.subido || ''),
+      por: String(a.por || ''),
+      ...(a.pendiente ? { pendiente: true } : {}),
+      ...(a.borrado ? { borrado: String(a.borrado) } : {}),
+    })),
   lineas: (Array.isArray(c.lineas) ? c.lineas : []).map((l) => ({
     nombre: String(l.nombre || ''),
     productoId: String(l.productoId || ''),
@@ -128,6 +145,10 @@ const nProv = (p) => ({
   whatsapp: String(p.whatsapp || ''),
   email: String(p.email || ''),
   nota: String(p.nota || ''),
+  /* Días en que acepta pedidos (0 = domingo … 6 = sábado), hora límite y con cuántas horas avisar */
+  diasPedido: (Array.isArray(p.diasPedido) ? p.diasPedido : []).map(Number).filter((d) => d >= 0 && d <= 6),
+  horaPedido: /^\d{2}:\d{2}$/.test(p.horaPedido || '') ? p.horaPedido : '',
+  avisoHoras: Number(p.avisoHoras) > 0 ? Math.min(48, Number(p.avisoHoras)) : 5,
 });
 /* Manual de la casa: lo que el equipo necesita saber cuando el encargado no está */
 const nManual = (m) => ({

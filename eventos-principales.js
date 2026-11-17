@@ -37,6 +37,12 @@ V.addEventListener('input', (e) => {
 V.addEventListener('change', (e) => {
   const t = e.target;
   if (nuevoChange(e)) return;
+  if (t.id === 'f-cprov') {
+    filCompra = t.value;
+    lim.compras = 30;
+    listaCompras();
+    return;
+  }
   if (t.id === 'f-est') {
     estProd = t.value;
     lim.precios = 50;
@@ -325,6 +331,7 @@ V.addEventListener('click', (e) => {
     }
   } else if (a === 'inv-sub') {
     invSub = b.dataset.v;
+    invSel = '';
     vInventario();
   } else if (a === 'sumar-inv') {
     const r = leerDictado($('inv-dictado').value);
@@ -356,9 +363,15 @@ V.addEventListener('click', (e) => {
     if (r.ok.length) listaMermas();
     msgDictado('me-dictado', r);
   } else if (a === 'cerrar-inv') cerrarInv();
+  else if (a === 'inv-ver') {
+    invSel = b.dataset.id;
+    vInventario();
+    scrollTo(0, 0);
+  } else if (a === 'ven-exp') abrirVentasExp();
   else if (a === 'borrar-inv') {
     if (!confirmar(b, 'Pulsa otra vez')) return;
-    borrar('inventarios', b.closest('.row').dataset.id);
+    borrar('inventarios', b.dataset.id || b.closest('[data-id]').dataset.id);
+    invSel = '';
     vInventario();
   } else if (a === 'borrar-merma') {
     borrar('mermas', b.closest('.row').dataset.id);
