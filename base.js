@@ -42,6 +42,7 @@ const UD = { kg: 'g', l: 'ml', ud: 'ud' },
 const SUBS = {
   inicio: [
     ['panel', 'Panel'],
+    ['turnos', 'Turnos y avisos'],
     ['manual', 'Manual'],
   ],
   carta: [
@@ -106,7 +107,9 @@ const S = {
   manual: [],
   dudas: [],
   fotos: [],
-  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [], diasAlbaranes: 30, archivados: [] },
+  turnos: [],
+  pedidos: [],
+  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [], diasAlbaranes: 30, archivados: [], horasFotos: 24, avisos: [] },
 };
 const COLS = [
   'platos',
@@ -122,6 +125,8 @@ const COLS = [
   'manual',
   'dudas',
   'fotos',
+  'turnos',
+  'pedidos',
 ];
 const cargado = {};
 let vista = 'inicio',

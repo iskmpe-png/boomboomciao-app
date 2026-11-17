@@ -47,6 +47,7 @@ function compraHTML(c) {
         c.lineas.map((l) => '<tr><td>' + esc(l.nombre) + '</td><td>' + fNum(l.cantidad, 3) + ' ' + UDI[l.unidad] + '</td><td>' + fEur.format(l.precio) + UDP[l.unidad].slice(1) + '</td><td>' + fEur.format(importeLinea(l)) + '</td></tr>').join('') +
         '</tbody><tfoot><tr><td>Total sin IVA</td><td></td><td></td><td>' + fEur.format(c.importe) + '</td></tr></tfoot></table></div>'
       : '<p class="hint">Apuntada solo con el importe, sin productos.</p>') +
+    cuadreHTML(c.proveedor, c.fecha, c.lineas, c.id) +
     '<p class="hint">' + esc(fFecha(c.fecha)) + (c.recibe ? ' · Recibió: ' + esc(c.recibe) : '') + (nombre(c.por) ? ' · Lo subió: ' + esc(nombre(c.por)) : '') + (c.creado ? ' · ' + esc(new Date(c.creado).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : '') + '</p>' +
     '<div class="acciones">' +
     c.archivos

@@ -22,6 +22,8 @@ const COLNIV = {
   compras: 1,
   appcc: 1,
   planes: 1,
+  turnos: 2,
+  pedidos: 1,
 };
 const ACT2 = new Set([
   'tf-importar',
@@ -67,6 +69,11 @@ const ACT2 = new Set([
   'ap-borrar',
   'ventas-importar',
   'vi-guardar',
+  'tu-crear',
+  'tu-add',
+  'tu-borrar',
+  'tu-copiar',
+  'av-borrar',
 ]);
 const ACT1 = new Set(['arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
 const FORMNIV = {
@@ -76,6 +83,8 @@ const FORMNIV = {
   'form-appcc': 1,
   'form-scan': 1,
   'form-ventas': 2,
+  'form-turnos': 2,
+  'form-avisop': 2,
 };
 const PANTNIV = {
   carta: 2,
@@ -114,7 +123,7 @@ const LIBRE = new Set([
   'b-inv',
   'b-sala',
 ]);
-const ID2 = new Set(['inv-per', 'et-dias']);
+const ID2 = new Set(['inv-per', 'et-dias', 'lf-horas']);
 const puede = (n) => LV[nivel] >= n;
 function aplicarPermisos() {
   if (nivel === 'admin') return;

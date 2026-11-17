@@ -1,6 +1,6 @@
 /* Boom Boom Ciao: guarda la app en el dispositivo para que abra sin conexión.
    Sube el número de versión cada vez que publiques cambios. */
-const CACHE = 'bbc-v14';
+const CACHE = 'bbc-v15';
 const BASE = [
   "./",
   "index.html",
@@ -80,6 +80,8 @@ const BASE = [
   "menus-carta.js",
   "zonas.js",
   "recordatorios.js",
+  "turnos.js",
+  "cuadre.js",
   "manual.js",
   "primeros-pasos.js",
   "buscador.js",
@@ -87,6 +89,8 @@ const BASE = [
   "sesion.js",
   "almacen-local.js",
   "archivos.js",
+  "avisos.js",
+  "limpieza.js",
   "sincronizacion.js",
   "acceso.js",
   "usuarios.js",
@@ -124,4 +128,37 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   e.respondWith(caches.match(r).then((m) => m || fetch(r).then(guarda)));
+});
+// Avisos al móvil: llegan del servidor aunque la app esté cerrada
+self.addEventListener('push', (e) => {
+  let d = {};
+  try {
+    d = e.data ? e.data.json() : {};
+  } catch (er) {
+    d = { cuerpo: e.data ? e.data.text() : '' };
+  }
+  e.waitUntil(
+    self.registration.showNotification(d.titulo || 'Boom Boom Ciao', {
+      body: d.cuerpo || '',
+      icon: 'icon-192.png',
+      badge: 'icon-192.png',
+      tag: d.clave || undefined,
+      data: { url: d.url || '' },
+    })
+  );
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const destino = new URL('./' + ((e.notification.data && e.notification.data.url) || ''), self.registration.scope).href;
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((l) => {
+      for (const c of l) {
+        if (c.url.indexOf(self.registration.scope) === 0 && 'focus' in c) {
+          c.navigate(destino).catch(() => {});
+          return c.focus();
+        }
+      }
+      return self.clients.openWindow(destino);
+    })
+  );
 });

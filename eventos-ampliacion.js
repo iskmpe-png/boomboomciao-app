@@ -169,6 +169,7 @@ function nuevoSubmit(f) {
     });
     S.compras.push(c);
     guardar('compras', c, true);
+    enlazarPedido(c);
     if (files.length) adjuntarA(c, files).then(() => pant === 'compras' && listaCompras());
     if (fe.slice(0, 7) !== mesM) {
       mesM = fe.slice(0, 7);
@@ -219,6 +220,16 @@ function nuevoSubmit(f) {
     });
     S.appcc.push(a);
     guardar('appcc', a, true);
+    const fi = $('ap-fotos'),
+      fts = fi ? Array.from(fi.files || []) : [];
+    if (fts.length) {
+      fi.value = '';
+      $('ap-fn').textContent = 'Subiendo ' + fts.length + (fts.length === 1 ? ' foto…' : ' fotos…');
+      fotosA(a, fts).then(() => {
+        if ($('ap-fn')) $('ap-fn').textContent = '';
+        if (pant === 'appcc') listaAppcc();
+      });
+    }
     apDia = hoy();
     $('ap-dia').value = apDia;
     $('ap-punto').value = '';

@@ -8,6 +8,7 @@ function nuevoInput2(e) {
         const n = q($('vista'), '.sc-l[data-k="' + k + '"] [data-out="n"]');
         if (n) n.innerHTML = notaLinea(l);
       });
+    if (t.dataset.scg === 'proveedor' || t.dataset.scg === 'fecha') pintaScExtra();
     return true;
   }
   if (t.dataset.sl && escaneo) {
@@ -23,6 +24,7 @@ function nuevoInput2(e) {
     } else if (c === 'unidad') l.unidad = uni(t.value);
     else l[c] = parse(t.value);
     q(f, '[data-out="n"]').innerHTML = notaLinea(l);
+    pintaScExtra();
     return true;
   }
   if (t.dataset.sc && escaneo) {

@@ -10,6 +10,57 @@ const nAjustes = (a) => ({
   /* Archivo de albaranes: días que se guardan y meses ya descargados en ZIP */
   diasAlbaranes: Number(a && a.diasAlbaranes) >= 7 ? Math.min(365, Number(a.diasAlbaranes)) : 30,
   archivados: (a && Array.isArray(a.archivados) ? a.archivados : []).filter((m) => /^\d{4}-\d{2}$/.test(m)),
+  /* Horas que se guardan las fotos de limpieza (de 1 a 48) y avisos personalizados al móvil */
+  horasFotos: Number(a && a.horasFotos) >= 1 ? Math.min(48, Math.round(Number(a.horasFotos))) : 24,
+  avisos: (a && Array.isArray(a.avisos) ? a.avisos : []).filter((x) => x && x.id).slice(0, 40).map(nAvisoP),
+});
+const HORA = (h) => (/^\d{2}:\d{2}$/.test(h || '') ? h : '');
+const nAvisoP = (x) => ({
+  id: String(x.id),
+  titulo: String(x.titulo || '').slice(0, 60),
+  texto: String(x.texto || '').slice(0, 200),
+  hora: HORA(x.hora) || '10:00',
+  dias: (Array.isArray(x.dias) ? x.dias : []).map(Number).filter((d, i, l) => d >= 0 && d <= 6 && l.indexOf(d) === i),
+  para: ['todos', 'encargados', 'personas'].indexOf(x.para) >= 0 ? x.para : 'todos',
+  personas: String(x.personas || '').slice(0, 200),
+  activo: x.activo !== false,
+});
+/* Semana del horario de turnos: el id es el lunes (AAAA-MM-DD). Cada fila es una tarea o un rol,
+   con quién la hace cada día por la mañana (am) y por la tarde (pm) y a qué hora se avisa. */
+const diasMapa = (o) => {
+  const r = {};
+  Object.keys(mapa(o)).forEach((k) => {
+    const t = String(o[k] || '').trim().slice(0, 80);
+    if (/^[0-6]$/.test(k) && t) r[k] = t;
+  });
+  return r;
+};
+const nTurno = (t) => ({
+  id: t.id,
+  filas: (Array.isArray(t.filas) ? t.filas : []).filter((f) => f && f.id).slice(0, 30).map((f) => ({
+    id: String(f.id),
+    tarea: String(f.tarea || '').slice(0, 80),
+    nota: String(f.nota || '').slice(0, 160),
+    horaAm: HORA(f.horaAm),
+    horaPm: HORA(f.horaPm),
+    am: diasMapa(f.am),
+    pm: diasMapa(f.pm),
+  })),
+});
+/* Pedido enviado a un proveedor: se guarda para cuadrarlo después con el albarán */
+const nPedido = (p) => ({
+  id: p.id,
+  fecha: String(p.fecha || hoy()),
+  proveedor: String(p.proveedor || ''),
+  enviado: String(p.enviado || ''),
+  por: String(p.por || ''),
+  compraId: String(p.compraId || ''),
+  lineas: (Array.isArray(p.lineas) ? p.lineas : []).map((l) => ({
+    nombre: String(l.nombre || ''),
+    productoId: String(l.productoId || ''),
+    cantidad: Number(l.cantidad) || 0,
+    unidad: uni(l.unidad),
+  })),
 });
 const nPlato = (p) => ({
   id: p.id,
@@ -121,6 +172,11 @@ const nAppcc = (a) => ({
   nota: String(a.nota || ''),
   quien: String(a.quien || ''),
   por: String(a.por || ''),
+  /* Fotos de limpieza: duran unas horas en la nube y luego se borran solas (queda el registro) */
+  fotos: (Array.isArray(a.fotos) ? a.fotos : [])
+    .filter((f) => f && typeof f.ruta === 'string')
+    .map((f) => ({ ruta: f.ruta, tam: Number(f.tam) || 0, subido: String(f.subido || ''), ...(f.pendiente ? { pendiente: true } : {}) })),
+  fotosBorradas: Number(a.fotosBorradas) || 0,
 });
 const nVenta = (v) => ({
   id: v.id,
@@ -173,4 +229,6 @@ const NORM = {
   fotos: nFoto,
   planes: nPlan,
   eventos: nEvento,
+  turnos: nTurno,
+  pedidos: nPedido,
 };

@@ -754,7 +754,8 @@ details.nueva-compra[open] > summary {
   display: flex;
   gap: 8px;
 }
-.pv-dias .dias {
+.pv-dias .dias,
+#form-avisop .dias {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -805,4 +806,131 @@ details.compra > summary .n b {
 }
 .compra-d table.nivel td:first-child {
   min-width: 110px;
+}
+/* ---- Turnos y avisos ---- */
+.tu-bar .tu-rango {
+  font-size: 0.98rem;
+  min-width: 0;
+}
+.tu-cab {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-end;
+}
+.tu-cab .grow {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.tu-cab .corto {
+  flex: 1 1 130px;
+  min-width: 0;
+}
+.tu-cab .corto input {
+  width: 100%;
+}
+.tu-tabla {
+  width: 100%;
+  table-layout: fixed;
+}
+.tu-tabla th:first-child {
+  width: 64px;
+  text-align: left;
+}
+#vista .tu-tabla th,
+#vista .tu-tabla td {
+  padding: 4px 3px;
+}
+.tu-tabla th small {
+  display: block;
+  font-weight: 400;
+  color: var(--muted);
+}
+.tu-tabla td input {
+  width: 100%;
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 6px;
+  font-size: 0.95rem;
+}
+.tu-tabla tr.hoy th,
+.tu-tabla tr.hoy td {
+  background: var(--accent-soft);
+}
+.turno .destinos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+.tu-hoy ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+.tu-aviso {
+  border-left: 3px solid var(--oro);
+  padding-left: 10px;
+}
+/* ---- Fotos de limpieza ---- */
+.lf-p h4 {
+  margin: 12px 0 4px;
+}
+.lf-z p {
+  margin: 6px 0;
+}
+.lf-fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+}
+.lf-f {
+  position: relative;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: var(--sunken);
+  cursor: zoom-in;
+  max-width: 100%;
+}
+.lf-f img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.lf-f span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  font-size: 0.7rem;
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.lf-f.rota::after {
+  content: 'Ya borrada';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.lf-h {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.86rem;
+}
+/* ---- Cuadre y subidas ---- */
+.cuadre.con-dif,
+.subidas {
+  border-left: 4px solid var(--warn);
+}
+.cu-res {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }

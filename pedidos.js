@@ -46,6 +46,7 @@ function vPedidos() {
     expHTML() +
     '</div>' +
     proximosHTML() +
+    enviadosHTML() +
     '<form id="form-ped" class="card pv-add" novalidate data-libre><div class="field grow"><label for="ped-prod">Producto</label><input id="ped-prod" type="text" list="dl-solo-prod" autocomplete="off" placeholder="Escribe para buscar"></div>' +
     '<div class="field" style="flex:0 1 110px"><label for="ped-cant">Cantidad</label><input id="ped-cant" class="num" type="text" inputmode="decimal" autocomplete="off"></div><button class="btn primary" type="submit">Añadir</button></form>' +
     (ks.length

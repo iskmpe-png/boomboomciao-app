@@ -295,6 +295,7 @@ V.addEventListener('click', (e) => {
   const en = e.target.closest('[data-env]');
   if (en) {
     pedEnv[en.dataset.env] = true;
+    registrarPedido(en.dataset.env);
     setTimeout(() => {
       if (pant === 'pedidos') vPedidos();
     }, 600);
@@ -322,7 +323,8 @@ V.addEventListener('click', (e) => {
     vPedidos();
   } else if (a === 'ped-copiar') {
     const tx = pedTexto(pedGrupos()[b.dataset.k] || []);
-    const ok = () => toast('Pedido copiado.');
+    registrarPedido(b.dataset.k);
+    const ok = () => toast('Pedido copiado. Queda guardado para cuadrarlo con el albarán.');
     try {
       navigator.clipboard.writeText(tx).then(ok, () => toast('No se pudo copiar aquí.'));
     } catch (er) {

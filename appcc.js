@@ -7,6 +7,7 @@ const apLista = () =>
 const apValor = (a) => (a.tipo === 'limpieza' ? '' : a.valor == null ? '' : fNum(a.valor, 1) + ' °C');
 function listaAppcc() {
   const l = apLista();
+  if ($('lf-hoy')) $('lf-hoy').innerHTML = limpiezaHoyHTML();
   $('lista-ap').innerHTML = l.length
     ? l
         .slice(0, lim.appcc)
@@ -21,7 +22,8 @@ function listaAppcc() {
               (apPer === 'mes' ? fFecha(a.fecha) + ' ' : '') +
                 a.hora +
                 (a.quien ? ' · ' + a.quien : porTxt(a.por)) +
-                (a.nota ? ' · ' + a.nota : ''),
+                (a.nota ? ' · ' + a.nota : '') +
+                (a.fotos.length ? ' · ' + a.fotos.length + (a.fotos.length === 1 ? ' foto' : ' fotos') : a.fotosBorradas ? ' · ' + a.fotosBorradas + ' fotos (ya borradas)' : ''),
             ) +
             '</span></div>' +
             '<div class="d"><b>' +
@@ -37,7 +39,7 @@ function listaAppcc() {
 }
 function vAppcc() {
   const pts = {};
-  ['Cámara 1', 'Cámara 2', 'Congelador', 'Mesa fría'].forEach((x) => {
+  ['Cámara 1', 'Cámara 2', 'Congelador', 'Mesa fría'].concat(apTipo === 'limpieza' ? ['Área de pastas', 'Almacén', 'Cámaras y bodega', 'Plancha y freidoras', 'Suelos'] : []).forEach((x) => {
     pts[x] = 1;
   });
   S.appcc.forEach((a) => {
@@ -76,19 +78,27 @@ function vAppcc() {
     '<div class="field wide"><label for="ap-nota">' +
     (apTipo === 'recepcion' ? 'Producto y observaciones' : 'Observaciones') +
     '</label><input id="ap-nota" type="text" autocomplete="off"></div>' +
+    (apTipo === 'limpieza'
+      ? '<div class="field wide"><label for="ap-fotos">Fotos de la zona (todas las que quieras)</label><input id="ap-fotos" type="file" accept="image/*" multiple><span class="hint" id="ap-fn"></span></div>'
+      : '') +
     (apTipo === 'temp'
       ? ''
       : '<label class="check" for="ap-ok"><input type="checkbox" id="ap-ok" checked> ' +
         (apTipo === 'limpieza' ? 'Hecho correctamente' : 'Mercancía aceptada') +
         '</label>') +
     '<button class="btn primary" type="submit">Registrar</button><span class="hint full" id="ap-msg" aria-live="polite">' +
-    (apTipo === 'temp' ? 'Se marca incidencia si una cámara pasa de 5 °C o un congelador de −18 °C.' : '') +
+    (apTipo === 'temp' ? 'Se marca incidencia si una cámara pasa de 5 °C o un congelador de −18 °C.' : apTipo === 'limpieza' ? 'Haz un registro por zona: por ejemplo «Área de pastas» con sus fotos y otro «Almacén» con las suyas.' : '') +
     '</span></form>' +
     '<datalist id="dl-puntos">' +
     Object.keys(pts)
       .map((x) => '<option value="' + esc(x) + '"></option>')
       .join('') +
     '</datalist></section>' +
+    (apTipo === 'limpieza' ? '<div id="lf-hoy">' + limpiezaHoyHTML() + '</div>' + galeriaHTML() : '') +
     '<section class="card"><div class="rows" id="lista-ap"></div></section>';
   listaAppcc();
+  if (apTipo === 'limpieza') {
+    pintaGaleria();
+    setTimeout(caducarFotos, 2500);
+  }
 }

@@ -86,6 +86,7 @@ function pintar() {
     historial: vHistorial,
     grupo: vGrupo,
     manual: vManual,
+    turnos: vTurnos,
   })[pant]();
 }
 function refrescar() {

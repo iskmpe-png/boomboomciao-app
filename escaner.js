@@ -148,6 +148,7 @@ function vEscaneo() {
       : '') +
     (e.total ? '<p class="hint">Total con IVA en el albarán: ' + fEur.format(e.total) + '</p>' : '') +
     '</section>' +
+    '<div id="sc-extra" class="col">' + scExtraHTML() + '</div>' +
     '<section class="card"><h3>' +
     e.lineas.length +
     (e.lineas.length === 1 ? ' línea' : ' líneas') +
@@ -252,6 +253,7 @@ async function guardarEscaneo() {
   }
   S.compras.push(c);
   guardar('compras', c, true);
+  enlazarPedido(c);
   escaneo = null;
   mesM = c.fecha.slice(0, 7);
   pintarListas();
