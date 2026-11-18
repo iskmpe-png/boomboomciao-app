@@ -207,6 +207,7 @@ V.addEventListener('click', (e) => {
       compras: listaCompras,
       hist: vHistorial,
       tarifa: vTarifa,
+      consumo: () => filasConsumo(),
     })[k]();
   } else if (a === 'abrir') abrirPlato(b.dataset.id);
   else if (a === 'volver') {

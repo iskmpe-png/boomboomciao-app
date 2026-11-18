@@ -67,6 +67,8 @@ function vIng() {
     (sAPI ? '<button class="btn primary" type="button" data-act="ventas-importar">Importar ventas</button>' : '') +
     expHTML(0, mOp('ven-exp', 'Ventas de un día, semana o mes…')) +
     '</div><div class="kpis" id="ing-k"></div>' +
+    importadasHTML() +
+    menusVendidosHTML() +
     '<section class="card"><div class="rows" id="lista-ing">' +
     (r.d.length
       ? r.d
@@ -87,7 +89,6 @@ function vIng() {
           .join('')
       : '<p class="hint">Aún no hay platos con precio de carta.</p>') +
     '</div></section>' +
-    semanasHTML() +
-    importadasHTML();
+    semanasHTML();
   calcIng();
 }

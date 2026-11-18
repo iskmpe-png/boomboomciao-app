@@ -319,7 +319,7 @@ function nuevoClick(b, a) {
     const ev = evento(),
       id = $('ev-sel').value;
     if (ev && id) {
-      ev.platos.push({ id: id, n: 1 });
+      ev.platos.push({ id: id, n: 1, tiempo: '' });
       guardar('eventos', ev);
       vEventos();
     }

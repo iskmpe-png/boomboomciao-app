@@ -33,6 +33,8 @@ function vendidoEn(d, h) {
         k = diasEntre(ini, fin) / diasEntre(x.desde, x.hasta);
       for (let f = ini; f <= fin; f = masDias(f, 1)) dias.add(f);
       x.lineas.forEach(([pid, n]) => (u[pid] = (u[pid] || 0) + n * k));
+      /* Los platos vendidos dentro de menús también se gastan */
+      (x.menuLineas || []).forEach(([pid, n]) => (u[pid] = (u[pid] || 0) + n * k));
     }),
   );
   return { u: u, dias: dias.size, viejos: viejos };
@@ -174,8 +176,8 @@ function vConsumo() {
     '<section class="card"><div class="acciones" style="justify-content:space-between"><h3>Productos</h3><div class="acciones">' +
     '<input id="b-cns" type="search" aria-label="Buscar producto" placeholder="Buscar" value="' + esc(cnsBus) + '">' +
     '<label class="check"><input type="checkbox" id="cn-todo"' + (cnsTodo ? ' checked' : '') + '> Ver todos</label></div></div>' +
-    '<p class="hint">Gasto según ventas = lo que llevan los platos vendidos, con la merma de cada escandallo. Debería quedar = inventario del ' + (r.ini ? esc(fFecha(r.ini.fecha)) : '—') + ' + compras − gasto − mermas.' + (r.fin ? ' Contado: inventario del ' + esc(fFecha(r.fin.fecha)) + '.' : '') + ' Mínimo sugerido = gasto diario × días hasta el próximo pedido × 1,2.</p>' +
-    '<div class="tabla"><table class="nivel cns"><thead><tr><th>Producto</th><th>Inicial</th><th>Compras</th><th>Gasto ventas</th><th>Mermas</th><th>Debería quedar</th>' + (r.fin ? '<th>Contado</th><th>Diferencia</th>' : '') + '<th>Por semana</th><th>Mín. sugerido</th><th>Mín. actual</th></tr></thead><tbody id="cn-filas"></tbody></table></div>' +
+    '<p class="hint"><b>Toca un producto para ver de dónde sale su gasto.</b> Gasto según ventas = lo que llevan los platos vendidos, con la merma de cada escandallo. Debería quedar = inventario del ' + (r.ini ? esc(fFecha(r.ini.fecha)) : '—') + ' + compras − gasto − mermas.' + (r.fin ? ' Contado: inventario del ' + esc(fFecha(r.fin.fecha)) + '.' : '') + ' Mínimo sugerido = gasto diario × días hasta el próximo pedido × 1,2.</p>' +
+    '<div class="tabla"><table class="nivel cns"><thead><tr><th>Producto</th><th>Inicial</th><th>Compras</th><th>Gasto ventas</th><th>Mermas</th><th>Debería quedar</th>' + (r.fin ? '<th>Contado</th><th>Diferencia</th>' : '') + '<th>Por semana</th><th>Mín. sugerido</th><th>Mín. actual</th></tr></thead><tbody id="cn-filas"></tbody></table></div><div class="acciones" id="cn-mas"></div>' +
     (puede(2) ? '<div class="acciones"><button class="btn" type="button" data-act="cn-minimos">Poner los mínimos sugeridos</button></div>' : '') +
     '</section>' +
     '<section class="card"><h3>Elaboraciones: producción semanal</h3>' +
@@ -188,7 +190,9 @@ function vConsumo() {
     '</section>';
   filasConsumo(r);
 }
-let cnsUlt = null;
+let cnsUlt = null,
+  cnsSel = '';
+const CN_LIM = 20;
 function filasConsumo(r) {
   r = r || cnsUlt;
   cnsUlt = r;
@@ -198,22 +202,86 @@ function filasConsumo(r) {
       .sort((a, z) => z.gasto * z.p.precio - a.gasto * a.p.precio || a.p.nombre.localeCompare(z.p.nombre, 'es'));
   const el = $('cn-filas');
   if (!el) return;
+  const ncol = r.fin ? 11 : 9;
+  if (lim.consumo == null) lim.consumo = CN_LIM;
   el.innerHTML = l.length
     ? l
+        .slice(0, lim.consumo)
         .map((x) => {
           const u = x.p.unidad,
             dif = x.real != null && x.teo != null ? x.real - x.teo : null,
             bajo = x.teo != null && x.min > 0 && x.teo < x.min;
           return (
-            '<tr><td><b>' + esc(x.p.nombre) + '</b>' + (x.p.general ? ' <span class="pill">Uso general</span>' : !platosDe(x.p.id).size ? ' <span class="pill crit">Sin enlazar</span>' : '') + (x.otraUd ? ' <span class="pill warn" title="Algún albarán viene en otra unidad y no se suma">otra unidad</span>' : '') + '</td>' +
+            '<tr class="cn-f' + (cnsSel === x.p.id ? ' sel' : '') + '" data-cnp="' + esc(x.p.id) + '" tabindex="0" role="button" aria-expanded="' + (cnsSel === x.p.id) + '"><td><b>' + esc(x.p.nombre) + '</b>' + (x.p.general ? ' <span class="pill">Uso general</span>' : !platosDe(x.p.id).size ? ' <span class="pill crit">Sin enlazar</span>' : '') + (x.otraUd ? ' <span class="pill warn" title="Algún albarán viene en otra unidad y no se suma">otra unidad</span>' : '') + '</td>' +
             '<td>' + qU(x.ini, u) + '</td><td>' + (x.compra ? qU(x.compra, u) : '—') + '</td><td>' + (x.gasto ? qU(x.gasto, u) : '—') + '</td><td>' + (x.merma ? qU(x.merma, u) : '—') + '</td>' +
             '<td' + (x.teo != null && x.teo < 0 ? ' class="neg"' : bajo ? ' class="bajo"' : '') + '><b>' + qU(x.teo, u) + '</b></td>' +
             (r.fin ? '<td>' + qU(x.real, u) + '</td><td' + (dif != null && Math.abs(dif) > 0.0005 ? ' class="' + (dif < 0 ? 'neg' : 'pos') + '"' : '') + '>' + (dif == null ? '—' : (dif > 0 ? '+' : '') + qU(dif, u)) + '</td>' : '') +
-            '<td>' + (x.semana ? qU(x.semana, u) : '—') + '</td><td><b>' + (x.min ? qU(x.min, u) : '—') + '</b></td><td>' + (x.p.minimo ? qU(x.p.minimo, u) : '—') + '</td></tr>'
+            '<td>' + (x.semana ? qU(x.semana, u) : '—') + '</td><td><b>' + (x.min ? qU(x.min, u) : '—') + '</b></td><td>' + (x.p.minimo ? qU(x.p.minimo, u) : '—') + '</td></tr>' +
+            (cnsSel === x.p.id ? '<tr class="cn-det"><td colspan="' + ncol + '">' + detalleConsumo(x, r) + '</td></tr>' : '')
           );
         })
         .join('')
-    : '<tr><td colspan="11" class="hint">' + (r.platos ? 'Nada que mostrar con ese filtro.' : 'No hay ventas importadas en estas fechas.') + '</td></tr>';
+    : '<tr><td colspan="' + ncol + '" class="hint">' + (r.platos ? 'Nada que mostrar con ese filtro.' : 'No hay ventas importadas en estas fechas.') + '</td></tr>';
+  const m = $('cn-mas');
+  if (m)
+    m.innerHTML =
+      '<span class="hint">' + Math.min(l.length, lim.consumo) + ' de ' + l.length + '</span>' + masHTML('consumo', l.length) +
+      (lim.consumo > CN_LIM ? '<button class="btn small" type="button" data-act="cn-menos">Ver menos</button>' : '');
+}
+/* ---- De dónde sale el gasto de un producto ----
+   Por cada plato vendido: cuánto lleva de ese producto (con merma) y por qué elaboración pasa. */
+function rutaProd(p, pid, d) {
+  const via = [];
+  if ((d || 0) > 6) return via;
+  p.ingredientes.forEach((i) => {
+    if (i.productoId === pid) via.push('');
+    else {
+      const b = baseDe(i);
+      if (b) rutaProd(b, pid, (d || 0) + 1).forEach((v) => via.push(b.nombre + (v ? ' › ' + v : '')));
+    }
+  });
+  return via;
+}
+function aportes(pid, r) {
+  const l = [];
+  Object.keys(r.vendido.u).forEach((id) => {
+    const pl = idx().pl.get(id),
+      n = r.vendido.u[id];
+    if (!pl || !(n > 0)) return;
+    const P = {};
+    explotarC(pl, n, P, {}, 0);
+    if (P[pid] > 0) l.push({ pl: pl, n: n, q: P[pid], via: [...new Set(rutaProd(pl, pid, 0))] });
+  });
+  return l.sort((a, z) => z.q - a.q);
+}
+function detalleConsumo(x, r) {
+  const u = x.p.unidad,
+    ap = aportes(x.p.id, r),
+    compras = S.compras
+      .filter((c) => c.fecha >= r.d && c.fecha <= r.h)
+      .map((c) => ({ c: c, q: suma(c.lineas.filter((l) => l.productoId === x.p.id && l.unidad === u), (l) => l.cantidad) }))
+      .filter((y) => y.q > 0),
+    mer = S.mermas.filter((m) => m.productoId === x.p.id && m.fecha >= r.d && m.fecha <= r.h && m.unidad === u),
+    pl = (n) => fNum(n, n % 1 ? 1 : 0);
+  return (
+    '<div class="cn-exp">' +
+    (ap.length
+      ? '<p>En ventas del ' + esc(fRangoF(r.d, r.h)) + ' se gastaron <b>' + qU(x.gasto, u) + ' de ' + esc(x.p.nombre) + '</b> porque se vendieron:</p><ul>' +
+        ap
+          .slice(0, 15)
+          .map((y) => '<li><b>' + pl(y.n) + ' × ' + esc(y.pl.nombre) + '</b> → ' + qU(y.q, u) + ' <span class="hint">(' + qU(y.q / y.n, u) + ' cada uno' + (y.via.filter(Boolean).length ? ', a través de ' + esc(y.via.filter(Boolean).join(' y ')) : '') + ')</span></li>')
+          .join('') +
+        (ap.length > 15 ? '<li class="hint">y ' + (ap.length - 15) + ' platos más</li>' : '') +
+        '</ul><p class="hint">Las cantidades ya incluyen el % de merma de cada escandallo.</p>'
+      : '<p>No se gastó nada según las ventas de estas fechas' + (x.p.general ? ' (es de uso general, no va en ningún plato).' : !platosDe(x.p.id).size ? ': no está en ningún plato.' : ': ninguno de sus platos se vendió.') + '</p>') +
+    (compras.length ? '<p>Compras: ' + compras.map((y) => qU(y.q, u) + ' de ' + esc(y.c.proveedor || 'proveedor') + ' el ' + esc(fFecha(y.c.fecha))).join(' · ') + '.</p>' : '') +
+    (mer.length ? '<p>Mermas apuntadas: ' + mer.map((m) => qU(m.cantidad, u) + ' (' + esc(m.motivo) + ')').join(' · ') + '.</p>' : '') +
+    (x.teo != null
+      ? '<p>Debería quedar: ' + qU(x.ini, u) + ' del inventario + ' + qU(x.compra, u) + ' comprados − ' + qU(x.gasto, u) + ' gastados − ' + qU(x.merma, u) + ' de merma = <b>' + qU(x.teo, u) + '</b>' + (x.real != null ? '. Contado: ' + qU(x.real, u) + '.' : '.') + '</p>'
+      : '') +
+    (x.min ? '<p class="hint">Mínimo sugerido: ' + qU(x.semana / 7, u) + ' al día × ' + cobertura(x.p) + ' días hasta el siguiente pedido × 1,2 = ' + qU(x.min, u) + '.</p>' : '') +
+    '</div>'
+  );
 }
 function avisosConsumo(r, sin) {
   const l = [];
@@ -291,8 +359,31 @@ V.addEventListener('change', (e) => {
 V.addEventListener('input', (e) => {
   if (pant === 'consumo' && e.target.id === 'b-cns') {
     cnsBus = e.target.value;
+    lim.consumo = CN_LIM;
     filasConsumo();
   }
+});
+function abrirDetalleCn(tr) {
+  const id = tr.dataset.cnp;
+  cnsSel = cnsSel === id ? '' : id;
+  filasConsumo();
+}
+V.addEventListener('click', (e) => {
+  if (pant !== 'consumo') return;
+  const tr = e.target.closest('tr[data-cnp]');
+  if (tr) return abrirDetalleCn(tr);
+  if (e.target.closest('[data-act="cn-menos"]')) {
+    lim.consumo = CN_LIM;
+    filasConsumo();
+    const t = q($('vista'), 'table.cns');
+    if (t) t.scrollIntoView({ block: 'start' });
+  }
+});
+V.addEventListener('keydown', (e) => {
+  const tr = pant === 'consumo' && (e.key === 'Enter' || e.key === ' ') && e.target.closest('tr[data-cnp]');
+  if (!tr) return;
+  e.preventDefault();
+  abrirDetalleCn(tr);
 });
 V.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act="cn-minimos"],[data-act="cn-plan"]');
@@ -332,9 +423,23 @@ V.addEventListener('click', (e) => {
   if (pant === 'precios') vPrecios();
 });
 V.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-act="vimp-quitar"]');
-  if (!b || !puede(2)) return;
-  const r = b.closest('[data-vm]'),
-    v = S.ventas.find((x) => x.id === r.dataset.vm);
-  if (v && confirmar(b, '¿Quitar?')) quitarImportacion(v, +r.dataset.vi);
+  const b = e.target.closest('[data-act^="vimp-"]');
+  if (!b) return;
+  const a = b.dataset.act;
+  if (a === 'vimp-mas' || a === 'vimp-menos') {
+    impVer = a === 'vimp-mas' ? impVer + 20 : 10;
+    vIng();
+    return;
+  }
+  e.preventDefault(); // el botón está dentro del resumen desplegable: que no lo abra
+  if (!puede(2)) return toast('Solo el encargado puede quitar ventas.');
+  if (a === 'vimp-quitar') {
+    const r = b.closest('[data-vm]'),
+      v = S.ventas.find((x) => x.id === r.dataset.vm);
+    if (v && confirmar(b, '¿Quitar?')) quitarImportacion(v, +r.dataset.vi);
+  } else if (a === 'vimp-repes') {
+    if (confirmar(b, '¿Quitar los repetidos?')) quitarRepetidos();
+  } else if (a === 'vimp-mes') {
+    if (confirmar(b, 'Pulsa otra vez para borrar todo el mes')) borrarVentasMes();
+  }
 });

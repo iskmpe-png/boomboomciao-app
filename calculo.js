@@ -64,11 +64,45 @@ const fcDe = (p) => {
 /* Food cost que cuenta para la media general: lo que solo se vende dentro de un menú no entra,
    porque su precio suelto no es real. En su lugar cuenta el food cost del menú entero. */
 const fcGen = (p) => (p.soloMenu ? null : fcDe(p));
-const costeMenu = (e) =>
-  suma(e.platos, (x) => {
-    const p = idx().pl.get(x.id);
-    return p ? x.n * costeUd(p) : 0;
+/* Tiempos de un menú con opciones: { 'Entrante': [platos…], 'Principal': […] }.
+   Un plato sin tiempo cuenta como un tiempo propio (siempre va en el menú). */
+const T_SOLO = '·';
+const tmpo = (x) => String((x && x.tiempo) || '').trim();
+function tiemposMenu(e) {
+  const t = {};
+  e.platos.forEach((x) => {
+    const k = tmpo(x) || T_SOLO + x.id;
+    (t[k] || (t[k] = [])).push(x);
   });
+  return t;
+}
+const costeOp = (x) => {
+  const p = idx().pl.get(x.id);
+  return p ? x.n * costeUd(p) : 0;
+};
+/* Coste por persona. Menú cerrado: todos los platos. Con opciones: de cada tiempo, la media de sus opciones. */
+const costeMenu = (e) => {
+  if (!e.opciones) return suma(e.platos, costeOp);
+  const t = tiemposMenu(e);
+  return suma(Object.keys(t), (k) => suma(t[k], costeOp) / t[k].length);
+};
+/* Lo más caro que puede salir (si todos eligen la opción más cara de cada tiempo) */
+const costeMenuMax = (e) => {
+  if (!e.opciones) return costeMenu(e);
+  const t = tiemposMenu(e);
+  return suma(Object.keys(t), (k) => Math.max(...t[k].map(costeOp)));
+};
+/* Menús vendidos a partir de los platos del TPV: de cada tiempo se suman sus opciones,
+   y el total del menú es el tiempo que más vendió (cada persona toma uno de cada). */
+function menusVendidos(e, uds) {
+  const t = tiemposMenu(e);
+  let max = 0;
+  Object.keys(t).forEach((k) => {
+    const s = suma(t[k], (x) => Number(uds[x.id]) || 0);
+    if (s > max) max = s;
+  });
+  return max;
+}
 const fcMenu = (e) => {
   const c = costeMenu(e);
   return e.precio > 0 && c > 0 ? (c / (e.precio / 1.1)) * 100 : null;
@@ -89,6 +123,20 @@ function gruposCarta() {
   });
   return l.concat(Object.keys(extra).sort((a, z) => a.localeCompare(z, 'es')));
 }
+/* Lo mismo para las elaboraciones de la casa */
+function gruposElab() {
+  const l = (S.ajustes.gruposElab || []).slice(),
+    extra = {};
+  S.platos.forEach((p) => {
+    const g = p.grupo.trim();
+    if (p.base && g && l.indexOf(g) < 0) extra[g] = 1;
+  });
+  return l.concat(Object.keys(extra).sort((a, z) => a.localeCompare(z, 'es')));
+}
+/* Los grupos de la lista que se está viendo: Platos o Elaboraciones */
+const gruposLista = () => (enElab() ? gruposElab() : gruposCarta());
+/* Grupo de una ficha dentro de su lista (lo que no tiene grupo va a «Sin grupo») */
+const grupoLista = (p) => p.grupo.trim() || SIN_GRUPO;
 const SIN_GRUPO = 'Platos'; // así se llama, por dentro, lo que no tiene grupo
 const grupoDe = (p) => (p.base ? G_BASE : p.grupo.trim() || 'Platos');
 function abierto(crear) {

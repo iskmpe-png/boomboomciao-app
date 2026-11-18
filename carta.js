@@ -4,12 +4,12 @@ function filtradosCarta() {
   const elab = enElab(),
     oc = elab ? null : ocultosEnMenu(),
     l = ordenados(S.platos).filter(
-      (p) => !!p.base === elab && enArea(p) && (elab || !oc.has(p.id)) && (elab || !grp || grupoDe(p) === grp) && (!f || norm(p.nombre).indexOf(f) >= 0 || p.alias.some((a) => norm(a).indexOf(f) >= 0)),
+      (p) => !!p.base === elab && enArea(p) && (elab || !oc.has(p.id)) && (!grp || (elab ? grupoLista(p) : grupoDe(p)) === grp) && (!f || norm(p.nombre).indexOf(f) >= 0 || p.alias.some((a) => norm(a).indexOf(f) >= 0)),
     );
-  if (grp === MENUS) return [];
-  if (elab || grp) return ordenaCarta(l);
+  if (grp === MENUS) return elab ? ordenaCarta(l) : [];
+  if (grp) return ordenaCarta(l);
   /* Con todo a la vista, las fichas van juntas por grupo y lo que no tiene grupo al final */
-  const gs = gruposCarta(),
+  const gs = gruposLista(),
     pos = (p) => (p.grupo.trim() ? gs.indexOf(p.grupo.trim()) : 1e6);
   return ordenaCarta(l).sort((a, z) => pos(a) - pos(z));
 }
@@ -63,12 +63,13 @@ function vCarta() {
     return;
   }
   const oc = ocultosEnMenu(),
-    visibles = S.platos.filter((p) => !p.base && enArea(p) && !oc.has(p.id)),
-    cuenta = (g) => visibles.filter((p) => grupoDe(p) === g).length,
+    visibles = S.platos.filter((p) => !!p.base === elab && enArea(p) && (elab || !oc.has(p.id))),
+    gd = (p) => (elab ? grupoLista(p) : grupoDe(p)),
+    cuenta = (g) => visibles.filter((p) => gd(p) === g).length,
     /* En cada zona solo se ven sus grupos (y los que aún están vacíos) */
-    ks = gruposCarta().filter((g) => cuenta(g) || !S.platos.some((p) => !p.base && grupoDe(p) === g)),
+    ks = gruposLista().filter((g) => cuenta(g) || !S.platos.some((p) => !!p.base === elab && gd(p) === g)),
     sueltos = cuenta(SIN_GRUPO),
-    nm = S.eventos.filter((e) => e.enCarta).length;
+    nm = elab ? 0 : S.eventos.filter((e) => e.enCarta).length;
   if (grp && grp !== SIN_GRUPO && grp !== MENUS && ks.indexOf(grp) < 0) grp = '';
   if (grp === MENUS && !nm) grp = '';
   const chip = (g, t, n) => '<button class="chipg" type="button" data-act="grupo" data-g="' + esc(g) + '" aria-pressed="' + (g === grp) + '">' + esc(t) + (n == null ? '' : ' <small>' + n + '</small>') + '</button>';
@@ -81,13 +82,11 @@ function vCarta() {
       : '<button class="btn primary" type="button" data-act="nuevo-plato">' + (elab ? 'Nueva' : 'Nuevo') + '</button>' +
         expHTML(
           1,
-          mOp('sel-ini', 'Seleccionar varios', ' data-m="carta"') + mOp('ei-importar', 'Importar escandallos') + (elab ? '' : mOp('gr-editar', 'Editar grupos')),
+          mOp('sel-ini', 'Seleccionar varios', ' data-m="carta"') + mOp('ei-importar', 'Importar escandallos') + mOp('gr-editar', 'Editar grupos'),
         )) +
     '</div>' +
-    (elab
-      ? ''
-      : '<div class="gruposc" id="gruposc">' + chip('', 'Todo', visibles.length + nm) + (nm ? chip(MENUS, 'Menús', nm) : '') + ks.map((g) => chip(g, g, cuenta(g))).join('') + (sueltos && ks.length ? chip(SIN_GRUPO, 'Sin grupo', sueltos) : '') +
-        (ks.length ? '' : '<button class="link" type="button" data-act="gr-editar">Crear grupos: pizzas, pastas, brunch…</button>') + '</div>') +
+    '<div class="gruposc" id="gruposc">' + chip('', 'Todo', visibles.length + nm) + (nm ? chip(MENUS, 'Menús', nm) : '') + ks.map((g) => chip(g, g, cuenta(g))).join('') + (sueltos && ks.length ? chip(SIN_GRUPO, 'Sin grupo', sueltos) : '') +
+    (ks.length ? '' : '<button class="link" type="button" data-act="gr-editar">' + (elab ? 'Crear grupos: salsas, masas, mayonesas, caldos…' : 'Crear grupos: pizzas, pastas, brunch…') + '</button>') + '</div>' +
     '<div class="ordenc"><label for="f-ord">Ordenar</label><select id="f-ord">' +
     [['', 'Por nombre'], ['fc', 'Food cost más alto'], ['coste', 'Coste más alto']].map((o) => '<option value="' + o[0] + '"' + (o[0] === ordCarta ? ' selected' : '') + '>' + o[1] + '</option>').join('') +
     '</select></div>' +
@@ -122,7 +121,8 @@ function listaCarta() {
         .slice(0, lim.carta)
         .map((p, k, vis) => {
           const c = costeUd(p),
-            cab = !enElab() && !grp && (gruposCarta().length || mh) && (!k || grupoDe(vis[k - 1]) !== grupoDe(p));
+            gdl = enElab() ? grupoLista : grupoDe,
+            cab = !grp && (gruposLista().length || mh) && (!k || gdl(vis[k - 1]) !== gdl(p));
           return (
             (cab ? '<h3 class="grupoh">' + esc(p.grupo.trim() || 'Sin grupo') + '</h3>' : '') +
             (selModo === 'carta'

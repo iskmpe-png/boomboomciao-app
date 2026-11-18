@@ -44,6 +44,7 @@ function nuevoInput2(e) {
       else if (c === 'precio') l.precio = Math.round(parse(t.value) * 100) / 100;
       else if (c === 'alias') l.alias = t.checked;
       else if (c === 'renombrar') l.renombrar = t.checked;
+      else if (c === 'tiempo') l.tiempo = t.value.trim().slice(0, 40);
       else if (c === 'pid') {
         l.pid = t.value;
         /* Elegido a mano: deja de ser una sugerencia y se recuerda el nombre del TPV */
@@ -53,8 +54,20 @@ function nuevoInput2(e) {
         scrollTo(0, y);
         return true;
       }
-      if ($('vi-n')) $('vi-n').textContent = 'Sumar ' + vendidos() + ' platos vendidos';
+      if ($('vi-n')) $('vi-n').textContent = textoSumar();
+      const mb = t.closest('[data-mi]'),
+        m = mb && ventasImp.menus[+mb.dataset.mi],
+        o = mb && q(mb, '[data-out="tm"]');
+      if (m && o) o.textContent = totalMenu(m) + (totalMenu(m) === 1 ? ' menú' : ' menús');
     }
+    return true;
+  }
+  if (t.dataset.vim && ventasImp) {
+    const m = ventasImp.menus[+t.closest('[data-mi]').dataset.mi];
+    if (m) m.ev = t.value;
+    const y = scrollY;
+    vIng();
+    scrollTo(0, y);
     return true;
   }
   return false;

@@ -85,6 +85,9 @@ function vFicha() {
         '</select></div>' +
         '<div class="field"><label for="p-cad">Días de vida</label><input class="num" id="p-cad" data-p="caducidad" type="text" inputmode="numeric" placeholder="3" value="' +
         esc(show(p.caducidad)) +
+        '"></div>' +
+        '<div class="field"><label for="p-grupo">Grupo</label><input id="p-grupo" data-p="grupo" type="text" list="dl-gelab" autocomplete="off" placeholder="Ej. Salsas, Masas, Caldos" value="' +
+        esc(p.grupo) +
         '"></div>'
       : '<div class="field"><label for="p-raciones">Raciones</label><input class="num" id="p-raciones" data-p="raciones" type="text" inputmode="decimal" value="' +
         esc(show(p.raciones)) +
@@ -205,6 +208,7 @@ function inputFicha(e) {
       return;
     }
     if (dp === 'base') {
+      if (p.base !== t.checked) p.grupo = '';
       p.base = t.checked;
       guardar('platos', p);
       vFicha();

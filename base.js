@@ -110,7 +110,7 @@ const S = {
   fotos: [],
   turnos: [],
   pedidos: [],
-  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [], diasAlbaranes: 30, archivados: [], horasFotos: 24, avisos: [] },
+  ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [], gruposElab: [], diasAlbaranes: 30, archivados: [], horasFotos: 24, avisos: [] },
 };
 const COLS = [
   'platos',
