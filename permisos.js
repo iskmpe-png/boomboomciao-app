@@ -70,6 +70,9 @@ const ACT2 = new Set([
   'ventas-importar',
   'vi-guardar',
   'tu-crear',
+  'cn-minimos',
+  'tu-repartir',
+  'tu-subir',
   'tu-add',
   'tu-borrar',
   'tu-copiar',
@@ -122,13 +125,50 @@ const LIBRE = new Set([
   'b-prod',
   'b-inv',
   'b-sala',
+  'b-cns',
+  'cn-todo',
+  'cn-per',
+  'cn-d',
+  'cn-h',
 ]);
 const ID2 = new Set(['inv-per', 'et-dias', 'lf-horas']);
 const puede = (n) => LV[nivel] >= n;
+/* ---- Áreas: un encargado de barra no cambia lo de cocina, y al revés ---- */
+let miAreaV = 'todas';
+const miArea = () => miAreaV;
+const areaDe = (x) => (x === 'barra' || (x && x.area === 'barra') ? 'barra' : 'cocina');
+/* ¿Puede este usuario cambiar algo de esa área? (a: 'barra', 'cocina', '' o un producto/plato) */
+const puedeArea = (a) => puede(2) && (miAreaV === 'todas' || areaDe(a) === miAreaV);
+function fijarArea(a) {
+  miAreaV = a === 'cocina' || a === 'barra' ? a : 'todas';
+  if (miAreaV !== 'todas') {
+    /* Cada uno trabaja en su zona por defecto */
+    area = miAreaV;
+    if ($('area-sel')) $('area-sel').value = area;
+    vigilarVista();
+  }
+}
+function aplicarArea(r) {
+  if (miAreaV === 'todas') return;
+  const bloque = (el) => {
+    const c = el.closest('[data-area]');
+    return c ? !puedeArea(c.dataset.area) : r.dataset.area != null && !puedeArea(r.dataset.area);
+  };
+  r.querySelectorAll('input,select,textarea').forEach((el) => {
+    if (el.type === 'search' || LIBRE.has(el.id) || el.closest('[data-libre]')) return;
+    if (bloque(el)) el.disabled = true;
+  });
+  r.querySelectorAll('[data-act]').forEach((b) => {
+    if (b.classList.contains('row') || b.closest('[data-libre]')) return;
+    if ((ACT2.has(b.dataset.act) || AREA_ACT.has(b.dataset.act)) && bloque(b)) b.hidden = true;
+  });
+}
+const AREA_ACT = new Set(['borrar-prod', 'add-ing', 'quitar-ing', 'borrar-plato', 'duplicar', 'guardar-prod', 'conv-ud']);
 function aplicarPermisos() {
+  const r = $('vista');
+  aplicarArea(r);
   if (nivel === 'admin') return;
-  const r = $('vista'),
-    base = PANTNIV[pant] || 0;
+  const base = PANTNIV[pant] || 0;
   r.querySelectorAll('input,select,textarea').forEach((el) => {
     if (el.type === 'search' || el.type === 'file' || LIBRE.has(el.id) || el.closest('[data-libre]')) return;
     const f = el.closest('form'),
@@ -161,7 +201,11 @@ function setNivel(n) {
   nivel = n;
   $('m-copia').hidden = n !== 'admin';
   $('rol').textContent = NIVTXT[n];
-  if (n !== 'admin' && !obs) {
+  if (n !== 'admin') vigilarVista();
+  pintar();
+}
+function vigilarVista() {
+  if (!obs) {
     let pend = false;
     obs = new MutationObserver(() => {
       if (pend) return;
@@ -173,7 +217,6 @@ function setNivel(n) {
     });
     obs.observe($('vista'), { childList: true, subtree: true });
   }
-  pintar();
 }
 function permClick(b, a) {
   if ((ACT2.has(a) && !puede(2)) || (ACT1.has(a) && !puede(1))) {

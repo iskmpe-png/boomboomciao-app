@@ -28,13 +28,14 @@ function ruta() {
   pintar();
 }
 window.addEventListener('hashchange', ruta);
-const SECN = { inicio: 'Inicio', carta: 'Carta', precios: 'Precios', cocina: 'Cocina', almacen: 'Almacén' };
+const SECN = { inicio: 'Inicio', carta: 'Carta', precios: 'Precios', cocina: 'Cocina', control: 'Control', almacen: 'Almacén' };
 const SECI = {
   inicio: '<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
   carta: '<rect x="5" y="3" width="14" height="18" rx="3"/><path d="M9 8h6M9 12h6M9 16h3"/>',
   precios: '<path d="M3 12V4h8l10 10-8 8z"/><path d="M7.5 8.5h.01"/>',
   cocina: '<path d="M6 10a4 4 0 1 1 2.5-7.1 4 4 0 0 1 7 0A4 4 0 1 1 18 10v7H6z"/><path d="M6 21h12"/>',
   almacen: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  control: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
 };
 function construirMenu() {
   $('menu-nav').innerHTML = Object.keys(SUBS)

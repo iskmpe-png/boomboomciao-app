@@ -1,6 +1,6 @@
 /* Boom Boom Ciao: guarda la app en el dispositivo para que abra sin conexión.
    Sube el número de versión cada vez que publiques cambios. */
-const CACHE = 'bbc-v15';
+const CACHE = 'bbc-v16';
 const BASE = [
   "./",
   "index.html",
@@ -81,7 +81,10 @@ const BASE = [
   "zonas.js",
   "recordatorios.js",
   "turnos.js",
+  "reparto.js",
   "cuadre.js",
+  "aprobar.js",
+  "consumo.js",
   "manual.js",
   "primeros-pasos.js",
   "buscador.js",

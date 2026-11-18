@@ -42,6 +42,7 @@ function pintarListas() {
 }
 function pintar() {
   pintarMenu();
+  delete $('vista').dataset.area;
   const ss = SUBS[vista],
     sn = $('subs');
   sn.hidden = ss.length < 2;
@@ -87,6 +88,7 @@ function pintar() {
     grupo: vGrupo,
     manual: vManual,
     turnos: vTurnos,
+    consumo: vConsumo,
   })[pant]();
 }
 function refrescar() {

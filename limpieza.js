@@ -106,10 +106,8 @@ const queda = (f) => {
 };
 /* Lo que toca limpiar hoy según el horario de turnos, y si ya se hizo */
 function limpiezaHoyHTML() {
-  const s = semanaDe(lunesDe(hoy())),
-    d = String(new Date().getDay());
-  if (!s.doc) return '';
-  const filas = s.doc.filas.filter((f) => /limpi/.test(norm(f.tarea)) && (f.am[d] || f.pm[d]));
+  const d = String(new Date().getDay());
+  const filas = filasHoy().filter((f) => /limpi/.test(norm(f.tarea)) && (f.am[d] || f.pm[d]));
   if (!filas.length) return '';
   const hechos = S.appcc.filter((a) => a.tipo === 'limpieza' && a.fecha === hoy());
   const hecho = (txt) =>

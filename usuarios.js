@@ -19,7 +19,10 @@ function cerrarUsuarios() {
 }
 function pintarUsuarios(msg) {
   const mio = mios.find((x) => x.id === rid),
-    soyD = mio.rol === 'dueno';
+    soyD = mio.rol === 'dueno',
+    tocaArea = soyD || (mio.rol === 'encargado' && (mio.area || 'todas') === 'todas'),
+    hayArea = miembros.some((m) => m.area);
+  const AREAS = { todas: 'Cocina y barra', cocina: 'Solo cocina', barra: 'Solo barra' };
   const ops = (sel) =>
     Object.keys(ROLES)
       .filter((k) => soyD || k === 'cocina' || k === 'consulta')
@@ -43,14 +46,20 @@ function pintarUsuarios(msg) {
               esc(m.email) +
               '</small></span>' +
               (fijo
-                ? '<span class="pill">' + ROLES[m.rol] + '</span>'
+                ? '<span class="pill">' + ROLES[m.rol] + (m.area && m.area !== 'todas' ? ' · ' + AREAS[m.area] : '') + '</span>'
                 : '<select data-us="rol" data-id="' +
                   esc(m.user_id) +
                   '" aria-label="Rol de ' +
                   esc(m.nombre) +
                   '">' +
                   ops(m.rol) +
-                  '</select><button class="btn small danger" type="button" data-us="quitar" data-id="' +
+                  '</select>' +
+                  (hayArea && tocaArea
+                    ? '<select data-us="area" data-id="' + esc(m.user_id) + '" aria-label="Área de ' + esc(m.nombre) + '">' +
+                      Object.keys(AREAS).map((k) => '<option value="' + k + '"' + (k === (m.area || 'todas') ? ' selected' : '') + '>' + AREAS[k] + '</option>').join('') +
+                      '</select>'
+                    : '') +
+                  '<button class="btn small danger" type="button" data-us="quitar" data-id="' +
                   esc(m.user_id) +
                   '">Quitar</button>') +
               '</div>'
@@ -62,7 +71,9 @@ function pintarUsuarios(msg) {
     '<form id="form-us" class="mx-fil" novalidate><div class="field"><label for="us-email">Correo de la persona</label><input id="us-email" type="email" inputmode="email" autocomplete="off"></div><div class="field"><label for="us-rol">Rol</label><select id="us-rol">' +
     ops('cocina') +
     '</select></div><button class="btn primary" type="submit">Dar acceso</button></form>' +
-    '<p class="hint">Primero la persona crea su cuenta en la app con su correo y contraseña. Después le das acceso aquí. Cocina apunta inventario, mermas, compras, APPCC y producción; Solo consulta no cambia nada.</p>' +
+    '<p class="hint">Primero la persona crea su cuenta en la app con su correo y contraseña. Después le das acceso aquí. Cocina apunta inventario, mermas, compras, APPCC y producción; Solo consulta no cambia nada.' +
+    (hayArea ? ' El área decide qué puede cambiar: un encargado de «Solo barra» no toca productos, platos ni turnos de cocina, y al revés.' : ' Para separar cocina y barra, ejecuta el script 7 en la base de datos.') +
+    '</p>' +
     (esPlat
       ? '<form id="form-rest" class="mx-fil" novalidate><div class="field"><label for="us-rest">Nuevo restaurante</label><input id="us-rest" type="text" autocomplete="off" placeholder="Nombre"></div><button class="btn" type="submit">Crear restaurante</button></form>'
       : '') +
@@ -91,6 +102,8 @@ $('usuarios').addEventListener('change', (e) => {
   const t = e.target;
   if (t.dataset.us === 'rol')
     usRpc('cambiar_rol', { p_rid: rid, p_user: t.dataset.id, p_rol: t.value }, 'Rol actualizado.');
+  else if (t.dataset.us === 'area')
+    usRpc('cambiar_area', { p_rid: rid, p_user: t.dataset.id, p_area: t.value }, 'Área actualizada.');
 });
 $('usuarios').addEventListener('submit', (e) => {
   e.preventDefault();

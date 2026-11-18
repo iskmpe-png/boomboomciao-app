@@ -12,6 +12,8 @@ function estadoProd(p) {
   if (!estProd) return true;
   if (estProd === 'sube') return p.anterior > 0 && p.precio > p.anterior + 0.004;
   if (estProd === 'sinuso') return !usos(p.id);
+  if (estProd === 'sinenlace') return !p.general && !platosDe(p.id).size;
+  if (estProd === 'general') return p.general;
   if (estProd === 'sinprov') return !p.proveedor.trim();
   if (estProd === 'sinprecio') return !(p.precio > 0);
   if (estProd === 'viejo') return !p.actualizado || Date.now() - new Date(p.actualizado) > 90 * 864e5;
@@ -29,7 +31,8 @@ function listaProd() {
       casa
         .map(
           (b) =>
-            '<button class="row" type="button" data-act="abrir" data-id="' + esc(b.id) + '"><span class="n"><b>' + esc(b.nombre) + '</b><span>BB Ciao · rinde ' + rinde(b) + '</span></span><span class="d"><b>' +
+            '<button class="row" type="button" data-act="abrir" data-id="' + esc(b.id) + '"><span class="n"><b>' + esc(b.nombre) + '</b><span>BB Ciao · rinde ' + rinde(b) + '</span>' +
+            (platosDe(b.id, true).size ? '<span class="enl">En ' + platosDe(b.id, true).size + (platosDe(b.id, true).size === 1 ? ' plato' : ' platos') + '</span>' : '<span class="pill crit">Sin enlazar a un plato</span>') + '</span><span class="d"><b>' +
             fEur.format(costeUd(b)) + '</b><span class="hint">' + UDP[b.unidadBase].slice(1) + '</span></span></button>',
         )
         .join('') + '</div>'
@@ -58,7 +61,7 @@ function vPrecios() {
       .join('') +
     '</select></div>' +
     '<div class="field corto"><label for="f-est">Mostrar</label><select id="f-est">' +
-    [['', 'Todos'], ['sube', 'Han subido de precio'], ['sinuso', 'Sin usar en fichas'], ['sinprov', 'Sin proveedor'], ['sinprecio', 'Sin precio'], ['viejo', 'Precio de hace +3 meses']]
+    [['', 'Todos'], ['sinenlace', 'Sin enlazar a un plato'], ['general', 'Uso general'], ['sube', 'Han subido de precio'], ['sinuso', 'Sin usar en fichas'], ['sinprov', 'Sin proveedor'], ['sinprecio', 'Sin precio'], ['viejo', 'Precio de hace +3 meses']]
       .map((o) => '<option value="' + o[0] + '"' + (o[0] === estProd ? ' selected' : '') + '>' + o[1] + '</option>')
       .join('') +
     '</select></div>' +
@@ -77,8 +80,23 @@ function vPrecios() {
         '<div class="field"><label for="np-precio">Precio</label><div class="precio"><input class="num" id="np-precio" type="text" inputmode="decimal" placeholder="0,00"><select id="np-unidad" aria-label="Unidad"><option value="kg">€/kg</option><option value="l">€/L</option><option value="ud">€/ud</option></select></div></div>' +
         '<button class="btn primary" type="submit">Guardar</button><span class="hint wide" id="np-msg" aria-live="polite"></span></form>'
       : '') +
+    sinEnlaceHTML() +
     '<section class="card"><span class="hint" id="n-prod"></span><div class="rows" id="lista-prod"></div></section><section class="card" id="lista-casa" hidden></section>';
   listaProd();
+}
+/* Aviso rojo: productos y elaboraciones que no llegan a ningún plato */
+function sinEnlaceHTML() {
+  const l = sinEnlazar();
+  if (!l.length || estProd === 'sinenlace') return '';
+  const np = l.filter((y) => !y.base).length,
+    nb = l.length - np;
+  return (
+    '<section class="card alerta-roja"><h3>' +
+    [np ? np + (np === 1 ? ' producto' : ' productos') : '', nb ? nb + (nb === 1 ? ' elaboración' : ' elaboraciones') : ''].filter(Boolean).join(' y ') +
+    ' sin enlazar a ningún plato</h3><p class="hint">Todo lo que se compra debería estar en el escandallo de algún plato (directamente o dentro de una elaboración). Así la app calcula cuánto se gasta con las ventas y el stock mínimo. Lo que es de uso general (aceite de freidora, soplete…) márcalo como «Uso general».</p>' +
+    '<p class="lista-roja">' + esc(l.slice(0, 12).map((y) => y.x.nombre).join(' · ') + (l.length > 12 ? ' …' : '')) + '</p>' +
+    '<div class="acciones"><button class="btn small" type="button" data-act="ver-sinenlace">Ver los productos</button></div></section>'
+  );
 }
 function inputPrecios(e) {
   const t = e.target,
@@ -92,6 +110,12 @@ function inputPrecios(e) {
     p.actualizado = new Date().toISOString();
   } else if (c === 'unidad') p.unidad = uni(t.value);
   else if (c === 'minimo') p.minimo = parse(t.value);
+  else if (c === 'general') {
+    p.general = t.checked;
+    guardar('productos', p);
+    listaProd();
+    return;
+  }
   else p[c] = t.value;
   guardar('productos', p);
 }

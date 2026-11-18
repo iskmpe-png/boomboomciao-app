@@ -35,12 +35,22 @@ const diasMapa = (o) => {
   });
   return r;
 };
+const TURNO_D = ['am', 'pm', 'completo', 'libre'];
 const nTurno = (t) => ({
   id: t.id,
+  /* Horario de trabajo de la semana (de donde sale el reparto de la limpieza) */
+  horario: (Array.isArray(t.horario) ? t.horario : []).filter((x) => x && x.nombre).slice(0, 60).map((x) => {
+    const dias = {};
+    Object.keys(mapa(x.dias)).forEach((k) => {
+      if (/^[0-6]$/.test(k) && TURNO_D.indexOf(x.dias[k]) >= 0) dias[k] = x.dias[k];
+    });
+    return { nombre: String(x.nombre).slice(0, 60), dias: dias, horas: diasMapa(x.horas) };
+  }),
   filas: (Array.isArray(t.filas) ? t.filas : []).filter((f) => f && f.id).slice(0, 30).map((f) => ({
     id: String(f.id),
     tarea: String(f.tarea || '').slice(0, 80),
     nota: String(f.nota || '').slice(0, 160),
+    excluir: String(f.excluir || '').slice(0, 200),
     horaAm: HORA(f.horaAm),
     horaPm: HORA(f.horaPm),
     am: diasMapa(f.am),
@@ -102,6 +112,8 @@ const nProd = (p) => ({
   minimo: Number(p.minimo) || 0,
   familia: String(p.familia || ''),
   area: p.area === 'barra' ? 'barra' : '',
+  /* Uso general de la cocina (aceite de freidora, gas del soplete…): no va en ningún escandallo */
+  general: !!p.general,
   anterior: Number(p.anterior) || 0,
   historial: (Array.isArray(p.historial) ? p.historial : [])
     .slice(-12)
@@ -160,6 +172,21 @@ const nCompra = (c) => ({
     unidad: uni(l.unidad),
     precio: Number(l.precio) || 0,
   })),
+  /* Cambios que pidió cocina al subir el albarán y que el encargado tiene que aprobar:
+     producto nuevo, cambio de precio o de formato (unidad) */
+  pendientes: (Array.isArray(c.pendientes) ? c.pendientes : [])
+    .filter((x) => x && ['nuevo', 'precio', 'formato'].indexOf(x.tipo) >= 0)
+    .map((x) => ({
+      id: String(x.id || ''),
+      tipo: x.tipo,
+      k: Number(x.k) || 0,
+      pid: String(x.pid || ''),
+      nombre: String(x.nombre || ''),
+      unidad: uni(x.unidad),
+      precio: Number(x.precio) || 0,
+      de: String(x.de == null ? '' : x.de),
+      area: x.area === 'barra' ? 'barra' : '',
+    })),
 });
 const nAppcc = (a) => ({
   id: a.id,

@@ -104,7 +104,74 @@ const VENTAS_PROMPT =
   '- No incluyas totales, subtotales, impuestos, formas de pago, propinas ni descuentos generales.\n' +
   '- Si el informe solo da el importe, calcula el precio dividiendo entre las unidades.\n' +
   '- Para "plato", acepta diferencias de tildes, espacios, letras repetidas o abreviaturas (por ejemplo «Regina Boom Boom» y «Regginna Boomboom» son el mismo plato). Si dudas, deja "".\n';
-async function importarVentas() {
+/* ---- Antes de subir: ¿de qué fechas son estas ventas? ---- */
+function rangosRapidos() {
+  const h = hoy(),
+    lun = lunesDe(h),
+    ayer = masDias(h, -1),
+    mes = h.slice(0, 8) + '01';
+  return [
+    ['pasada', 'Semana pasada', masDias(lun, -7), masDias(lun, -1)],
+    ['esta', 'Esta semana', lun, h],
+    ['ayer', 'Ayer', ayer, ayer],
+    ['mes', 'Este mes', mes, h],
+  ];
+}
+const fRangoF = (a, b) => (a === b ? fFecha(a) : new Date(a + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) + ' – ' + fFecha(b));
+function elegirPeriodoVentas() {
+  if (!sAPI) {
+    toast('La IA no está disponible aquí.');
+    return;
+  }
+  const r = rangosRapidos();
+  capa(
+    capaTop('Importar ventas', '¿De qué fechas son?') +
+      '<form id="form-vper" class="editor" novalidate>' +
+      '<div class="field wide"><span class="lbl">Periodo</span><div class="togs">' +
+      r.map((x, i) => '<label class="tog"><input type="radio" name="vper" value="' + x[0] + '"' + (i === 0 ? ' checked' : '') + '> ' + x[1] + ' <small>' + esc(fRangoF(x[2], x[3])) + '</small></label>').join('') +
+      '<label class="tog"><input type="radio" name="vper" value="otro"> Otras fechas</label><label class="tog"><input type="radio" name="vper" value="ia"> Las que diga el informe</label></div></div>' +
+      '<div class="field"><label for="vp-d">Desde</label><input id="vp-d" type="date" value="' + r[0][2] + '"></div><div class="field"><label for="vp-h">Hasta</label><input id="vp-h" type="date" value="' + r[0][3] + '"></div>' +
+      '<p class="hint wide" id="vp-av" aria-live="polite"></p>' +
+      '<div class="acciones wide"><button class="btn primary" type="submit">Elegir el archivo</button><button class="btn" type="button" data-capa="cerrar">Cancelar</button></div></form>',
+  );
+  vperAviso();
+}
+function vperAviso() {
+  const d = $('vp-d').value,
+    h = $('vp-h').value,
+    ya = S.ventas.reduce((l, v) => l.concat(v.importes), []).filter((x) => x.desde <= h && x.hasta >= d);
+  $('vp-av').textContent = ya.length ? 'Ojo: ya hay ventas importadas que tocan esas fechas (' + ya.map((x) => fRangoF(x.desde, x.hasta)).join(', ') + '). Si es el mismo informe, se sumaría dos veces.' : '';
+}
+$('capa').addEventListener('change', (e) => {
+  const t = e.target;
+  if (!$('form-vper') || !$('form-vper').contains(t)) return;
+  if (t.name === 'vper') {
+    const x = rangosRapidos().find((y) => y[0] === t.value);
+    if (x) {
+      $('vp-d').value = x[2];
+      $('vp-h').value = x[3];
+    }
+    $('vp-d').disabled = $('vp-h').disabled = t.value === 'ia';
+  } else if (t.id === 'vp-d' || t.id === 'vp-h') {
+    const o = q($('form-vper'), 'input[value="otro"]');
+    if (o) o.checked = true;
+  }
+  vperAviso();
+});
+$('capa').addEventListener('submit', (e) => {
+  if (e.target.id !== 'form-vper') return;
+  e.preventDefault();
+  const m = (q(e.target, 'input[name="vper"]:checked') || {}).value,
+    d = $('vp-d').value,
+    h = $('vp-h').value;
+  if (m !== 'ia' && (!d || !h || d > h)) {
+    $('vp-av').textContent = 'Revisa las fechas: «desde» tiene que ser antes que «hasta».';
+    return;
+  }
+  cerrarCapa();
+  importarVentas(m === 'ia' ? null : { desde: d, hasta: h });
+});
+async function importarVentas(periodo) {
   if (!sAPI) {
     toast('La IA no está disponible aquí.');
     return;
@@ -179,8 +246,10 @@ async function importarVentas() {
   ventasImp = {
     estado: 'revisar',
     archivo: fs.map((f) => f.name).join(', '),
-    desde: fs2[0] || hoy(),
-    hasta: fs2[fs2.length - 1] || hoy(),
+    desde: periodo ? periodo.desde : fs2[0] || hoy(),
+    hasta: periodo ? periodo.hasta : fs2[fs2.length - 1] || hoy(),
+    fijo: !!periodo,
+    leidas: fs2.length ? [fs2[0], fs2[fs2.length - 1]] : null,
     grupoNuevo: '',
     avisos: avisos,
     lineas: lineas,
@@ -222,7 +291,7 @@ function vVentasImp() {
       '<section class="card estado"><strong>No se pudo leer</strong><span>' + esc(e.msg) +
       '</span><div class="acciones" style="justify-content:center"><button class="btn primary" type="button" data-act="ventas-importar">Probar otra vez</button><button class="btn" type="button" data-act="vi-cancelar">Cerrar</button></div></section>'
     );
-  const dup = S.ventas.some((v) => v.importes.some((x) => x.desde === e.desde && x.hasta === e.hasta)),
+  const dup = S.ventas.some((v) => v.importes.some((x) => x.desde <= e.hasta && x.hasta >= e.desde)),
     idx3 = e.lineas.map((l, k) => [l, k]),
     revisar = idx3.filter(([l]) => l.como === 'parecido' && l.pid),
     faltan = idx3.filter(([l]) => !l.pid || l.pid === '__nuevo'),
@@ -233,7 +302,8 @@ function vVentasImp() {
     '<form id="form-ventas" class="col" novalidate><section class="card"><h2>Revisa las ventas</h2><p class="hint">' + esc(e.archivo) + '</p>' +
     '<div class="ficha"><div class="field"><label for="vi-desde">Desde</label><input id="vi-desde" data-vig="desde" type="date" value="' + esc(e.desde) +
     '"></div><div class="field"><label for="vi-hasta">Hasta</label><input id="vi-hasta" data-vig="hasta" type="date" value="' + esc(e.hasta) + '"></div></div>' +
-    (dup ? '<p class="aviso">Ya importaste ventas de estas mismas fechas. Si guardas, se sumarán otra vez.</p>' : '') +
+    (e.fijo && e.leidas && (e.leidas[0] !== e.desde || e.leidas[1] !== e.hasta) ? '<p class="hint">El informe dice ' + esc(fRangoF(e.leidas[0], e.leidas[1])) + '. Se guarda con las fechas que elegiste; cámbialas aquí si hace falta.</p>' : '') +
+    (dup ? '<p class="aviso">Ya hay ventas importadas que tocan estas fechas. Si es el mismo informe, se sumarán otra vez.</p>' : '') +
     (e.avisos && e.avisos.length ? '<p class="aviso">' + esc(e.avisos.join(' ')) + ' Revisa que no falte nada.</p>' : '') +
     '</section>' +
     (revisar.length
@@ -325,6 +395,52 @@ function guardarVentas() {
       (nombres ? '. ' + nombres + (nombres === 1 ? ' nombre actualizado' : ' nombres actualizados') : '') + '.',
   );
 }
+/* Ventas importadas, por fechas: se pueden quitar si se subieron mal */
+function importadasHTML() {
+  const l = [];
+  S.ventas.forEach((v) => v.importes.forEach((x, i) => l.push({ v: v, x: x, i: i })));
+  if (!l.length) return '';
+  l.sort((a, z) => String(z.x.hasta).localeCompare(String(a.x.hasta)) || String(z.x.creado).localeCompare(String(a.x.creado)));
+  return (
+    '<section class="card"><h3>Ventas importadas</h3><p class="hint">Cada informe queda guardado con sus fechas. El panel de Control › Consumo y stock usa estas ventas para calcular lo que se gastó de cada producto.</p><div class="rows">' +
+    l
+      .slice(0, 20)
+      .map(
+        (y) =>
+          '<div class="row" data-vm="' + esc(y.v.id) + '" data-vi="' + y.i + '"><span class="n"><b>' + esc(fRangoF(y.x.desde, y.x.hasta)) + '</b><span>' + esc((y.x.n || 0) + ' platos vendidos' + (y.x.archivo ? ' · ' + y.x.archivo : '') + (nombre(y.x.por) ? ' · ' + nombre(y.x.por) : '')) + '</span></span><span class="d">' +
+          (Array.isArray(y.x.lineas) && puede(2) ? '<button class="btn small" type="button" data-act="vimp-quitar">Quitar</button>' : '') + '</span></div>',
+      )
+      .join('') +
+    '</div></section>'
+  );
+}
+function quitarImportacion(v, i) {
+  const x = v.importes[i];
+  if (!x || !Array.isArray(x.lineas)) return;
+  const wk = semana(x.hasta || x.desde || hoy()),
+    w = v.semanas[wk] || {};
+  x.lineas.forEach(([pid, n]) => {
+    v.unidades[pid] = Math.max(0, (Number(v.unidades[pid]) || 0) - n);
+    if (!v.unidades[pid]) delete v.unidades[pid];
+    w[pid] = Math.max(0, (Number(w[pid]) || 0) - n);
+    if (!w[pid]) delete w[pid];
+  });
+  v.importes.splice(i, 1);
+  guardar('ventas', v, true);
+  sucio();
+  vIng();
+  toast('Ventas del ' + fRangoF(x.desde, x.hasta) + ' quitadas.');
+}
+/* «2026-S46» → «9 nov» (el lunes de esa semana) */
+function lunesISO(k) {
+  const m = /^(\d{4})-S(\d{2})$/.exec(k);
+  if (!m) return k;
+  const y = +m[1],
+    s4 = new Date(Date.UTC(y, 0, 4)),
+    lun = new Date(s4);
+  lun.setUTCDate(s4.getUTCDate() - ((s4.getUTCDay() + 6) % 7) + (+m[2] - 1) * 7);
+  return lun.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+}
 function semanasHTML() {
   const sm = semanasVentas().slice(-6);
   if (!sm.length) return '';
@@ -339,7 +455,7 @@ function semanasHTML() {
     .slice(0, 6);
   return (
     '<section class="card"><h3>Platos por semana</h3><div class="tabla"><table><thead><tr><th>Plato</th>' +
-    sm.map((w) => '<th>' + esc(w.k.slice(5)) + '</th>').join('') +
+    sm.map((w) => '<th title="Semana ' + esc(w.k.slice(6)) + '">' + esc(lunesISO(w.k)) + '</th>').join('') +
     '<th>Media</th></tr></thead><tbody>' +
     ids
       .map((id) => {

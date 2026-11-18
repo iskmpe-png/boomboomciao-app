@@ -934,3 +934,240 @@ details.compra > summary .n b {
   flex-wrap: wrap;
   gap: 6px;
 }
+/* ---- Cuadro de limpieza con el formato de la casa (verde, amarillo y días en verde claro) ---- */
+.hoja-l {
+  border: 1px solid #969696;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+}
+.hoja-t {
+  background: #00b050;
+  color: #fff;
+  text-align: center;
+  padding: 10px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.hoja-t b,
+.hoja-t input {
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  text-align: center;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 4px;
+}
+.hoja-t input:focus-visible {
+  outline: 2px solid #fff;
+  border-radius: 4px;
+}
+.hoja-t input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+.hoja-t span {
+  font-size: 0.82rem;
+  opacity: 0.95;
+}
+.hoja-l .tu-tabla {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+#vista .hoja-l .tu-tabla th,
+#vista .hoja-l .tu-tabla td,
+#capa .hoja-l .tu-tabla th,
+#capa .hoja-l .tu-tabla td {
+  border: 1px solid #b4b4b4;
+  text-align: center;
+  color: #000;
+  padding: 4px 3px;
+}
+.hoja-l .tu-tabla thead th {
+  background: #fff200;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.hoja-l .tu-tabla tbody th {
+  background: #e2efda;
+  font-weight: 700;
+}
+.hoja-l .tu-tabla tbody tr:nth-child(even) td {
+  background: #f5f5f5;
+}
+.hoja-l .tu-tabla tbody tr.hoy th {
+  box-shadow: inset 4px 0 0 #00b050;
+}
+.hoja-l .tu-tabla td input {
+  text-align: center;
+  background: transparent;
+  color: #000;
+  border-color: transparent;
+}
+.hoja-l .tu-tabla td input:hover:not(:disabled),
+.hoja-l .tu-tabla td input:focus {
+  border-color: #00b050;
+  background: #fff;
+}
+.hoja-l .tu-tabla td input:disabled {
+  opacity: 1;
+  -webkit-text-fill-color: #000;
+}
+.tu-exp {
+  margin-top: 10px;
+}
+.tu-mas {
+  margin-top: 8px;
+}
+.tu-mas summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.tu-mas .tu-cab {
+  margin-top: 8px;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.seg-b {
+  border: 0;
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 700;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 0.86rem;
+}
+.seg-b.on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+/* Horario leído: AM / PM / Todo / Libre */
+table.hor td {
+  text-align: center;
+  font-size: 0.8rem;
+}
+table.hor td.t-am {
+  background: var(--warn-bg);
+}
+table.hor td.t-pm {
+  background: var(--accent-soft);
+}
+table.hor td.t-completo {
+  background: var(--ok-bg);
+}
+table.hor td.t-libre {
+  color: var(--muted);
+}
+.rep .hint {
+  line-height: 1.5;
+}
+/* ---- Enlaces de productos ---- */
+.alerta-roja {
+  border-left: 4px solid var(--crit);
+  background: var(--crit-bg);
+}
+.alerta-roja h3 {
+  color: var(--crit);
+}
+.lista-roja {
+  font-size: 0.86rem;
+  margin: 6px 0;
+}
+.row .n .enl {
+  color: var(--ok);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.row .n .pill {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+/* ---- Consumo y stock ---- */
+table.cns th,
+table.cns td {
+  white-space: nowrap;
+  text-align: right;
+}
+table.cns th:first-child,
+table.cns td:first-child {
+  text-align: left;
+  white-space: normal;
+  min-width: 150px;
+}
+table.cns td.neg {
+  color: var(--crit);
+}
+table.cns td.pos {
+  color: var(--ok);
+}
+table.cns td.bajo {
+  background: var(--warn-bg);
+}
+#b-cns {
+  max-width: 180px;
+}
+/* ---- Pendientes de aprobar ---- */
+.pend-card {
+  border-left: 4px solid var(--warn);
+}
+.row.pend .d {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.bar.tu-bar,
+.bar.cn-bar {
+  position: static;
+}
+@media (max-width: 480px) {
+  .hoja-t b,
+  .hoja-t input {
+    font-size: 0.98rem;
+  }
+}
+/* Elegir las fechas de las ventas */
+#form-vper .togs {
+  flex-direction: column;
+  align-items: stretch;
+}
+#form-vper .tog {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border-radius: 12px;
+  padding: 9px 12px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+#form-vper .tog input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+#form-vper .tog small {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 500;
+}
+#form-vper .tog:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
