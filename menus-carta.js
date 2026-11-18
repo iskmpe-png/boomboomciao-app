@@ -15,16 +15,16 @@ function menusHTML() {
         const c = costeMenu(e);
         return (
           '<button class="row menurow" type="button" data-act="ev-carta" data-id="' + esc(e.id) + '"><span class="mini-foto menu" aria-hidden="true">' + ICO_MENU + '</span>' +
-          '<span class="n"><b>' + esc(e.nombre || 'Menú sin nombre') + '</b><span>' + e.platos.length + (e.platos.length === 1 ? ' plato' : ' platos') +
+          '<span class="n"><b>' + esc(e.nombre || 'Menú sin nombre') + '</b><span>' + resumenMenu(e) +
           (e.precio > 0 ? ' · ' + fEur.format(e.precio) + ' por persona' : ' · falta el precio') + '</span></span>' +
           '<span class="d"><b>' + fEur.format(c) + '</b>' + evPill(e) + '</span></button>' +
           '<div class="menu-platos">' +
-          e.platos
-            .map((x) => {
+          ordenLineasMenu(e)
+            .map(([x]) => {
               const p = plato(x.id);
               return p
                 ? '<button class="row subrow" type="button" data-act="abrir" data-id="' + esc(p.id) + '">' + miniFoto(p) + '<span class="n"><b>' + esc(p.nombre || 'Sin nombre') + '</b><span>' +
-                    (x.n !== 1 ? fNum(x.n, 2) + ' raciones · ' : '') + 'coste ' + fEur.format(x.n * costeUd(p)) + '</span></span></button>'
+                    (e.opciones && tmpo(x) ? esc(tmpo(x)) + ' · ' : '') + (x.n !== 1 ? fNum(x.n, 2) + ' raciones · ' : '') + 'coste ' + fEur.format(x.n * costeUd(p)) + '</span></span></button>'
                 : '';
             })
             .join('') +
@@ -41,7 +41,9 @@ function nivelHTML(e) {
   if (!(c > 0)) return '<p class="hint">Añade platos con ingredientes para ver el reparto.</p>';
   if (!(e.precio > 0)) return '<p class="hint">Pon el precio por persona para ver cómo se reparte entre los platos.</p>';
   return (
-    '<p class="hint">Si repartes los ' + fEur.format(e.precio) + ' del menú según lo que cuesta cada plato, todos quedan al <b>' + fNum(fc) + ' %</b>: los platos caros se compensan con los baratos.</p>' +
+    (e.opciones
+      ? '<p class="hint">El menú cuesta de media <b>' + fEur.format(c) + '</b> por persona (una opción de cada tiempo): food cost <b>' + fNum(fc) + ' %</b>. Abajo, lo que le tocaría a cada opción del precio del menú si la eligen.</p>'
+      : '<p class="hint">Si repartes los ' + fEur.format(e.precio) + ' del menú según lo que cuesta cada plato, todos quedan al <b>' + fNum(fc) + ' %</b>: los platos caros se compensan con los baratos.</p>') +
     '<div class="tabla"><table class="nivel"><thead><tr><th>Plato</th><th>Coste</th><th>Precio repartido</th><th>Suelto</th></tr></thead><tbody>' +
     e.platos
       .map((x) => {
@@ -110,6 +112,17 @@ V.addEventListener('click', (e) => {
   else location.hash = '#carta-eventos';
 });
 V.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.id === 'ev-opc' || t.dataset.evt != null) {
+    const ev = evento();
+    if (!ev || !puede(2)) return;
+    if (t.id === 'ev-opc') ev.opciones = t.checked;
+    else if (ev.platos[+t.dataset.evt]) ev.platos[+t.dataset.evt].tiempo = t.value.trim().slice(0, 40);
+    guardar('eventos', ev, true);
+    sucio();
+    vEventos();
+    return;
+  }
   if (e.target.id !== 'ev-encarta') return;
   const ev = evento();
   if (!ev || !puede(2)) return;
@@ -118,3 +131,53 @@ V.addEventListener('change', (e) => {
   sucio();
   toast(ev.enCarta ? 'El menú sale en Carta › Platos con su precio por persona.' : 'El menú ya no sale en la carta.');
 });
+/* ---- Ingeniería: menús vendidos en el mes ----
+   El número de menús sale de los platos del TPV (el tiempo que más vendió). El coste es el real:
+   lo que costaron los platos que de verdad se eligieron dentro del menú. */
+function menusVendidosHTML() {
+  const v = ventasMes(false);
+  if (!v || !v.menus || !Object.keys(v.menus).length) return '';
+  const det = {};
+  v.importes.forEach((x) =>
+    (x.menuLineas || []).forEach(([pid, n, ev]) => {
+      const d = det[ev] || (det[ev] = {});
+      d[pid] = (d[pid] || 0) + n;
+    }),
+  );
+  const filas = Object.keys(v.menus)
+    .map((id) => {
+      const e = S.eventos.find((x) => x.id === id),
+        n = Number(v.menus[id]) || 0,
+        d = det[id] || {},
+        coste = suma(Object.keys(d), (pid) => {
+          const p = idx().pl.get(pid);
+          return p ? d[pid] * costeUd(p) : 0;
+        }),
+        ing = e && e.precio > 0 ? n * e.precio : 0;
+      return { e, id, n, d, coste, ing, fc: ing > 0 ? (coste / (ing / 1.1)) * 100 : null };
+    })
+    .filter((x) => x.n > 0)
+    .sort((a, z) => z.n - a.n);
+  if (!filas.length) return '';
+  return (
+    '<section class="card"><h3>Menús vendidos en ' + esc(fMes(mesM).toLowerCase()) + '</h3><p class="hint">Sus platos no cuentan abajo con el precio de carta. Coste real = lo que costaron los platos que se eligieron.</p><div class="rows">' +
+    filas
+      .map(
+        (x) =>
+          '<details class="vimp"><summary class="row"><span class="n"><b>' + esc(x.e ? x.e.nombre || 'Menú sin nombre' : 'Menú borrado') + '</b><span>' +
+          esc(x.n + (x.n === 1 ? ' menú' : ' menús') + (x.ing ? ' · ' + fEur.format(x.ing) + ' de venta' : ' · sin precio') + ' · coste real ' + fEur.format(x.coste) + (x.n ? ' (' + fEur.format(x.coste / x.n) + ' por menú)' : '')) +
+          '</span></span><span class="d">' + (x.fc == null ? '<span class="pill">Sin precio</span>' : '<span class="pill ' + (x.fc <= 30 ? 'ok' : x.fc <= 35 ? 'warn' : 'crit') + '">' + fNum(x.fc) + ' %</span>') + '</span></summary>' +
+          '<div class="tabla"><table class="nivel"><thead><tr><th>Plato del menú</th><th>Vendidos</th><th>Coste</th></tr></thead><tbody>' +
+          Object.keys(x.d)
+            .sort((a, z) => x.d[z] - x.d[a])
+            .map((pid) => {
+              const p = idx().pl.get(pid);
+              return '<tr><td>' + esc(p ? p.nombre : '(plato borrado)') + '</td><td>' + fNum(x.d[pid], 0) + '</td><td>' + (p ? fEur.format(x.d[pid] * costeUd(p)) : '—') + '</td></tr>';
+            })
+            .join('') +
+          '</tbody></table></div></details>',
+      )
+      .join('') +
+    '</div></section>'
+  );
+}

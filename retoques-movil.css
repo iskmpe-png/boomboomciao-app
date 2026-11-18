@@ -1171,3 +1171,95 @@ table.cns td.bajo {
   border-color: var(--accent);
   background: var(--accent-soft);
 }
+/* Consumo: fila elegida y su explicación */
+table.cns tr.cn-f {
+  cursor: pointer;
+}
+table.cns tr.cn-f:hover td,
+table.cns tr.cn-f.sel td {
+  background: var(--accent-soft);
+}
+table.cns tr.cn-det td {
+  text-align: left;
+  white-space: normal;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+}
+.cn-exp {
+  max-width: 640px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.cn-exp p,
+.cn-exp ul {
+  margin: 4px 0;
+}
+.cn-exp ul {
+  padding-left: 18px;
+}
+#cn-mas {
+  justify-content: space-between;
+  align-items: center;
+}
+.cn-exp {
+  position: sticky;
+  left: 0;
+  max-width: min(640px, calc(100vw - 72px));
+}
+/* Ventas importadas: cada informe se despliega para ver sus platos */
+details.vimp > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details.vimp > summary::-webkit-details-marker {
+  display: none;
+}
+details.vimp[open] > summary {
+  background: var(--accent-soft);
+}
+details.vimp .tabla {
+  margin: 6px 0 12px;
+}
+details.vimp > summary.row,
+details.vimp > summary.row * {
+  text-transform: none;
+  letter-spacing: normal;
+  font-family: inherit;
+}
+details.vimp > summary.row {
+  font-size: inherit;
+  color: inherit;
+  padding: 10px 0;
+}
+details.vimp > summary.row .n b {
+  font-size: 0.98rem;
+}
+details.vimp > summary.row .n span {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+/* Menús con opciones y menús del informe de ventas */
+.ev-tiempo {
+  margin: 14px 0 4px;
+  font-size: 0.95rem;
+}
+.ev-t,
+.vi-t {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  max-width: 220px;
+}
+.vi-menu {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.vi-menu-cab {
+  align-items: center;
+}
+.vi-menu-cab select {
+  flex: 1 1 220px;
+  min-width: 0;
+}

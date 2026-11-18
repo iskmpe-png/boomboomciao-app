@@ -7,6 +7,10 @@ const nAjustes = (a) => ({
   grupos: (a && Array.isArray(a.grupos) ? a.grupos : [])
     .map((g) => String(g || '').trim().slice(0, 60))
     .filter((g, i, l) => g && l.indexOf(g) === i),
+  /* Grupos de las elaboraciones (salsas, masas, caldos…), en su orden */
+  gruposElab: (a && Array.isArray(a.gruposElab) ? a.gruposElab : [])
+    .map((g) => String(g || '').trim().slice(0, 60))
+    .filter((g, i, l) => g && l.indexOf(g) === i),
   /* Archivo de albaranes: días que se guardan y meses ya descargados en ZIP */
   diasAlbaranes: Number(a && a.diasAlbaranes) >= 7 ? Math.min(365, Number(a.diasAlbaranes)) : 30,
   archivados: (a && Array.isArray(a.archivados) ? a.archivados : []).filter((m) => /^\d{4}-\d{2}$/.test(m)),
@@ -210,6 +214,9 @@ const nVenta = (v) => ({
   unidades: mapa(v.unidades),
   semanas: mapa(v.semanas),
   importes: Array.isArray(v.importes) ? v.importes : [],
+  /* Menús vendidos en el mes y platos vendidos dentro de menús (no cuentan con su precio de carta) */
+  menus: mapa(v.menus),
+  enMenu: mapa(v.enMenu),
 });
 /* Foto de un plato: una miniatura JPEG pequeña guardada como texto, con el id del plato */
 const nFoto = (f) => ({ id: f.id, img: /^data:image\/(jpeg|webp|png);base64,[A-Za-z0-9+/=]+$/.test(String(f.img || '')) ? String(f.img) : '' });
@@ -220,7 +227,10 @@ const nEvento = (e) => ({
   pax: Number(e.pax) || 0,
   precio: Number(e.precio) || 0,
   enCarta: !!e.enCarta,
-  platos: (Array.isArray(e.platos) ? e.platos : []).map((x) => ({ id: String(x.id || ''), n: Number(x.n) || 0 })),
+  /* Menú con opciones: cada cliente elige un plato de cada tiempo (entrante, principal, postre…).
+     Si no, es un menú cerrado: cada persona come todos los platos (como el de Nochevieja). */
+  opciones: !!e.opciones,
+  platos: (Array.isArray(e.platos) ? e.platos : []).map((x) => ({ id: String(x.id || ''), n: Number(x.n) || 0, tiempo: String(x.tiempo || '').slice(0, 40) })),
 });
 const nProv = (p) => ({
   id: p.id,

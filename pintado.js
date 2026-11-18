@@ -39,6 +39,10 @@ function pintarListas() {
   $('dl-grupos').innerHTML = gruposCarta()
     .map((n) => '<option value="' + esc(n) + '"></option>')
     .join('');
+  if ($('dl-gelab'))
+    $('dl-gelab').innerHTML = gruposElab()
+      .map((n) => '<option value="' + esc(n) + '"></option>')
+      .join('');
 }
 function pintar() {
   pintarMenu();

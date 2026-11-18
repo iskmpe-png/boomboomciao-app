@@ -9,7 +9,9 @@ function selBarHTML() {
   let acc = '';
   if (selModo === 'carta')
     acc = enElab()
-      ? bt('sel-mover', 'Pasar a Platos', 'primary', ' data-a="plato"') + bt('sel-a-prod', 'Pasar a Productos') + zona
+      ? '<div class="selgrupo"><select id="sel-grupo" aria-label="Grupo de elaboraciones">' + gruposElab().map((g) => '<option>' + esc(g) + '</option>').join('') + '<option value="">Sin grupo</option></select>' +
+        bt('sel-grupo', 'Poner en el grupo', 'primary') + '</div>' +
+        bt('sel-mover', 'Pasar a Platos', '', ' data-a="plato"') + bt('sel-a-prod', 'Pasar a Productos') + zona
       : '<div class="selgrupo"><select id="sel-grupo" aria-label="Grupo de la carta">' + gruposCarta().map((g) => '<option>' + esc(g) + '</option>').join('') + '<option value="">Sin grupo</option></select>' +
         bt('sel-grupo', 'Poner en el grupo', 'primary') + '</div>' +
         bt('sel-menu', 'Crear un menú con ellos') + bt('sel-mover', 'Pasar a Elaboraciones', '', ' data-a="elab"') + zona;
@@ -59,6 +61,8 @@ function selMover(aElab) {
       p.unidadBase = 'kg';
       p.soloMenu = false;
     }
+    /* Los grupos de Platos y de Elaboraciones son distintos: al cambiar de lista se queda sin grupo */
+    if (p.base !== aElab) p.grupo = '';
     p.base = aElab;
     guardar('platos', p, true);
   });
@@ -102,9 +106,10 @@ function selAplicar() {
 /* Varias fichas al mismo grupo. Se sigue en modo selección para ir repartiendo el resto */
 function selGrupo() {
   const g = $('sel-grupo').value,
-    l = S.platos.filter((p) => selIds.has(p.id) && !p.base);
+    el = enElab(),
+    l = S.platos.filter((p) => selIds.has(p.id) && !!p.base === el);
   if (!l.length) {
-    toast('Marca primero los platos que quieres poner en el grupo.');
+    toast(el ? 'Marca primero las elaboraciones que quieres poner en el grupo.' : 'Marca primero los platos que quieres poner en el grupo.');
     return;
   }
   l.forEach((p) => {
@@ -115,7 +120,7 @@ function selGrupo() {
   selIds.clear();
   pintar();
   if ($('sel-grupo')) $('sel-grupo').value = g;
-  toast((l.length === 1 ? '1 plato' : l.length + ' platos') + (g ? ' en «' + g + '».' : ' sin grupo.'));
+  toast((el ? (l.length === 1 ? '1 elaboración' : l.length + ' elaboraciones') : l.length === 1 ? '1 plato' : l.length + ' platos') + (g ? ' en «' + g + '».' : ' sin grupo.'));
 }
 /* Un producto comprado que en realidad se hace en casa: pasa a ser una elaboración.
    Conserva su precio como coste hasta que se le pongan los ingredientes de verdad. */

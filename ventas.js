@@ -99,7 +99,8 @@ const bonito = (s) => {
 };
 const VENTAS_PROMPT =
   'Es un informe de ventas del TPV de un restaurante (cierre de caja, listado de artículos vendidos o exportación). Devuelve SOLO JSON:\n' +
-  '{"desde":"AAAA-MM-DD" o null,"hasta":"AAAA-MM-DD" o null,"lineas":[{"articulo":"nombre como aparece","unidades":número total vendido,"importe":total vendido en euros con IVA o null,"precio":precio de venta de una unidad con IVA o null,"plato":"nombre EXACTO de la lista de platos si es claramente el mismo plato aunque esté escrito distinto, si no \\"\\""}]}\n' +
+  '{"desde":"AAAA-MM-DD" o null,"hasta":"AAAA-MM-DD" o null,"lineas":[{"articulo":"nombre como aparece","unidades":número total vendido,"importe":total vendido en euros con IVA o null,"precio":precio de venta de una unidad con IVA o null,"plato":"nombre EXACTO de la lista de platos si es claramente el mismo plato aunque esté escrito distinto, si no \\"\\"","menu":"nombre del menú si el artículo es un plato dentro de un menú, si no \\"\\"","tiempo":"entrante, principal, postre, bebida u otro (solo si es de un menú)"}]}\n' +
+  '- Un plato dentro de un menú suele venir con el menú entre paréntesis o detrás: «Alcachofas (Menú Experiencia Gianini)», «Avocado Toast (Menú Brunch 1 o 2)». En ese caso "menu" es el nombre del menú y "plato" el plato sin el menú.\n' +
   'Reglas:\n- Suma las unidades del mismo artículo. Incluye todos los artículos, también bebidas y extras.\n' +
   '- No incluyas totales, subtotales, impuestos, formas de pago, propinas ni descuentos generales.\n' +
   '- Si el informe solo da el importe, calcula el precio dividiendo entre las unidades.\n' +
@@ -217,11 +218,13 @@ async function importarVentas(periodo) {
         const art = String((l && l.articulo) || '').trim().slice(0, 120),
           n = Number(l && l.unidades) || 0;
         if (!art || !(n > 0)) return;
-        const x = porArt[norm(art)] || (porArt[norm(art)] = { art: art, n: 0, importe: 0, precio: 0, sug: '' });
+        const x = porArt[norm(art)] || (porArt[norm(art)] = { art: art, n: 0, importe: 0, precio: 0, sug: '', menu: '', tiempo: '' });
         x.n += n;
         x.importe += Number(l.importe) || 0;
         x.precio = x.precio || Number(l.precio) || 0;
         x.sug = x.sug || String(l.plato || '');
+        x.menu = x.menu || String(l.menu || '').trim().slice(0, 80);
+        x.tiempo = x.tiempo || String(l.tiempo || '').trim().slice(0, 40);
       });
     } catch (e) {
       fallo = errIA(e);
@@ -230,11 +233,23 @@ async function importarVentas(periodo) {
     }
   }
   if (!ventasImp) return;
+  detectarMenus(porArt);
   const lineas = Object.keys(porArt).map((k) => {
     const x = porArt[k],
-      m = platoDeArticulo(x.art, x.sug),
+      m = platoDeArticulo(x.menu ? x.base : x.art, x.sug),
       pr = x.precio || (x.importe > 0 ? x.importe / x.n : 0);
-    return { art: x.art, n: Math.round(x.n), pid: m.p ? m.p.id : '', como: m.como, precio: Math.round(pr * 100) / 100, alias: true, renombrar: false };
+    return {
+      art: x.art,
+      n: Math.round(x.n),
+      pid: m.p ? m.p.id : '',
+      como: m.como,
+      precio: Math.round(pr * 100) / 100,
+      alias: !x.menu,
+      renombrar: false,
+      menu: x.menu,
+      base: x.base || '',
+      tiempo: tiempoBonito(x.tiempo),
+    };
   });
   if (!lineas.length) {
     ventasImp = { estado: 'error', msg: fallo || avisos.join(' ') || 'No encontré artículos vendidos en esos archivos.' };
@@ -245,6 +260,7 @@ async function importarVentas(periodo) {
     fs2 = fechas.map(ok).filter(Boolean).sort();
   ventasImp = {
     estado: 'revisar',
+    menus: gruposMenus(lineas),
     archivo: fs.map((f) => f.name).join(', '),
     desde: periodo ? periodo.desde : fs2[0] || hoy(),
     hasta: periodo ? periodo.hasta : fs2[fs2.length - 1] || hoy(),
@@ -256,15 +272,107 @@ async function importarVentas(periodo) {
   };
   if (pant === 'ingenieria') vIng();
 }
+/* ---- Menús dentro del informe ----
+   Los TPV ponen los platos de un menú con el menú al lado: «Alcachofas (Menú Experiencia Gianini)».
+   Cada plato se suma por separado (para el gasto y las compras), pero su precio no cuenta como plato
+   suelto: cuenta el menú. Los menús vendidos salen del tiempo que más se vendió. */
+const MENU_RE = /^(.*?)\s*[\(\[]\s*([^)\]]+?)\s*[\)\]]\s*$/;
+function detectarMenus(porArt) {
+  const xs = Object.keys(porArt).map((k) => porArt[k]),
+    cand = {};
+  xs.forEach((x) => {
+    const m = MENU_RE.exec(x.art);
+    x.base = m ? m[1].trim() : x.art;
+    x.paren = m ? m[2].trim() : '';
+    if (x.paren) cand[norm(x.paren)] = (cand[norm(x.paren)] || 0) + 1;
+  });
+  xs.forEach((x) => {
+    /* Lo que va entre paréntesis es un menú si la IA lo dice, si dice «menú», si ya existe o si se repite en varios platos */
+    if (!x.menu && x.paren && (/\bmen[uú]\b/i.test(x.paren) || cand[norm(x.paren)] >= 2 || S.eventos.some((e) => norm(e.nombre) === norm(x.paren)))) x.menu = x.paren;
+    if (x.menu && !x.paren) {
+      const i = norm(x.art).indexOf(norm(x.menu));
+      x.base = i > 0 ? x.art.slice(0, x.art.length - x.menu.length).replace(/[\s(\[-]+$/, '').trim() || x.art : x.art;
+    }
+    if (x.menu && x.paren && norm(x.menu) !== norm(x.paren)) x.base = x.art.replace(MENU_RE, '$1').trim();
+    if (x.menu) x.menu = bonito(x.menu);
+  });
+}
+const TIEMPOS = { entrante: 'Entrante', entrada: 'Entrante', primero: 'Entrante', principal: 'Principal', segundo: 'Principal', fondo: 'Principal', postre: 'Postre', bebida: 'Bebida' };
+const tiempoBonito = (t) => TIEMPOS[norm(t).split(' ')[0]] || '';
+/* Un grupo por menú del informe, ligado al menú que ya existe con ese nombre (o para crearlo) */
+function gruposMenus(lineas) {
+  const g = {};
+  lineas.forEach((l) => {
+    if (!l.menu) return;
+    const k = norm(l.menu);
+    if (!g[k]) {
+      const ev = S.eventos.find((e) => norm(e.nombre) === k) || S.eventos.find((e) => e.nombre && (norm(e.nombre).indexOf(k) >= 0 || k.indexOf(norm(e.nombre)) >= 0));
+      g[k] = { k: k, nombre: l.menu, ev: ev ? ev.id : '__nuevo' };
+    }
+    /* Si el menú ya existe y conoce el plato, se usa el tiempo que tiene allí */
+    const ev = S.eventos.find((e) => e.id === g[k].ev),
+      x = ev && l.pid && ev.platos.find((y) => y.id === l.pid);
+    if (x && x.tiempo) l.tiempo = x.tiempo;
+  });
+  return Object.keys(g).map((k) => g[k]);
+}
+const lineasMenu = (m) => (ventasImp ? ventasImp.lineas.filter((l) => l.menu && norm(l.menu) === m.k) : []);
+/* Menús vendidos de un grupo del informe: por tiempo se suman sus opciones; el total es el tiempo mayor */
+function totalMenu(m) {
+  const t = {};
+  lineasMenu(m).forEach((l) => {
+    if (!(l.n > 0)) return;
+    const k = l.tiempo || '·' + l.art;
+    t[k] = (t[k] || 0) + l.n;
+  });
+  return Math.max(0, ...Object.values(t));
+}
+const enMenuSi = (l) => l.menu && ventasImp && ventasImp.menus.some((m) => m.k === norm(l.menu) && m.ev !== '__suelto');
 const vendidos = () =>
   suma(
-    ventasImp.lineas.filter((x) => x.pid),
+    ventasImp.lineas.filter((x) => x.pid && !enMenuSi(x)),
     (x) => x.n,
   );
+const textoSumar = () => {
+  const nm = (ventasImp.menus || []).filter((m) => m.ev !== '__suelto').reduce((t, m) => t + totalMenu(m), 0);
+  return 'Sumar ' + vendidos() + ' platos' + (nm ? ' y ' + nm + (nm === 1 ? ' menú' : ' menús') : '') + ' vendidos';
+};
+function menusImpHTML() {
+  const e = ventasImp;
+  if (!e.menus || !e.menus.length) return '';
+  return (
+    '<section class="card vi-menus"><h3>Menús en este informe (' + e.menus.length + ')</h3><p class="hint">Sus platos se suman uno a uno para calcular el gasto y las compras, pero su precio no cuenta como plato suelto: cuenta el menú. Para saber cuántos menús se vendieron, pon a cada plato su tiempo: se suman las opciones de cada tiempo y el total es el tiempo que más vendió.</p>' +
+    e.menus
+      .map((m, i) => {
+        const ls = e.lineas.map((l, k) => [l, k]).filter(([l]) => l.menu && norm(l.menu) === m.k),
+          suelto = m.ev === '__suelto';
+        return (
+          '<div class="vi-menu" data-mi="' + i + '"><div class="acciones vi-menu-cab"><b class="grow">' + esc(m.nombre) + '</b>' +
+          (suelto ? '' : '<span class="pill ok" data-out="tm">' + totalMenu(m) + (totalMenu(m) === 1 ? ' menú' : ' menús') + '</span>') +
+          '<select data-vim="ev" aria-label="Menú para ' + esc(m.nombre) + '"><option value="__nuevo"' + (m.ev === '__nuevo' ? ' selected' : '') + '>Crear el menú «' + esc(m.nombre) + '»</option>' +
+          ordenados(S.eventos).map((ev) => '<option value="' + esc(ev.id) + '"' + (ev.id === m.ev ? ' selected' : '') + '>Es el menú «' + esc(ev.nombre || 'sin nombre') + '»</option>').join('') +
+          '<option value="__suelto"' + (suelto ? ' selected' : '') + '>No es un menú: contar como platos sueltos</option></select></div>' +
+          '<div class="rows">' +
+          ls
+            .map(([l, k]) =>
+              filaVenta(l, k).replace(
+                '</div><div class="q">',
+                (suelto ? '' : '<label class="mini vi-t"><span>Tiempo</span><input type="text" list="dl-tiempos" data-vil="tiempo" value="' + esc(l.tiempo) + '" placeholder="Entrante, Principal…" autocomplete="off"></label>') + '</div><div class="q">',
+              ),
+            )
+            .join('') +
+          '</div></div>'
+        );
+      })
+      .join('') +
+    '</section>'
+  );
+}
+const nombreNuevo = (l) => bonito(l.menu && l.base ? l.base : l.art);
 function filaVenta(l, k) {
   const pl = ordenados(S.platos.filter((p) => !p.base)),
     p = l.pid && l.pid !== '__nuevo' ? plato(l.pid) : null,
-    distinto = p && norm(p.nombre) !== norm(l.art) && !p.alias.some((a) => norm(a) === norm(l.art));
+    distinto = !l.menu && p && norm(p.nombre) !== norm(l.art) && !p.alias.some((a) => norm(a) === norm(l.art));
   return (
     '<div class="row invrow vrow" data-k="' + k + '"><div class="n"><b>' + esc(l.art) +
     (l.como === 'parecido' ? ' <span class="pill warn">¿Es este?</span>' : l.como === 'alias' ? ' <span class="pill ok">Reconocido</span>' : '') +
@@ -276,7 +384,7 @@ function filaVenta(l, k) {
       ? '<label class="check"><input type="checkbox" data-vil="alias"' + (l.alias ? ' checked' : '') + '> Recordar que en el TPV se llama así</label>' +
         '<label class="check"><input type="checkbox" data-vil="renombrar"' + (l.renombrar ? ' checked' : '') + '> Cambiar el nombre de mi plato a «' + esc(bonito(l.art)) + '»</label>'
       : '') +
-    (l.pid === '__nuevo'
+    (l.pid === '__nuevo' && !l.menu
       ? '<div class="vi-nuevo"><label class="mini"><span>Precio carta €</span><input class="num" data-vil="precio" type="text" inputmode="decimal" value="' + esc(show(l.precio)) + '"></label></div>'
       : '') +
     '</div><div class="q"><input class="num" data-vil="n" type="text" inputmode="numeric" aria-label="Unidades" value="' + l.n + '"><span>ud</span></div></div>'
@@ -292,7 +400,7 @@ function vVentasImp() {
       '</span><div class="acciones" style="justify-content:center"><button class="btn primary" type="button" data-act="ventas-importar">Probar otra vez</button><button class="btn" type="button" data-act="vi-cancelar">Cerrar</button></div></section>'
     );
   const dup = S.ventas.some((v) => v.importes.some((x) => x.desde <= e.hasta && x.hasta >= e.desde)),
-    idx3 = e.lineas.map((l, k) => [l, k]),
+    idx3 = e.lineas.map((l, k) => [l, k]).filter(([l]) => !l.menu),
     revisar = idx3.filter(([l]) => l.como === 'parecido' && l.pid),
     faltan = idx3.filter(([l]) => !l.pid || l.pid === '__nuevo'),
     bien = idx3.filter(([l]) => l.pid && l.pid !== '__nuevo' && l.como !== 'parecido'),
@@ -323,7 +431,8 @@ function vVentasImp() {
       ? '<section class="card"><details' + (revisar.length || faltan.length ? '' : ' open') + '><summary>Reconocidos (' + bien.length + ')</summary><div class="rows">' +
         bien.map(([l, k]) => filaVenta(l, k)).join('') + '</div></details></section>'
       : '') +
-    '<div class="acciones"><button class="btn primary" type="submit" id="vi-n">Sumar ' + vendidos() + ' platos vendidos</button><button class="btn" type="button" data-act="vi-cancelar">Descartar</button></div></form>'
+    menusImpHTML() +
+    '<div class="acciones"><button class="btn primary" type="submit" id="vi-n">' + esc(textoSumar()) + '</button><button class="btn" type="button" data-act="vi-cancelar">Descartar</button></div></form>'
   );
 }
 function guardarVentas() {
@@ -332,13 +441,17 @@ function guardarVentas() {
     wk = semana(e.hasta || e.desde || hoy());
   let n = 0,
     creados = 0,
-    nombres = 0;
+    nombres = 0,
+    nm = 0,
+    menusNuevos = 0;
   enLote(() => {
     /* Primero los platos nuevos y los nombres del TPV, después las unidades */
     e.lineas.forEach((l) => {
       if (!(l.n > 0)) return;
       if (l.pid === '__nuevo') {
-        const p = nPlato({ id: nuevoId('platos'), nombre: bonito(l.art), pvp: l.precio, grupo: e.grupoNuevo, area: areaNueva(), alias: norm(bonito(l.art)) === norm(l.art) ? [] : [l.art] });
+        const enM = enMenuSi(l),
+          nb = nombreNuevo(l);
+        const p = nPlato({ id: nuevoId('platos'), nombre: nb, pvp: enM ? 0 : l.precio, grupo: enM ? '' : e.grupoNuevo, area: areaNueva(), soloMenu: enM, alias: enM || norm(nb) === norm(l.art) ? [] : [l.art] });
         S.platos.push(p);
         guardar('platos', p, true);
         l.pid = p.id;
@@ -346,7 +459,7 @@ function guardarVentas() {
         return;
       }
       const p = plato(l.pid);
-      if (!p || norm(p.nombre) === norm(l.art)) return;
+      if (!p || norm(p.nombre) === norm(l.art) || l.menu) return;
       let ch = false;
       if (l.renombrar) {
         if (!p.alias.some((a) => norm(a) === norm(p.nombre))) p.alias.push(p.nombre);
@@ -368,10 +481,43 @@ function guardarVentas() {
     }
     const w = v.semanas[wk] || (v.semanas[wk] = {});
     e.lineas.forEach((l) => {
-      if (!l.pid || l.pid === '__nuevo' || !(l.n > 0)) return;
+      if (!l.pid || l.pid === '__nuevo' || !(l.n > 0) || enMenuSi(l)) return;
       v.unidades[l.pid] = (Number(v.unidades[l.pid]) || 0) + l.n;
       w[l.pid] = (Number(w[l.pid]) || 0) + l.n;
       n += l.n;
+    });
+    /* Menús: se crean o completan, y se cuentan */
+    const mLineas = [],
+      mTot = [];
+    (e.menus || []).forEach((m) => {
+      if (m.ev === '__suelto') return;
+      const ls = lineasMenu(m).filter((l) => l.pid && l.pid !== '__nuevo' && l.n > 0);
+      if (!ls.length) return;
+      let ev = S.eventos.find((x) => x.id === m.ev);
+      if (!ev) {
+        ev = nEvento({ id: nuevoId('eventos'), nombre: m.nombre, enCarta: true, opciones: true, platos: [] });
+        S.eventos.push(ev);
+        menusNuevos++;
+      }
+      ls.forEach((l) => {
+        const x = ev.platos.find((y) => y.id === l.pid);
+        if (!x) ev.platos.push({ id: l.pid, n: 1, tiempo: l.tiempo || '' });
+        else if (!x.tiempo && l.tiempo) x.tiempo = l.tiempo;
+      });
+      if (ls.some((l) => l.tiempo)) ev.opciones = true;
+      guardar('eventos', ev, true);
+      const uds = {};
+      ls.forEach((l) => {
+        uds[l.pid] = (uds[l.pid] || 0) + l.n;
+        mLineas.push([l.pid, l.n, ev.id]);
+        v.enMenu[l.pid] = (Number(v.enMenu[l.pid]) || 0) + l.n;
+      });
+      const t = menusVendidos(ev, uds);
+      if (t > 0) {
+        mTot.push([ev.id, t]);
+        v.menus[ev.id] = (Number(v.menus[ev.id]) || 0) + t;
+        nm += t;
+      }
     });
     v.importes.push({
       desde: e.desde,
@@ -381,7 +527,10 @@ function guardarVentas() {
       creado: new Date().toISOString(),
       por: miId || '',
       /* Detalle por plato de este informe: permite exportar un día o una semana concreta */
-      lineas: e.lineas.filter((l) => l.pid && l.pid !== '__nuevo' && l.n > 0).map((l) => [l.pid, l.n]),
+      lineas: e.lineas.filter((l) => l.pid && l.pid !== '__nuevo' && l.n > 0 && !enMenuSi(l)).map((l) => [l.pid, l.n]),
+      /* Platos vendidos dentro de menús [plato, unidades, menú] y menús vendidos [menú, cuántos] */
+      menuLineas: mLineas,
+      menus: mTot,
     });
     guardar('ventas', v, true);
   });
@@ -390,33 +539,80 @@ function guardarVentas() {
   sucio();
   vIng();
   toast(
-    n + ' platos sumados a ' + fMes(mes).toLowerCase() +
+    n + ' platos' + (nm ? ' y ' + nm + (nm === 1 ? ' menú' : ' menús') : '') + ' sumados a ' + fMes(mes).toLowerCase() +
+      (menusNuevos ? '. ' + menusNuevos + (menusNuevos === 1 ? ' menú nuevo en Menús' : ' menús nuevos en Menús') : '') +
       (creados ? '. ' + creados + (creados === 1 ? ' plato nuevo en la carta' : ' platos nuevos en la carta') : '') +
       (nombres ? '. ' + nombres + (nombres === 1 ? ' nombre actualizado' : ' nombres actualizados') : '') + '.',
   );
 }
-/* Ventas importadas, por fechas: se pueden quitar si se subieron mal */
-function importadasHTML() {
+/* Ventas importadas, por fechas: se pueden revisar una a una y quitar si se subieron mal o repetidas */
+const firmaImp = (x) =>
+  x.desde + '|' + x.hasta + '|' + (Array.isArray(x.lineas) ? x.lineas.map((l) => l.join(':')).sort().join(',') : 'n' + x.n) + '|' + (Array.isArray(x.menuLineas) ? x.menuLineas.map((l) => l.join(':')).sort().join(',') : '');
+function importadasLista() {
   const l = [];
   S.ventas.forEach((v) => v.importes.forEach((x, i) => l.push({ v: v, x: x, i: i })));
+  /* Repetida: mismas fechas y mismos platos que otra subida antes */
+  const vistos = {};
+  l.slice()
+    .sort((a, z) => String(a.x.creado).localeCompare(String(z.x.creado)))
+    .forEach((y) => {
+      const f = firmaImp(y.x);
+      y.repe = !!vistos[f];
+      y.solapa = false;
+      vistos[f] = 1;
+    });
+  l.forEach((y) => (y.solapa = !y.repe && l.some((o) => o !== y && o.x.desde <= y.x.hasta && o.x.hasta >= y.x.desde)));
+  return l.sort((a, z) => String(z.x.hasta).localeCompare(String(a.x.hasta)) || String(z.x.creado).localeCompare(String(a.x.creado)));
+}
+let impVer = 10;
+function importadasHTML() {
+  const l = importadasLista();
   if (!l.length) return '';
-  l.sort((a, z) => String(z.x.hasta).localeCompare(String(a.x.hasta)) || String(z.x.creado).localeCompare(String(a.x.creado)));
+  const nrep = l.filter((y) => y.repe).length,
+    adm = puede(2);
   return (
-    '<section class="card"><h3>Ventas importadas</h3><p class="hint">Cada informe queda guardado con sus fechas. El panel de Control › Consumo y stock usa estas ventas para calcular lo que se gastó de cada producto.</p><div class="rows">' +
+    '<section class="card" id="ventas-imp"><h3>Ventas importadas (' + l.length + ')</h3><p class="hint">Cada informe queda guardado con sus fechas. Toca uno para ver qué platos sumó. Si uno se leyó mal o está repetido, quítalo: se restan sus platos de las ventas.</p>' +
+    (nrep ? '<p class="aviso">Hay ' + nrep + (nrep === 1 ? ' informe repetido' : ' informes repetidos') + ' (mismas fechas y mismos platos que otro).' + (adm ? ' <button class="btn small" type="button" data-act="vimp-repes">Quitar los repetidos</button>' : '') + '</p>' : '') +
+    '<div class="rows">' +
     l
-      .slice(0, 20)
+      .slice(0, impVer)
       .map(
         (y) =>
-          '<div class="row" data-vm="' + esc(y.v.id) + '" data-vi="' + y.i + '"><span class="n"><b>' + esc(fRangoF(y.x.desde, y.x.hasta)) + '</b><span>' + esc((y.x.n || 0) + ' platos vendidos' + (y.x.archivo ? ' · ' + y.x.archivo : '') + (nombre(y.x.por) ? ' · ' + nombre(y.x.por) : '')) + '</span></span><span class="d">' +
-          (Array.isArray(y.x.lineas) && puede(2) ? '<button class="btn small" type="button" data-act="vimp-quitar">Quitar</button>' : '') + '</span></div>',
+          '<details class="vimp" data-vm="' + esc(y.v.id) + '" data-vi="' + y.i + '"><summary class="row"><span class="n"><b>' + esc(fRangoF(y.x.desde, y.x.hasta)) +
+          (y.repe ? ' <span class="pill crit">Repetido</span>' : y.solapa ? ' <span class="pill warn">Fechas que se pisan</span>' : '') + '</b><span>' +
+          esc((y.x.n || 0) + ' platos vendidos' + (y.x.archivo ? ' · ' + y.x.archivo : '') + (y.x.creado ? ' · subido el ' + fFecha(y.x.creado) : '') + (nombre(y.x.por) ? ' por ' + nombre(y.x.por) : '')) + '</span></span>' +
+          (adm ? '<span class="d"><button class="btn small danger" type="button" data-act="vimp-quitar">Quitar</button></span>' : '') + '</summary>' +
+          (Array.isArray(y.x.lineas) && y.x.lineas.length
+            ? '<div class="tabla"><table class="nivel"><thead><tr><th>Plato</th><th>Unidades</th></tr></thead><tbody>' +
+              y.x.lineas
+                .slice()
+                .sort((a, z) => z[1] - a[1])
+                .map(([pid, n]) => '<tr><td>' + esc((plato(pid) || { nombre: '(plato borrado)' }).nombre) + '</td><td>' + fNum(n, 0) + '</td></tr>')
+                .join('') +
+              '</tbody></table></div>'
+            : '<p class="hint">Este informe es de una versión antigua y no guardó el detalle por plato: al quitarlo solo se borra de la lista. Para corregir las unidades, usa «Borrar las ventas del mes».</p>') +
+          '</details>',
       )
       .join('') +
+    '</div>' +
+    '<div class="acciones">' + (l.length > impVer ? '<button class="btn small" type="button" data-act="vimp-mas">Ver más (' + (l.length - impVer) + ' restantes)</button>' : '') +
+    (impVer > 10 ? '<button class="btn small" type="button" data-act="vimp-menos">Ver menos</button>' : '') +
+    (adm ? '<button class="link" type="button" data-act="vimp-mes" style="color:var(--crit)">Borrar todas las ventas de ' + esc(fMes(mesM).toLowerCase()) + '</button>' : '') +
     '</div></section>'
   );
 }
-function quitarImportacion(v, i) {
+function quitarImportacion(v, i, callado) {
   const x = v.importes[i];
-  if (!x || !Array.isArray(x.lineas)) return;
+  if (!x) return;
+  if (!Array.isArray(x.lineas)) {
+    v.importes.splice(i, 1);
+    guardar('ventas', v, true);
+    if (!callado) {
+      vIng();
+      toast('Informe quitado de la lista. Sus unidades no se pueden restar: revisa el mes.');
+    }
+    return;
+  }
   const wk = semana(x.hasta || x.desde || hoy()),
     w = v.semanas[wk] || {};
   x.lineas.forEach(([pid, n]) => {
@@ -425,11 +621,41 @@ function quitarImportacion(v, i) {
     w[pid] = Math.max(0, (Number(w[pid]) || 0) - n);
     if (!w[pid]) delete w[pid];
   });
+  (x.menuLineas || []).forEach(([pid, n]) => {
+    v.enMenu[pid] = Math.max(0, (Number(v.enMenu[pid]) || 0) - n);
+    if (!v.enMenu[pid]) delete v.enMenu[pid];
+  });
+  (x.menus || []).forEach(([id, n]) => {
+    v.menus[id] = Math.max(0, (Number(v.menus[id]) || 0) - n);
+    if (!v.menus[id]) delete v.menus[id];
+  });
   v.importes.splice(i, 1);
   guardar('ventas', v, true);
   sucio();
+  if (callado) return;
   vIng();
-  toast('Ventas del ' + fRangoF(x.desde, x.hasta) + ' quitadas.');
+  toast('Ventas del ' + fRangoF(x.desde, x.hasta) + ' quitadas: se restaron ' + (x.n || 0) + ' platos.');
+}
+function quitarRepetidos() {
+  const rep = importadasLista().filter((y) => y.repe);
+  /* De atrás hacia delante dentro de cada mes, para que no se muevan las posiciones */
+  rep.sort((a, z) => z.i - a.i);
+  enLote(() => rep.forEach((y) => quitarImportacion(y.v, y.i, true)));
+  vIng();
+  toast(rep.length + (rep.length === 1 ? ' informe repetido quitado.' : ' informes repetidos quitados.'));
+}
+function borrarVentasMes() {
+  const v = S.ventas.find((x) => x.id === mesM);
+  if (!v) return toast('No hay ventas en ' + fMes(mesM).toLowerCase() + '.');
+  v.unidades = {};
+  v.semanas = {};
+  v.importes = [];
+  v.menus = {};
+  v.enMenu = {};
+  guardar('ventas', v, true);
+  sucio();
+  vIng();
+  toast('Ventas de ' + fMes(mesM).toLowerCase() + ' borradas. Vuelve a importar los informes buenos.');
 }
 /* «2026-S46» → «9 nov» (el lunes de esa semana) */
 function lunesISO(k) {
