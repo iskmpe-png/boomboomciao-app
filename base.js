@@ -89,7 +89,7 @@ const ALIAS = {
   mermas: 'almacen-mermas',
 };
 const PER = { diario: 'Diario', quincenal: 'Quincenal', mensual: 'Mensual' };
-const MOTIVOS = ['Caducado', 'Mal estado', 'Error de cocina', 'Devolución de sala', 'Rotura o caída', 'Otro'];
+const MOTIVOS = ['Caducado', 'Mal estado', 'Quemado', 'Error de cocina', 'Devolución de sala', 'Rotura o caída', 'Otro'];
 const G_BASE = 'Elaboraciones de la casa';
 /* En Carta, el apartado Elaboraciones enseña lo que se produce en casa para usarlo en otros escandallos */
 const enElab = () => sub.carta === 'elaboraciones';

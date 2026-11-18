@@ -77,8 +77,12 @@ function comprasEn(d, h) {
 function mermasEn(d, h) {
   const q = {};
   S.mermas.forEach((m) => {
+    if (m.fecha < d || m.fecha > h) return;
     const p = prod(m.productoId);
-    if (p && m.fecha >= d && m.fecha <= h && m.unidad === p.unidad) q[p.id] = (q[p.id] || 0) + m.cantidad;
+    if (p && m.unidad === p.unidad) q[p.id] = (q[p.id] || 0) + m.cantidad;
+    /* Un plato tirado: lo que llevaba cuenta como merma de cada producto */
+    const pl = m.platoId && idx().pl.get(m.platoId);
+    if (pl) explotarC(pl, m.cantidad, q, {}, 0);
   });
   return q;
 }
@@ -262,6 +266,7 @@ function detalleConsumo(x, r) {
       .map((c) => ({ c: c, q: suma(c.lineas.filter((l) => l.productoId === x.p.id && l.unidad === u), (l) => l.cantidad) }))
       .filter((y) => y.q > 0),
     mer = S.mermas.filter((m) => m.productoId === x.p.id && m.fecha >= r.d && m.fecha <= r.h && m.unidad === u),
+    merPl = S.mermas.filter((m) => m.platoId && m.fecha >= r.d && m.fecha <= r.h && idx().pl.get(m.platoId) && rutaProd(idx().pl.get(m.platoId), x.p.id, 0).length),
     pl = (n) => fNum(n, n % 1 ? 1 : 0);
   return (
     '<div class="cn-exp">' +
@@ -276,6 +281,7 @@ function detalleConsumo(x, r) {
       : '<p>No se gastó nada según las ventas de estas fechas' + (x.p.general ? ' (es de uso general, no va en ningún plato).' : !platosDe(x.p.id).size ? ': no está en ningún plato.' : ': ninguno de sus platos se vendió.') + '</p>') +
     (compras.length ? '<p>Compras: ' + compras.map((y) => qU(y.q, u) + ' de ' + esc(y.c.proveedor || 'proveedor') + ' el ' + esc(fFecha(y.c.fecha))).join(' · ') + '.</p>' : '') +
     (mer.length ? '<p>Mermas apuntadas: ' + mer.map((m) => qU(m.cantidad, u) + ' (' + esc(m.motivo) + ')').join(' · ') + '.</p>' : '') +
+    (merPl.length ? '<p>Platos tirados que lo llevaban: ' + merPl.map((m) => fNum(m.cantidad, 2) + ' × ' + esc(m.nombre) + ' (' + esc(m.motivo) + ')').join(' · ') + '.</p>' : '') +
     (x.teo != null
       ? '<p>Debería quedar: ' + qU(x.ini, u) + ' del inventario + ' + qU(x.compra, u) + ' comprados − ' + qU(x.gasto, u) + ' gastados − ' + qU(x.merma, u) + ' de merma = <b>' + qU(x.teo, u) + '</b>' + (x.real != null ? '. Contado: ' + qU(x.real, u) + '.' : '.') + '</p>'
       : '') +
@@ -442,4 +448,50 @@ V.addEventListener('click', (e) => {
   } else if (a === 'vimp-mes') {
     if (confirmar(b, 'Pulsa otra vez para borrar todo el mes')) borrarVentasMes();
   }
+});
+
+/* Merma rápida de platos (Almacén › Mermas) */
+V.addEventListener('change', (e) => {
+  if (e.target.id === 'mp-plato') mpCoste();
+});
+V.addEventListener('input', (e) => {
+  if (e.target.id === 'mp-n') mpCoste();
+});
+V.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act^="mp-"]');
+  if (!b || pant !== 'mermas') return;
+  if (b.dataset.act === 'mp-rapido') {
+    $('mp-plato').value = b.dataset.id;
+    $('mp-n').focus();
+    $('mp-n').select();
+  } else {
+    const n = parse($('mp-n').value) || 0;
+    $('mp-n').value = show(Math.max(1, n + (b.dataset.act === 'mp-mas' ? 1 : -1))) || '1';
+  }
+  mpCoste();
+});
+V.addEventListener('submit', (e) => {
+  if (e.target.id !== 'form-mplato') return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  if (!puede(1)) return;
+  const p = plato($('mp-plato').value),
+    n = parse($('mp-n').value);
+  if (!p) {
+    $('mp-msg').textContent = 'Elige el plato.';
+    $('mp-plato').focus();
+    return;
+  }
+  if (!(n > 0)) {
+    $('mp-msg').textContent = 'Escribe cuántos.';
+    $('mp-n').focus();
+    return;
+  }
+  addMerma({ fecha: hoy(), nombre: p.nombre, platoId: p.id, cantidad: n, unidad: p.base ? p.unidadBase : 'ud', precio: r3(costeUd(p)), motivo: $('mp-motivo').value });
+  try {
+    mem('bbc.mplatos', JSON.stringify([p.id].concat(recientesMP().filter((x) => x !== p.id)).slice(0, 8)));
+  } catch (er) {}
+  mesM = hoy().slice(0, 7);
+  toast(fNum(n, 2) + ' × ' + p.nombre + ' a mermas: ' + fEur.format(costeUd(p) * n) + ' de coste.');
+  vMermas();
 });
