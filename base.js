@@ -63,6 +63,7 @@ const SUBS = {
     ['etiquetas', 'Etiquetas'],
     ['appcc', 'APPCC'],
   ],
+  control: [['consumo', 'Consumo y stock']],
   almacen: [
     ['inventario', 'Inventario'],
     ['pedidos', 'Pedidos'],
@@ -71,7 +72,7 @@ const SUBS = {
     ['mermas', 'Mermas'],
   ],
 };
-const sub = { inicio: 'panel', carta: 'platos', precios: 'productos', cocina: 'recetas', almacen: 'inventario' };
+const sub = { inicio: 'panel', carta: 'platos', precios: 'productos', cocina: 'recetas', control: 'consumo', almacen: 'inventario' };
 const LEG = {
   'carta/platos': 'carta',
   'carta/elaboraciones': 'carta',

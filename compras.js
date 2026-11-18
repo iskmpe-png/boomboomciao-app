@@ -47,6 +47,7 @@ function compraHTML(c) {
         c.lineas.map((l) => '<tr><td>' + esc(l.nombre) + '</td><td>' + fNum(l.cantidad, 3) + ' ' + UDI[l.unidad] + '</td><td>' + fEur.format(l.precio) + UDP[l.unidad].slice(1) + '</td><td>' + fEur.format(importeLinea(l)) + '</td></tr>').join('') +
         '</tbody><tfoot><tr><td>Total sin IVA</td><td></td><td></td><td>' + fEur.format(c.importe) + '</td></tr></tfoot></table></div>'
       : '<p class="hint">Apuntada solo con el importe, sin productos.</p>') +
+    (c.pendientes.length ? '<div class="rows">' + c.pendientes.map((x) => filaPend({ c: c, x: x }, false)).join('') + '</div>' : '') +
     cuadreHTML(c.proveedor, c.fecha, c.lineas, c.id) +
     '<p class="hint">' + esc(fFecha(c.fecha)) + (c.recibe ? ' · Recibió: ' + esc(c.recibe) : '') + (nombre(c.por) ? ' · Lo subió: ' + esc(nombre(c.por)) : '') + (c.creado ? ' · ' + esc(new Date(c.creado).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : '') + '</p>' +
     '<div class="acciones">' +
@@ -143,6 +144,7 @@ function vCompras() {
     (sLim && sLim.images ? '<button class="btn primary" type="button" data-act="escanear">Leer albarán (foto o PDF)</button>' : '') +
     expHTML() +
     '</div>' +
+    pendientesHTML() +
     '<div class="dos"><div class="col"><section class="card"><details class="nueva-compra"><summary>Apuntar una compra a mano</summary><form id="form-compra" class="editor m6" style="margin:0" novalidate>' +
     '<div class="field"><label for="co-fecha">Fecha</label><input id="co-fecha" type="date" value="' + hoy() + '"></div><div class="field"><label for="co-prov">Proveedor</label><input id="co-prov" type="text" list="dl-proveedores" autocomplete="off"></div>' +
     '<div class="field"><label for="co-alb">Nº de albarán</label><input id="co-alb" type="text" autocomplete="off" placeholder="opcional"></div><div class="field"><label for="co-imp">Importe sin IVA €</label><input class="num" id="co-imp" type="text" inputmode="decimal" placeholder="0,00"></div>' +
@@ -156,6 +158,7 @@ function vCompras() {
     '<div class="rows" id="lista-compras"></div></section></div>' +
     '<div class="col"><section class="card"><h3>Por proveedor</h3><div class="barras" id="c-prov"></div></section><section class="card"><h3>Archivo de albaranes</h3><div id="c-arch"></div></section></div></div>';
   listaCompras();
+  repasarFormatos();
   cargarEspacio();
   subirPendientes();
   /* Unos segundos después, con todos los datos ya cargados */

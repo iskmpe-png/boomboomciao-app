@@ -109,7 +109,7 @@ function nuevoClick2(b, a) {
     return true;
   }
   if (a === 'ventas-importar') {
-    importarVentas();
+    elegirPeriodoVentas();
     return true;
   }
   if (a === 'vi-crear-todos' && ventasImp) {

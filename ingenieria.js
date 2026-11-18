@@ -63,7 +63,7 @@ function vIng() {
   $('vista').innerHTML =
     '<div class="bar">' +
     mesHTML() +
-    '<span class="hint grow">Importa el informe del TPV o escribe a mano cuántos platos se vendieron en el mes.</span>' +
+    '<span class="hint grow">Importa el informe del TPV eligiendo sus fechas (un día, una semana o un mes), o escribe a mano cuántos platos se vendieron en el mes.</span>' +
     (sAPI ? '<button class="btn primary" type="button" data-act="ventas-importar">Importar ventas</button>' : '') +
     expHTML(0, mOp('ven-exp', 'Ventas de un día, semana o mes…')) +
     '</div><div class="kpis" id="ing-k"></div>' +
@@ -87,6 +87,7 @@ function vIng() {
           .join('')
       : '<p class="hint">Aún no hay platos con precio de carta.</p>') +
     '</div></section>' +
-    semanasHTML();
+    semanasHTML() +
+    importadasHTML();
   calcIng();
 }

@@ -61,13 +61,14 @@ async function escanear() {
       const p = prod(l.pid);
       l.act = !!(
         p &&
-        puede(2) &&
+        puedeArea(p) &&
         p.unidad === l.unidad &&
         l.precio > 0 &&
         Math.abs(p.precio - l.precio) >= 0.005 &&
         (!p.proveedor || !pvx || norm(p.proveedor) === norm(pvx))
       );
-      l.nuevo = false;
+      /* Quien no puede aprobar pide que lo creen: queda pendiente para el encargado */
+      l.nuevo = !p && !puedeArea(areaNueva()) && !!l.nombre.trim();
     });
     const fe = /^\d{4}-\d{2}-\d{2}$/.test((d && d.fecha) || '') ? d.fecha : hoy();
     escaneo = {
@@ -87,21 +88,22 @@ async function escanear() {
   }
   if (pant === 'compras') vCompras();
 }
+const PEND_TXT = 'queda pendiente de aprobar por el encargado';
 function notaLinea(l) {
   const p = prod(l.pid);
-  if (!p)
-    return puede(2) && l.nombre.trim()
-      ? '<label class="check"><input type="checkbox" data-sc="nuevo"' +
-          (l.nuevo ? ' checked' : '') +
-          '> No está en Precios: crearlo</label>'
-      : '<span class="hint">No está en Precios</span>';
+  if (!p) {
+    if (!l.nombre.trim()) return '<span class="hint">No está en Precios</span>';
+    return puedeArea(areaNueva())
+      ? '<label class="check"><input type="checkbox" data-sc="nuevo"' + (l.nuevo ? ' checked' : '') + '> No está en Precios: crearlo</label>'
+      : '<label class="check"><input type="checkbox" data-sc="nuevo"' + (l.nuevo ? ' checked' : '') + '> No está en Precios: pedir al encargado que lo cree</label>';
+  }
   const otro = p.proveedor && escaneo.proveedor && norm(p.proveedor) !== norm(escaneo.proveedor),
     dif = l.precio > 0 && Math.abs(p.precio - l.precio) >= 0.005;
   if (p.unidad !== l.unidad)
-    return '<span class="hint">En Precios va en ' + UDP[p.unidad] + ': revisa la unidad antes de actualizar.</span>';
+    return '<span class="hint">En Precios va en ' + UDP[p.unidad] + (puedeArea(p) ? ': revisa la unidad antes de actualizar.' : ': el cambio de formato ' + PEND_TXT + '.') + '</span>';
   if (!dif) return '<span class="hint">Mismo precio que en Precios.</span>';
   return (
-    (puede(2)
+    (puedeArea(p)
       ? '<label class="check"><input type="checkbox" data-sc="act"' +
         (l.act ? ' checked' : '') +
         '> Actualizar precio: ' +
@@ -109,7 +111,7 @@ function notaLinea(l) {
         ' → ' +
         fEur.format(l.precio) +
         '</label>'
-      : '<span class="hint">Precio distinto (' + fEur.format(p.precio) + ' en Precios). Avísale al encargado.</span>') +
+      : '<span class="hint" style="color:var(--warn)">Precio distinto (' + fEur.format(p.precio) + ' en Precios → ' + fEur.format(l.precio) + '): ' + PEND_TXT + '.</span>') +
     (otro ? '<span class="hint" style="color:var(--warn)">Ojo: en Precios es de ' + esc(p.proveedor) + '.</span>' : '')
   );
 }
@@ -210,13 +212,21 @@ async function guardarEscaneo() {
   e.guardando = true;
   let act = 0,
     nue = 0;
-  const lineas = [];
-  e.lineas.forEach((l) => {
+  const lineas = [],
+    pend = [],
+    pid0 = Date.now().toString(36);
+  e.lineas.forEach((l, k) => {
     let p = prod(l.pid);
-    if (!p && l.nuevo && puede(2) && l.nombre.trim() && !prodPorNombre(l.nombre)) {
-      p = crearProd(l.nombre, e.proveedor, l.precio, l.unidad);
-      nue++;
-    } else if (p && l.act && puede(2) && cambiarPrecio(p, l.precio)) act++;
+    if (!p && l.nuevo && l.nombre.trim() && !prodPorNombre(l.nombre)) {
+      if (puedeArea(areaNueva())) {
+        p = crearProd(l.nombre, e.proveedor, l.precio, l.unidad);
+        nue++;
+      } else pend.push({ id: pid0 + k, tipo: 'nuevo', k: lineas.length, nombre: l.nombre.trim(), unidad: l.unidad, precio: l.precio, area: areaNueva() });
+    } else if (p && !puedeArea(p)) {
+      /* Cocina sube el albarán tal cual; lo que cambia Precios lo aprueba el encargado */
+      if (p.unidad !== l.unidad && l.precio > 0) pend.push({ id: pid0 + k, tipo: 'formato', k: lineas.length, pid: p.id, nombre: p.nombre, unidad: l.unidad, precio: l.precio, de: p.unidad });
+      else if (l.precio > 0 && Math.abs(p.precio - l.precio) >= 0.005) pend.push({ id: pid0 + k, tipo: 'precio', k: lineas.length, pid: p.id, nombre: p.nombre, unidad: l.unidad, precio: l.precio, de: p.precio });
+    } else if (p && l.act && cambiarPrecio(p, l.precio)) act++;
     lineas.push({
       nombre: p ? p.nombre : l.nombre,
       productoId: p ? p.id : '',
@@ -235,6 +245,7 @@ async function guardarEscaneo() {
     recibe: String(e.recibe).trim(),
     creado: new Date().toISOString(),
     por: miId || '',
+    pendientes: pend,
   });
   /* Primero la prueba: así la compra se guarda ya con su foto o documento */
   if (e.archivos && e.archivos.length) {
@@ -261,6 +272,7 @@ async function guardarEscaneo() {
   toast(
     'Albarán guardado' +
       (act ? ' · ' + act + (act === 1 ? ' precio actualizado' : ' precios actualizados') : '') +
-      (nue ? ' · ' + nue + (nue === 1 ? ' producto nuevo' : ' productos nuevos') : ''),
+      (nue ? ' · ' + nue + (nue === 1 ? ' producto nuevo' : ' productos nuevos') : '') +
+      (pend.length ? ' · ' + pend.length + (pend.length === 1 ? ' cambio queda pendiente' : ' cambios quedan pendientes') + ' de aprobar' : ''),
   );
 }

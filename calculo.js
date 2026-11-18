@@ -107,3 +107,49 @@ function pillFC(p) {
   const o = p.objetivo > 0 ? p.objetivo : 30;
   return '<span class="pill ' + (fc <= o ? 'ok' : fc <= o + 5 ? 'warn' : 'crit') + '">' + fNum(fc) + ' %</span>';
 }
+/* ---- Enlaces: cada producto y cada elaboración tiene que llegar al menos a un plato de la carta,
+   directamente o a través de otras elaboraciones. Así todo lo que se compra se puede calcular. ---- */
+let enlCache = null;
+function enlaces() {
+  if (enlCache) return enlCache;
+  const P = new Map(),
+    B = new Map(),
+    add = (m, k, v) => {
+      let s = m.get(k);
+      if (!s) m.set(k, (s = new Set()));
+      s.add(v);
+    };
+  const visita = (p, raiz, d) => {
+    if (d > 6) return;
+    p.ingredientes.forEach((i) => {
+      if (i.productoId && prod(i.productoId)) add(P, i.productoId, raiz);
+      else {
+        const b = baseDe(i);
+        if (b) {
+          add(B, b.id, raiz);
+          visita(b, raiz, d + 1);
+        }
+      }
+    });
+  };
+  S.platos.filter((p) => !p.base).forEach((p) => visita(p, p.id, 0));
+  enlCache = { P: P, B: B };
+  return enlCache;
+}
+/* Platos de la carta a los que llega un producto (o una elaboración, con base=true) */
+const platosDe = (id, base) => (enlaces()[base ? 'B' : 'P'].get(id) || new Set());
+const elabsCon = (pid) => S.platos.filter((b) => b.base && b.ingredientes.some((i) => i.productoId === pid));
+function sinEnlazar() {
+  const e = enlaces();
+  return S.productos
+    .filter((p) => !p.general && enArea(p) && !e.P.has(p.id))
+    .map((p) => ({ x: p, base: false }))
+    .concat(S.platos.filter((b) => b.base && b.nombre && enArea(b) && !e.B.has(b.id)).map((b) => ({ x: b, base: true })));
+}
+function enlaceHTML(p) {
+  if (p.general) return '<span class="pill">Uso general</span>';
+  const n = platosDe(p.id).size,
+    el = elabsCon(p.id).length;
+  if (!n) return '<span class="pill crit">Sin enlazar a un plato</span>';
+  return '<span class="enl">En ' + n + (n === 1 ? ' plato' : ' platos') + (el ? ' · ' + el + (el === 1 ? ' elaboración' : ' elaboraciones') : '') + '</span>';
+}

@@ -71,6 +71,7 @@ function infReceta(p, f) {
   };
 }
 function informe() {
+  if (pant === 'consumo') return informeConsumo();
   const nu = informeNuevo();
   if (nu !== undefined) return nu;
   if (pant === 'carta' && abierta) return infFicha(plato());

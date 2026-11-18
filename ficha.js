@@ -50,6 +50,7 @@ const filaIng = (i, k) =>
   '</div><div class="mini"><span>Coste</span><b data-out="coste"></b></div><div class="i-x" data-out="nota"></div></div>';
 function vFicha() {
   const p = plato();
+  $('vista').dataset.area = areaDe(p);
   $('vista').innerHTML =
     '<div class="bar"><button class="btn" type="button" data-act="volver">← ' + (p.base ? 'Elaboraciones' : 'Carta') + '</button>' +
     expHTML(1) +

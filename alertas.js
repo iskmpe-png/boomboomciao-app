@@ -62,12 +62,24 @@ function spark(p) {
     '" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
   );
 }
+function enlaceDetalle(p) {
+  if (p.general) return '';
+  const ids = [...platosDe(p.id)],
+    el = elabsCon(p.id);
+  if (!ids.length)
+    return '<p class="aviso wide">No está en ningún plato de la carta. Añádelo al escandallo de un plato o de una elaboración, o márcalo como uso general. Si no, no se puede calcular cuánto se gasta.</p>';
+  return (
+    '<p class="hint wide">Llega a ' + ids.length + (ids.length === 1 ? ' plato: ' : ' platos: ') +
+    esc(ids.slice(0, 6).map((id) => (plato(id) || {}).nombre).filter(Boolean).join(', ') + (ids.length > 6 ? '…' : '')) +
+    (el.length ? '. Directamente en ' + el.length + (el.length === 1 ? ' elaboración: ' : ' elaboraciones: ') + esc(el.slice(0, 4).map((b) => b.nombre).join(', ')) : '') + '.</p>'
+  );
+}
 function filaProd(p) {
   if (p.id === editProd) {
     const n = usos(p.id),
       alt = alternativas(p)[0];
     return (
-      '<div class="editor pe" data-id="' +
+      '<div class="editor pe" data-area="' + areaDe(p) + '" data-id="' +
       esc(p.id) +
       '">' +
       '<div class="field"><label for="ep-n">Producto</label><input id="ep-n" data-c="nombre" type="text" autocomplete="off" value="' +
@@ -105,6 +117,8 @@ function filaProd(p) {
             .join(' · ') +
           '</span></div>'
         : '') +
+      '<label class="check wide"><input type="checkbox" data-c="general"' + (p.general ? ' checked' : '') + '> Uso general de la cocina: no va en ningún plato (aceite de freidora, gas del soplete, film…)</label>' +
+      enlaceDetalle(p) +
       '<span class="hint">' +
       (n === 1 ? 'Se usa en 1 ficha' : 'Se usa en ' + n + ' fichas') +
       (alt && alt.precio < p.precio
@@ -120,7 +134,7 @@ function filaProd(p) {
     esc(p.nombre) +
     '</b><span>' +
     esc(metaProd(p)) +
-    '</span></span><span class="d"><b>' +
+    '</span>' + enlaceHTML(p) + '</span><span class="d"><b>' +
     fEur.format(p.precio) +
     '</b><span class="hint">' +
     UDP[p.unidad].slice(1) +

@@ -296,7 +296,8 @@ function entrarSinRed(y) {
 }
 async function entrarNube() {
   try {
-    const m = await sb.from('miembros').select('restaurante_id,rol').eq('user_id', yo.id);
+    let m = await sb.from('miembros').select('restaurante_id,rol,area').eq('user_id', yo.id);
+    if (m.error) m = await sb.from('miembros').select('restaurante_id,rol').eq('user_id', yo.id);
     if (m.error) throw m.error;
     const q = await sb.from('restaurantes').select('id,nombre');
     if (q.error) throw q.error;
@@ -305,7 +306,7 @@ async function entrarNube() {
       nm[x.id] = x.nombre;
     });
     mios = (m.data || [])
-      .map((x) => ({ id: x.restaurante_id, rol: x.rol, nombre: nm[x.restaurante_id] || 'Restaurante' }))
+      .map((x) => ({ id: x.restaurante_id, rol: x.rol, area: x.area || 'todas', nombre: nm[x.restaurante_id] || 'Restaurante' }))
       .sort((a, z) => a.nombre.localeCompare(z.nombre, 'es'));
     const p = await sb.rpc('puedo_crear');
     esPlat = !p.error && p.data === true;
@@ -352,7 +353,8 @@ function iniciarNube(mio) {
   const d = sbDb(rid);
   remoto(d);
   setNivel(ROLNIV[mio.rol]);
-  $('rol').textContent = mio.nombre + ' · ' + ROLES[mio.rol];
+  fijarArea(mio.area);
+  $('rol').textContent = mio.nombre + ' · ' + ROLES[mio.rol] + (mio.area === 'cocina' || mio.area === 'barra' ? ' de ' + mio.area : '');
   $('btn-restaurar').hidden = nivel !== 'admin';
   $('m-cuenta').hidden = false;
   $('cu-nombre').textContent = yo.nombre;
@@ -380,10 +382,9 @@ function iniciarNube(mio) {
   refrescar();
 }
 function cargarMiembros() {
-  return sb
-    .from('miembros')
-    .select('user_id,rol,nombre,email')
-    .eq('restaurante_id', rid)
+  const pide = (c) => sb.from('miembros').select(c).eq('restaurante_id', rid);
+  return pide('user_id,rol,nombre,email,area')
+    .then((q) => (q.error ? pide('user_id,rol,nombre,email') : q))
     .then(
       (q) => {
         if (!q.error) {
