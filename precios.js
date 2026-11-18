@@ -87,14 +87,16 @@ function vPrecios() {
 /* Aviso rojo: productos y elaboraciones que no llegan a ningún plato */
 function sinEnlaceHTML() {
   const l = sinEnlazar();
-  if (!l.length || estProd === 'sinenlace') return '';
+  if (!l.length) return '';
+  if (estProd === 'sinenlace')
+    return '<section class="card alerta-roja"><h3>Añádelos a sus fichas desde aquí</h3><p class="hint">Toca uno, marca los platos o elaboraciones que lo llevan (varios a la vez) y pon la cantidad.</p>' + sinEnlaceBotones(l, true) + '</section>';
   const np = l.filter((y) => !y.base).length,
     nb = l.length - np;
   return (
     '<section class="card alerta-roja"><h3>' +
     [np ? np + (np === 1 ? ' producto' : ' productos') : '', nb ? nb + (nb === 1 ? ' elaboración' : ' elaboraciones') : ''].filter(Boolean).join(' y ') +
     ' sin enlazar a ningún plato</h3><p class="hint">Todo lo que se compra debería estar en el escandallo de algún plato (directamente o dentro de una elaboración). Así la app calcula cuánto se gasta con las ventas y el stock mínimo. Lo que es de uso general (aceite de freidora, soplete…) márcalo como «Uso general».</p>' +
-    '<p class="lista-roja">' + esc(l.slice(0, 12).map((y) => y.x.nombre).join(' · ') + (l.length > 12 ? ' …' : '')) + '</p>' +
+    '<p class="hint">Toca uno para añadirlo a varias fichas a la vez:</p>' + sinEnlaceBotones(l) +
     '<div class="acciones"><button class="btn small" type="button" data-act="ver-sinenlace">Ver los productos</button></div></section>'
   );
 }

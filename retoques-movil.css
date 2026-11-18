@@ -1282,3 +1282,17 @@ details.vimp > summary.row .n span {
   min-width: 40px;
   font-size: 1.1rem;
 }
+/* Añadir a fichas (desde Productos) */
+.enl-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.enl-chips .chip b { color: var(--accent); margin-left: 2px; }
+.enl-av { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.enl-av p { margin: 0; flex: 1 1 220px; }
+.enl-lista { display: flex; flex-direction: column; gap: 12px; max-height: 52vh; overflow-y: auto; padding-right: 2px; }
+.enl-b h4 { margin: 0 0 6px; }
+.enl-g { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.enl-f { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent; }
+.enl-f.on { border-color: var(--accent); }
+.enl-f .check { flex: 1; min-width: 0; }
+.enl-c { display: flex; align-items: center; gap: 4px; flex: none; }
+.enl-c input { width: 72px; }
+.enl-c input:disabled { opacity: .45; }

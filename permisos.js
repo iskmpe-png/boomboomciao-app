@@ -26,6 +26,7 @@ const COLNIV = {
   pedidos: 1,
 };
 const ACT2 = new Set([
+  'enl-abrir', 'enl-todas',
   'tf-importar',
   'conv-ud',
   'sel-ini',
@@ -83,6 +84,7 @@ const ACT2 = new Set([
 ]);
 const ACT1 = new Set(['arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
 const FORMNIV = {
+  'form-enl': 2,
   'form-prod': 2,
   'form-merma': 1,
   'form-mplato': 1,
