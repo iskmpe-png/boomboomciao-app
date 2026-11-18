@@ -66,10 +66,11 @@ function enlaceDetalle(p) {
   if (p.general) return '';
   const ids = [...platosDe(p.id)],
     el = elabsCon(p.id);
+  const btn = '<button class="btn small" type="button" data-act="enl-abrir" data-tipo="p" data-id="' + esc(p.id) + '">Añadir a fichas</button>';
   if (!ids.length)
-    return '<p class="aviso wide">No está en ningún plato de la carta. Añádelo al escandallo de un plato o de una elaboración, o márcalo como uso general. Si no, no se puede calcular cuánto se gasta.</p>';
+    return '<div class="aviso wide enl-av"><p>No está en ningún plato de la carta. Añádelo aquí mismo a uno o varios platos o elaboraciones, o márcalo como uso general. Si no, no se puede calcular cuánto se gasta.</p>' + btn + '</div>';
   return (
-    '<p class="hint wide">Llega a ' + ids.length + (ids.length === 1 ? ' plato: ' : ' platos: ') +
+    '<div class="acciones wide enl-av">' + btn + '</div><p class="hint wide">Llega a ' + ids.length + (ids.length === 1 ? ' plato: ' : ' platos: ') +
     esc(ids.slice(0, 6).map((id) => (plato(id) || {}).nombre).filter(Boolean).join(', ') + (ids.length > 6 ? '…' : '')) +
     (el.length ? '. Directamente en ' + el.length + (el.length === 1 ? ' elaboración: ' : ' elaboraciones: ') + esc(el.slice(0, 4).map((b) => b.nombre).join(', ')) : '') + '.</p>'
   );
