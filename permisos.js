@@ -85,6 +85,7 @@ const ACT1 = new Set(['arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'esc
 const FORMNIV = {
   'form-prod': 2,
   'form-merma': 1,
+  'form-mplato': 1,
   'form-compra': 1,
   'form-appcc': 1,
   'form-scan': 1,

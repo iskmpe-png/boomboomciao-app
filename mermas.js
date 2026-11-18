@@ -24,17 +24,14 @@ function listaMermas() {
             esc(m.id) +
             '"><div class="n"><b>' +
             esc(m.nombre) +
+            (m.platoId ? ' <span class="pill">Plato</span>' : '') +
             '</b><span>' +
             esc(
               fFecha(m.fecha) +
                 ' · ' +
                 m.motivo +
                 ' · ' +
-                fNum(m.cantidad, 3) +
-                ' ' +
-                UDI[m.unidad] +
-                ' a ' +
-                fEur.format(m.precio) +
+                (m.platoId && m.unidad === 'ud' ? fNum(m.cantidad, 0) + (m.cantidad === 1 ? ' ración' : ' raciones') + ' a ' + fEur.format(m.precio) + ' de coste' : fNum(m.cantidad, 3) + ' ' + UDI[m.unidad] + ' a ' + fEur.format(m.precio)) +
                 porTxt(m.por),
             ) +
             '</span></div>' +
@@ -88,7 +85,9 @@ function vMermas() {
     '<div class="resumen"><b class="g" id="m-total"></b><span id="m-n"></span></div>' +
     expHTML() +
     '</div>' +
-    '<div class="dos"><div class="col"><section class="card"><form id="form-merma" class="editor m6" style="margin:0" novalidate>' +
+    '<div class="dos"><div class="col">' +
+    mermaPlatoHTML() +
+    '<section class="card"><h3>Producto</h3><form id="form-merma" class="editor m6" style="margin:0" novalidate>' +
     '<div class="field wide"><label for="me-nombre">Producto</label><input id="me-nombre" type="text" list="dl-solo-prod" autocomplete="off" placeholder="Escribe o elige"></div>' +
     '<div class="field"><label for="me-cant">Cantidad</label><input class="num" id="me-cant" type="text" inputmode="decimal" placeholder="0"></div>' +
     '<div class="field"><label for="me-precio">Precio</label><div class="precio"><input class="num" id="me-precio" type="text" inputmode="decimal" placeholder="0,00"><select id="me-unidad" aria-label="Unidad"><option value="kg">€/kg</option><option value="l">€/L</option><option value="ud">€/ud</option></select></div></div>' +
@@ -114,4 +113,35 @@ function autoMerma() {
     us.value = p.unidad;
   }
   pi.disabled = us.disabled = !!p;
+}
+
+/* ---- Merma rápida de un plato de la carta (o de una elaboración) ----
+   En pleno servicio: «se quemaron 2 Zíngaras». Se apunta al coste de producción del escandallo,
+   no al precio de carta, y sus ingredientes cuentan como gastados en Consumo y stock. */
+const recientesMP = () => {
+  try {
+    return JSON.parse(mem('bbc.mplatos') || '[]').filter((id) => plato(id));
+  } catch (e) {
+    return [];
+  }
+};
+function mermaPlatoHTML() {
+  const rec = recientesMP().slice(0, 6);
+  return (
+    '<section class="card mplato"><h3>Plato de la carta</h3><form id="form-mplato" class="editor m6" style="margin:0" novalidate>' +
+    (rec.length ? '<div class="field wide"><span class="lbl">Rápidos</span><div class="togs">' + rec.map((id) => '<button class="tog" type="button" data-act="mp-rapido" data-id="' + esc(id) + '">' + esc(plato(id).nombre) + '</button>').join('') + '</div></div>' : '') +
+    '<div class="field wide"><label for="mp-plato">Plato</label><select id="mp-plato"><option value="">Elige el plato…</option>' + opcionesPlatos('') + '</select></div>' +
+    '<div class="field"><label for="mp-n">Cuántos</label><div class="precio mp-n"><button class="btn small" type="button" data-act="mp-menos" aria-label="Uno menos">−</button><input class="num" id="mp-n" type="text" inputmode="decimal" value="1"><button class="btn small" type="button" data-act="mp-mas" aria-label="Uno más">+</button></div></div>' +
+    '<div class="field"><label for="mp-motivo">Motivo</label><select id="mp-motivo">' + MOTIVOS.map((x) => '<option' + (x === 'Quemado' ? ' selected' : '') + '>' + x + '</option>').join('') + '</select></div>' +
+    '<button class="btn primary wide" type="submit">Apuntar merma</button><span class="hint wide" id="mp-msg" aria-live="polite">Se valora a lo que cuesta producirlo (su escandallo), no al precio de carta.</span></form></section>'
+  );
+}
+function mpCoste() {
+  const p = plato($('mp-plato').value),
+    n = parse($('mp-n').value);
+  if (!p) return ($('mp-msg').textContent = 'Se valora a lo que cuesta producirlo (su escandallo), no al precio de carta.');
+  const c = costeUd(p);
+  $('mp-msg').textContent = c > 0
+    ? (p.base ? fEur.format(c) + UDP[p.unidadBase].slice(1) : fEur.format(c) + ' de coste por ración') + (n > 0 ? ' · total ' + fEur.format(c * n) : '') + (p.pvp > 0 && !p.base ? ' (en carta ' + fEur.format(p.pvp) + ')' : '')
+    : 'Este plato no tiene escandallo: se apuntará sin valor. Añádele los ingredientes en su ficha.';
 }

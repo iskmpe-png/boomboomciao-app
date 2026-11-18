@@ -1263,3 +1263,22 @@ details.vimp > summary.row .n span {
   flex: 1 1 220px;
   min-width: 0;
 }
+/* Merma rápida de un plato */
+.mplato {
+  border-left: 4px solid var(--accent);
+}
+.mp-n {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.mp-n input {
+  text-align: center;
+  min-width: 0;
+  flex: 1 1 60px;
+}
+.mp-n .btn {
+  flex: none;
+  min-width: 40px;
+  font-size: 1.1rem;
+}

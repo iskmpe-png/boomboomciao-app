@@ -138,6 +138,8 @@ const nMerma = (m) => ({
   fecha: String(m.fecha || hoy()),
   nombre: String(m.nombre || ''),
   productoId: String(m.productoId || ''),
+  /* Un plato entero que se tira (quemado, devuelto…): se valora a su coste de producción */
+  platoId: String(m.platoId || ''),
   proveedor: String(m.proveedor || ''),
   cantidad: Number(m.cantidad) || 0,
   unidad: uni(m.unidad),
