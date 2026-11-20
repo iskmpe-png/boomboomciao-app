@@ -75,7 +75,7 @@ function pintar() {
     recetas: vRecetas,
     inventario: vInventario,
     mermas: vMermas,
-    panel: vPanel,
+    panel: () => (puede(2) ? vPanel() : vTablon()),
     sala: vSala,
     ingenieria: vIng,
     eventos: vEventos,

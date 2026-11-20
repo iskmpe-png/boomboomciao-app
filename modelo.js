@@ -254,7 +254,29 @@ const nManual = (m) => ({
 });
 /* Preguntas que el asistente no supo responder con los datos de la casa */
 const nDuda = (d) => ({ id: d.id, pregunta: String(d.pregunta || ''), fecha: String(d.fecha || ''), por: String(d.por || '') });
+/* Anuncios del tablón (los publican dueño y encargados) */
+const nAnuncio = (a) => ({
+  id: a.id,
+  titulo: String(a.titulo || '').slice(0, 120),
+  texto: String(a.texto || '').slice(0, 2000),
+  fecha: String(a.fecha || ''),
+  por: String(a.por || ''),
+  porNombre: String(a.porNombre || ''),
+  fijado: !!a.fijado,
+});
+/* Etiquetas guardadas: elaboraciones que no están en la carta, o etiquetas con datos propios */
+const nEtiqueta = (e) => ({
+  id: e.id,
+  nombre: String(e.nombre || '').slice(0, 80),
+  dias: Number(e.dias) > 0 ? Math.min(365, Math.round(Number(e.dias))) : 3,
+  alergenos: (Array.isArray(e.alergenos) ? e.alergenos : []).map(String),
+  conserva: String(e.conserva || ''),
+  nota: String(e.nota || '').slice(0, 60),
+  area: e.area === 'barra' ? 'barra' : '',
+});
 const NORM = {
+  anuncios: nAnuncio,
+  etiquetas: nEtiqueta,
   manual: nManual,
   dudas: nDuda,
   proveedores: nProv,

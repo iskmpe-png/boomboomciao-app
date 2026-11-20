@@ -97,6 +97,7 @@ function vPanel() {
       '.</p>';
   $('vista').innerHTML =
     (ppVisible() ? ppHTML() : '') +
+    tablonGestionHTML() +
     '<div class="bar">' +
     mesHTML() +
     '<span class="grow"></span>' +
@@ -147,4 +148,5 @@ function vPanel() {
     '">' +
     nAp +
     '</span></span></a></div></section></div></div>';
+  pintaGaleria();
 }

@@ -14,6 +14,7 @@ function ruta() {
     n = SUBS[ps[0]] ? ps[0] : 'inicio';
   let sb = sub[n];
   if (SUBS[ps[0]] && ps[1] && SUBS[n].some((x) => x[0] === ps[1])) sb = ps[1];
+  if (!SUBS[n].some((x) => x[0] === sb)) sb = SUBS[n][0][0];
   finEdicion();
   if (n !== vista || sb !== sub[n]) {
     editProd = null;
@@ -37,6 +38,33 @@ const SECI = {
   almacen: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
   control: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
 };
+/* ---- Menú según el rango ----
+   Dueño y encargados lo ven todo. El equipo (cocina, barra, solo consulta) ve solo lo que usa en el día a día:
+   sin precios, costes, ingeniería, menús ni comparaciones. */
+const SUBS_TODO = JSON.parse(JSON.stringify(SUBS));
+const MENU_EQUIPO = { inicio: ['panel', 'turnos', 'manual'], cocina: ['recetas', 'produccion', 'etiquetas', 'appcc'], almacen: ['inventario', 'compras', 'mermas'] };
+function aplicarMenuRol() {
+  const eq = !puede(2),
+    extra = (SUBS.inicio || []).filter((x) => !SUBS_TODO.inicio.some((y) => y[0] === x[0]));
+  sinPrecios = eq;
+  Object.keys(SUBS).forEach((k) => delete SUBS[k]);
+  Object.keys(SUBS_TODO).forEach((k) => {
+    if (!eq) SUBS[k] = SUBS_TODO[k].map((x) => x.slice());
+    else if (MENU_EQUIPO[k]) SUBS[k] = SUBS_TODO[k].filter((x) => MENU_EQUIPO[k].indexOf(x[0]) >= 0).map((x) => x.slice());
+  });
+  if (!eq) SUBS.inicio = SUBS.inicio.concat(extra);
+  SUBS.inicio[0][1] = eq ? 'Tablón' : 'Panel';
+  if (!SUBS[vista]) {
+    vista = 'inicio';
+    try {
+      if (location.hash) history.replaceState(null, '', '#inicio-panel');
+    } catch (e) {}
+  }
+  Object.keys(SUBS).forEach((k) => {
+    if (!SUBS[k].some((x) => x[0] === sub[k])) sub[k] = SUBS[k][0][0];
+  });
+  construirMenu();
+}
 function construirMenu() {
   $('menu-nav').innerHTML = Object.keys(SUBS)
     .map(

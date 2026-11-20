@@ -90,7 +90,9 @@ function vMermas() {
     '<section class="card"><h3>Producto</h3><form id="form-merma" class="editor m6" style="margin:0" novalidate>' +
     '<div class="field wide"><label for="me-nombre">Producto</label><input id="me-nombre" type="text" list="dl-solo-prod" autocomplete="off" placeholder="Escribe o elige"></div>' +
     '<div class="field"><label for="me-cant">Cantidad</label><input class="num" id="me-cant" type="text" inputmode="decimal" placeholder="0"></div>' +
-    '<div class="field"><label for="me-precio">Precio</label><div class="precio"><input class="num" id="me-precio" type="text" inputmode="decimal" placeholder="0,00"><select id="me-unidad" aria-label="Unidad"><option value="kg">€/kg</option><option value="l">€/L</option><option value="ud">€/ud</option></select></div></div>' +
+    (sinPrecios
+      ? '<div class="field"><label for="me-unidad">Unidad</label><input id="me-precio" type="hidden"><select id="me-unidad"><option value="kg">kg</option><option value="l">L</option><option value="ud">ud</option></select></div>'
+      : '<div class="field"><label for="me-precio">Precio</label><div class="precio"><input class="num" id="me-precio" type="text" inputmode="decimal" placeholder="0,00"><select id="me-unidad" aria-label="Unidad"><option value="kg">€/kg</option><option value="l">€/L</option><option value="ud">€/ud</option></select></div></div>') +
     '<div class="field"><label for="me-motivo">Motivo</label><select id="me-motivo">' +
     MOTIVOS.map((x) => '<option>' + x + '</option>').join('') +
     '</select></div>' +

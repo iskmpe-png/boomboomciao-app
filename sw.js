@@ -5,7 +5,6 @@ const BASE = [
   "./",
   "index.html",
   "config.js",
-  "analitica.js",
   "manifest.webmanifest",
   "supabase.js",
   "logo-oro.png",
@@ -87,6 +86,8 @@ const BASE = [
   "aprobar.js",
   "consumo.js",
   "enlazar.js",
+  "tablon.js",
+  "etiquetas-acciones.js",
   "manual.js",
   "primeros-pasos.js",
   "buscador.js",
@@ -123,11 +124,16 @@ self.addEventListener('fetch', (e) => {
     }
     return res;
   };
-  // Lo propio de la app: primero la red (así llegan las actualizaciones) y, si no hay, lo guardado.
+  // Lo propio de la app sale al instante de lo guardado en el móvil (abre mucho más rápido).
+  // Las actualizaciones llegan con un sw.js nuevo: guarda la versión nueva entera y la app se recarga sola.
   if (u.origin === location.origin) {
     e.respondWith(
-      fetch(r).then(guarda).catch(() =>
-        caches.match(r, { ignoreSearch: true }).then((m) => m || (r.mode === 'navigate' ? caches.match('index.html') : Response.error()))
+      caches.match(r, { ignoreSearch: true }).then(
+        (m) =>
+          m ||
+          fetch(r)
+            .then(guarda)
+            .catch(() => (r.mode === 'navigate' ? caches.match('index.html') : Response.error()))
       )
     );
     return;

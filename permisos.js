@@ -24,6 +24,8 @@ const COLNIV = {
   planes: 1,
   turnos: 2,
   pedidos: 1,
+  anuncios: 2,
+  etiquetas: 1,
 };
 const ACT2 = new Set([
   'enl-abrir', 'enl-todas',
@@ -82,9 +84,10 @@ const ACT2 = new Set([
   'tu-copiar',
   'av-borrar',
 ]);
-const ACT1 = new Set(['arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
+const ACT1 = new Set(['et-guardar', 'et-borrar', 'arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
 const FORMNIV = {
   'form-enl': 2,
+  'form-anuncio': 2,
   'form-prod': 2,
   'form-merma': 1,
   'form-mplato': 1,
@@ -137,7 +140,7 @@ const LIBRE = new Set([
   'cn-d',
   'cn-h',
 ]);
-const ID2 = new Set(['inv-per', 'et-dias', 'lf-horas']);
+const ID2 = new Set(['inv-per', 'lf-horas']);
 const puede = (n) => LV[nivel] >= n;
 /* ---- Áreas: un encargado de barra no cambia lo de cocina, y al revés ---- */
 let miAreaV = 'todas';
@@ -205,6 +208,7 @@ function aplicarPermisos() {
 }
 function setNivel(n) {
   nivel = n;
+  aplicarMenuRol();
   $('m-copia').hidden = n !== 'admin';
   $('rol').textContent = NIVTXT[n];
   if (n !== 'admin') vigilarVista();

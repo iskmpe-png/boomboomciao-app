@@ -23,18 +23,32 @@ async function subirFotoLimpieza(reg, k, file) {
   }
   return f;
 }
-async function fotosA(reg, files) {
-  let mal = 0;
-  for (const file of files) {
-    try {
-      reg.fotos.push(await subirFotoLimpieza(reg, reg.fotos.length, file));
-    } catch (e) {
-      mal++;
-    }
-  }
+async function fotosA(reg, files, alAvanzar) {
+  let mal = 0,
+    hechas = 0;
+  const base = reg.fotos.length;
+  const res = await enParalelo(
+    files,
+    async (file, k) => {
+      try {
+        const f = await subirFotoLimpieza(reg, base + k, file);
+        hechas++;
+        if (alAvanzar) alAvanzar(hechas, files.length);
+        return f;
+      } catch (e) {
+        mal++;
+        return null;
+      }
+    },
+    3,
+  );
+  res.forEach((f) => {
+    if (f) reg.fotos.push(f);
+  });
   guardar('appcc', reg, true);
   if (mal) toast(mal === 1 ? 'Una foto no se pudo abrir (en iPhone: Ajustes › Cámara › Formatos › «Más compatible»).' : mal + ' fotos no se pudieron abrir.');
   if (pant === 'appcc') pintaGaleria();
+  return { ok: files.length - mal, mal: mal, pendientes: res.filter((f) => f && f.pendiente).length };
 }
 async function blobLimp(ruta) {
   const l = (await idb.get('limpend:' + ruta)) || (await idb.get('limp:' + ruta));
