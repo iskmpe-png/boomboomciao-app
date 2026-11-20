@@ -136,7 +136,10 @@ function impresoraHTML() {
     '<details class="card et-impr"' + (mem('bbc.impVisto') ? '' : ' open') + '><summary><b>Impresora</b> <span class="hint">· ' + (m === 'directo' ? 'directo con un toque' : 'desde este móvil') + '</span></summary>' +
     '<div class="seg" role="radiogroup" aria-label="Cómo imprimir"><button type="button" data-act="et-modo" data-m="movil" aria-pressed="' + (m === 'movil') + '">Desde el móvil</button><button type="button" data-act="et-modo" data-m="directo" aria-pressed="' + (m === 'directo') + '">Directo (un toque)</button></div>' +
     (m === 'movil'
-      ? '<ol class="et-pasos"><li><b>iPhone:</b> no hay que instalar nada (AirPrint). Móvil e impresora en el mismo Wi-Fi.</li><li><b>Android / tablet Samsung:</b> instala «Brother Print Service Plugin» de Google Play y actívalo en Ajustes › Conexiones › Más ajustes › Impresión.</li><li>Al tocar Imprimir, elige la <b>TD-4455DNWB</b>, tamaño <b>51 × 26 mm</b>, escala 100 % y sin márgenes. El móvil lo recuerda para la próxima vez.</li></ol>'
+      ? (esIOS()
+          ? '<ol class="et-pasos"><li>Toca <b>Imprimir</b>: se abre el menú Compartir con la etiqueta en PDF. Elige <b>Imprimir</b>.</li><li>En <b>Impresora</b>, elige la <b>TD-4455DNWB</b> (móvil e impresora en el mismo Wi-Fi). Sin impresora elegida, el iPhone solo ofrece A4.</li><li>En <b>Tamaño del papel</b>, elige el de <b>51 × 26 mm</b> y escala 100 %. El iPhone lo recuerda para la próxima vez.</li><li>Si el tamaño 51 × 26 no aparece, hay que darlo de alta en la impresora (lo explica el aviso de abajo).</li></ol>'
+          : '<ol class="et-pasos"><li><b>Android / tablet Samsung:</b> instala «Brother Print Service Plugin» de Google Play y actívalo en Ajustes › Conexiones › Más ajustes › Impresión.</li><li>Al tocar Imprimir, elige la <b>TD-4455DNWB</b>, tamaño <b>51 × 26 mm</b>, escala 100 % y sin márgenes. El móvil lo recuerda para la próxima vez.</li><li>Si sale en A4: usa «PDF de la etiqueta» y ábrelo con la app Brother iPrint&amp;Label.</li></ol>') +
+        '<p class="hint">¿No aparece el tamaño 51 × 26 mm? Desde un PC en el mismo Wi-Fi, abre en el navegador la dirección IP de la impresora (sale en su pantalla: Menú › WLAN › Estado) y da de alta el papel de 51 × 26 mm, o hazlo con la «Printer Setting Tool» de Brother › Configuración del tamaño del papel.</p>'
       : '<p class="hint">La etiqueta se manda a la cola del restaurante y la imprime el <b>puente de impresión</b> (un ordenador pequeño, un PC o un móvil Android viejo enchufado junto a la impresora). Sale en 1-2 segundos, sin menús, desde cualquier móvil, incluso fuera del Wi-Fi.</p><p class="hint" id="et-puente">Si no sale nada, comprueba que el puente está encendido.</p>' + (puede(2) && typeof rid === 'string' && rid ? '<p class="hint">Para configurar el puente, ID del restaurante: <code>' + esc(rid) + '</code></p>' : '')) +
     '</details>'
   );
@@ -246,6 +249,9 @@ function imprimirEt() {
   }
   mem('bbc.impVisto', '1');
   if (modoImp() === 'directo') imprimirDirecto(d);
+  /* iPhone y iPad no respetan el tamaño de página de una web al imprimir (sacan A4 con cabecera y pie):
+     ahí se imprime el PDF de 51 × 26 mm desde el menú Compartir › Imprimir, que sí sale a su tamaño */
+  else if (esIOS()) pdfEtiqueta(d);
   else imprimirMovil(d);
 }
 /* Para exportar en PNG/PDF: la misma etiqueta dibujada a 16 puntos por mm (el doble de la impresora) */
