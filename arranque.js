@@ -41,7 +41,37 @@ CU('db').then(
 
 /* Fuera de Claude: guardar la app en el dispositivo para que abra sin conexión */
 if (!window.claude && 'serviceWorker' in navigator) {
+  const habia = !!navigator.serviceWorker.controller;
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker
+      .register('sw.js', { updateViaCache: 'none' })
+      .then((reg) => {
+        /* Al volver a la app, mira si hay versión nueva */
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) reg.update().catch(() => {});
+        });
+      })
+      .catch(() => {});
+  });
+  /* Versión nueva instalada: se recarga sola cuando no molesta (al salir de la app o al tocar el aviso) */
+  let recargando = false;
+  const recargar = () => {
+    if (recargando) return;
+    recargando = true;
+    location.reload();
+  };
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!habia) return;
+    if (document.hidden) return recargar();
+    const a = $('aviso');
+    if (a) {
+      a.textContent = 'Hay una versión nueva de la app. Toca aquí para actualizar.';
+      a.hidden = false;
+      a.style.cursor = 'pointer';
+      a.addEventListener('click', recargar, { once: true });
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) recargar();
+    });
   });
 }

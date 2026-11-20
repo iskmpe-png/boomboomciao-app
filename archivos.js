@@ -21,7 +21,7 @@ async function prepararArchivo(f) {
   const ext = (String(f.name).split('.').pop() || '').toLowerCase();
   if (/^image\//.test(f.type) || /^(jpe?g|png|webp|heic|heif)$/.test(ext)) {
     try {
-      return { blob: await reducir(f, 1800), ext: 'jpg', tipo: 'foto', nombre: f.name };
+      return { blob: await reducir(f, 1600), ext: 'jpg', tipo: 'foto', nombre: f.name };
     } catch (e) {
       throw new Error(/heic|heif/i.test(f.type + f.name) ? '«' + f.name + '» es HEIC: en el iPhone, Ajustes › Cámara › Formatos › «Más compatible».' : 'No se pudo abrir «' + f.name + '».');
     }

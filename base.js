@@ -1,6 +1,10 @@
 const $ = (id) => document.getElementById(id);
 const q = (el, s) => el.querySelector(s);
-const fEur = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+const fEurN = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
+/* El equipo (cocineros, bartenders) no ve precios ni costes, salvo en Compras para cuadrar las facturas */
+let sinPrecios = false;
+const fEur = { format: (v) => (sinPrecios && pant !== 'compras' ? '' : fEurN.format(v)) };
+const verPrecios = () => !sinPrecios || pant === 'compras';
 const fNum = (v, d) => new Intl.NumberFormat('es-ES', { maximumFractionDigits: d == null ? 1 : d }).format(v);
 const parse = (s) => {
   const n = parseFloat(String(s).replace(/\s/g, '').replace(',', '.'));
@@ -110,6 +114,8 @@ const S = {
   fotos: [],
   turnos: [],
   pedidos: [],
+  anuncios: [],
+  etiquetas: [],
   ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [], gruposElab: [], diasAlbaranes: 30, archivados: [], horasFotos: 24, avisos: [] },
 };
 const COLS = [
@@ -128,6 +134,8 @@ const COLS = [
   'fotos',
   'turnos',
   'pedidos',
+  'anuncios',
+  'etiquetas',
 ];
 const cargado = {};
 let vista = 'inicio',

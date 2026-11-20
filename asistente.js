@@ -183,7 +183,10 @@ const instr = () =>
   PENDIENTE +
   ' para que el encargado la añada al manual.\n' +
   'Sé breve y sin relleno. Formato: texto sencillo, negrita con **así** y listas con guiones; sin títulos, tablas ni bloques de código.\n' +
-  'No puedes cambiar datos de la app: explica dónde hacerlo. Apartados: Inicio (Panel, Manual, Historial); Carta (Platos, Elaboraciones, Sala y alérgenos, Ingeniería, Menús); el asistente es el chat del botón redondo de abajo a la derecha. Arriba se elige la zona: Cocina o Barra; Precios (Productos, Comparar, Alertas); Cocina (Recetas, Producción, Etiquetas, APPCC); Almacén (Inventario, Pedidos, Compras, Proveedores, Mermas).';
+  'No puedes cambiar datos de la app: explica dónde hacerlo. Apartados: Inicio (Panel, Manual, Historial); Carta (Platos, Elaboraciones, Sala y alérgenos, Ingeniería, Menús); el asistente es el chat del botón redondo de abajo a la derecha. Arriba se elige la zona: Cocina o Barra; Precios (Productos, Comparar, Alertas); Cocina (Recetas, Producción, Etiquetas, APPCC); Almacén (Inventario, Pedidos, Compras, Proveedores, Mermas).' +
+  (sinPrecios
+    ? '\nIMPORTANTE: hablas con alguien del equipo (cocina o barra), no con un encargado. No le des precios, costes, food cost, márgenes ni importes de compras: si los pide, dile que eso lo ven el dueño y los encargados. Sus apartados son: Inicio (Tablón, Turnos y avisos, Manual), Cocina (Recetas, Producción, Etiquetas, APPCC) y Almacén (Inventario, Compras, Mermas).'
+    : '');
 function fmt(t) {
   return esc(t)
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')

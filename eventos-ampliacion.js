@@ -67,38 +67,10 @@ function nuevoInput(e) {
     }
     return true;
   }
-  if (t.id === 'et-dias') {
-    const p = plato(et.id),
-      d = Math.round(parse(t.value));
-    if (p && d > 0) {
-      p.caducidad = d;
-      guardar('platos', p);
-      pintarEt();
-    }
-    return true;
-  }
-  if (t.id === 'et-resp') {
-    et.resp = t.value;
-    mem('bbc.resp', et.resp);
-    pintarEt();
-    return true;
-  }
   return false;
 }
 function nuevoChange(e) {
   const t = e.target;
-  if (t.id === 'et-plato') {
-    et.id = t.value;
-    vEtiquetas();
-    return true;
-  }
-  if (t.id === 'et-fecha') {
-    if (t.value) {
-      et.fecha = t.value;
-      pintarEt();
-    }
-    return true;
-  }
   if (t.id === 'plan-fecha') {
     if (t.value) {
       planF = t.value;
@@ -221,21 +193,43 @@ function nuevoSubmit(f) {
     S.appcc.push(a);
     guardar('appcc', a, true);
     const fi = $('ap-fotos'),
-      fts = fi ? Array.from(fi.files || []) : [];
+      fts = fi ? Array.from(fi.files || []) : [],
+      btn = f.querySelector('button[type=submit]'),
+      txtBtn = btn ? btn.textContent : '';
+    /* Limpieza: se bloquea el botón hasta que las fotos estén subidas y 5 segundos más,
+       con un aviso claro, para que nadie la suba dos veces */
+    const fin = (r) => {
+      const t =
+        '✓ Limpieza subida' +
+        (r ? (r.ok === 1 ? ' con 1 foto' : ' con ' + r.ok + ' fotos') : '') +
+        (r && r.pendientes ? '. Sin conexión: las fotos se terminarán de subir solas.' : '.');
+      toast(t);
+      if ($('ap-msg')) $('ap-msg').textContent = t;
+      if ($('ap-fn')) $('ap-fn').textContent = '';
+      if (btn) btn.textContent = 'Subida ✓';
+      setTimeout(() => {
+        if (btn && btn.isConnected) {
+          btn.disabled = false;
+          btn.textContent = txtBtn;
+        }
+      }, 5000);
+      if (pant === 'appcc') listaAppcc();
+    };
+    if (apTipo === 'limpieza' && btn) btn.disabled = true;
     if (fts.length) {
       fi.value = '';
-      $('ap-fn').textContent = 'Subiendo ' + fts.length + (fts.length === 1 ? ' foto…' : ' fotos…');
-      fotosA(a, fts).then(() => {
-        if ($('ap-fn')) $('ap-fn').textContent = '';
-        if (pant === 'appcc') listaAppcc();
-      });
-    }
+      if (btn) btn.textContent = 'Subiendo…';
+      $('ap-fn').textContent = 'Subiendo 0 de ' + fts.length + (fts.length === 1 ? ' foto…' : ' fotos…');
+      fotosA(a, fts, (h, n) => {
+        if ($('ap-fn')) $('ap-fn').textContent = 'Subiendo ' + h + ' de ' + n + (n === 1 ? ' foto…' : ' fotos…');
+      }).then(fin, () => fin(null));
+    } else if (apTipo === 'limpieza') setTimeout(() => fin(null), 0);
     apDia = hoy();
     $('ap-dia').value = apDia;
     $('ap-punto').value = '';
     if (vi) vi.value = '';
     $('ap-nota').value = '';
-    msg.textContent = ok ? 'Registrado.' : 'Registrado como incidencia: anota qué se hizo para corregirlo.';
+    msg.textContent = apTipo === 'limpieza' && fts.length ? 'Subiendo las fotos… no cierres la app.' : ok ? 'Registrado.' : 'Registrado como incidencia: anota qué se hizo para corregirlo.';
     listaAppcc();
     $('ap-punto').focus();
     return true;

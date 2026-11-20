@@ -1,5 +1,24 @@
 /* ---- Imágenes: reducir antes de enviar ---- */
-function reducir(file, max) {
+/* Reduce una foto antes de subirla (el lado mayor a «max» px, JPEG 0,8): de 3-5 MB pasa a unos 200 KB.
+   Usa createImageBitmap cuando existe: decodifica fuera del hilo principal y es bastante más rápido en móviles. */
+async function reducir(file, max) {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bm = await createImageBitmap(file, { imageOrientation: 'from-image' }),
+        k = Math.min(1, max / Math.max(bm.width, bm.height)),
+        w = Math.max(1, Math.round(bm.width * k)),
+        h = Math.max(1, Math.round(bm.height * k)),
+        cv = document.createElement('canvas');
+      cv.width = w;
+      cv.height = h;
+      cv.getContext('2d').drawImage(bm, 0, 0, w, h);
+      if (bm.close) bm.close();
+      const b = await new Promise((ok) => cv.toBlob(ok, 'image/jpeg', 0.8));
+      if (b) return b;
+    } catch (e) {
+      /* formato raro (HEIC…): se intenta por el camino clásico */
+    }
+  }
   return new Promise((ok, ko) => {
     const u = URL.createObjectURL(file),
       im = new Image();
@@ -10,7 +29,7 @@ function reducir(file, max) {
       cv.height = Math.round(im.height * k);
       cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
       URL.revokeObjectURL(u);
-      cv.toBlob((b) => (b ? ok(b) : ko(new Error('img'))), 'image/jpeg', 0.88);
+      cv.toBlob((b) => (b ? ok(b) : ko(new Error('img'))), 'image/jpeg', 0.8);
     };
     im.onerror = () => {
       URL.revokeObjectURL(u);
@@ -18,6 +37,19 @@ function reducir(file, max) {
     };
     im.src = u;
   });
+}
+/* Hace fn(x, i) con varios a la vez (por defecto 3), en orden de resultados */
+async function enParalelo(lista, fn, n) {
+  const out = new Array(lista.length);
+  let i = 0;
+  const trabajador = async () => {
+    while (i < lista.length) {
+      const k = i++;
+      out[k] = await fn(lista[k], k);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(n || 3, lista.length) }, trabajador));
+  return out;
 }
 function pedirArchivo(accept, multiple) {
   return new Promise((ok) => {

@@ -166,17 +166,24 @@ function vCompras() {
 }
 /* Guarda las pruebas elegidas en una compra ya creada */
 async function adjuntarA(c, files) {
-  const prep = [];
-  for (const f of files) {
-    try {
-      prep.push(await prepararArchivo(f));
-    } catch (e) {
-      toast(e.message);
-    }
-  }
-  if (!prep.length) return 0;
-  toast('Guardando ' + (prep.length === 1 ? 'el archivo' : prep.length + ' archivos') + '…');
-  for (const a of prep) c.archivos.push(await subirArchivo(c, c.archivos.length, a));
+  toast('Guardando ' + (files.length === 1 ? 'el archivo' : files.length + ' archivos') + '…');
+  const base = c.archivos.length;
+  /* Se preparan y se suben de 3 en 3: con varias fotos va mucho más rápido */
+  const res = await enParalelo(
+    files,
+    async (f, k) => {
+      try {
+        return await subirArchivo(c, base + k, await prepararArchivo(f));
+      } catch (e) {
+        toast(e.message);
+        return null;
+      }
+    },
+    3,
+  );
+  const ok = res.filter(Boolean);
+  if (!ok.length) return 0;
+  ok.forEach((f) => c.archivos.push(f));
   guardar('compras', c, true);
-  return prep.length;
+  return ok.length;
 }

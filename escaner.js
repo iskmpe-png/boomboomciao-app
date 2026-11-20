@@ -254,13 +254,17 @@ async function guardarEscaneo() {
       b.disabled = true;
       b.textContent = 'Guardando la prueba…';
     }
-    for (const f of e.archivos) {
+    const base = c.archivos.length;
+    (await enParalelo(e.archivos, async (f, k) => {
       try {
-        c.archivos.push(await subirArchivo(c, c.archivos.length, await prepararArchivo(f)));
+        return await subirArchivo(c, base + k, await prepararArchivo(f));
       } catch (er) {
         toast(er.message || 'No se pudo guardar un archivo.');
+        return null;
       }
-    }
+    }, 3)).forEach((f) => {
+      if (f) c.archivos.push(f);
+    });
   }
   S.compras.push(c);
   guardar('compras', c, true);
