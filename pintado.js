@@ -46,6 +46,7 @@ function pintarListas() {
 }
 function pintar() {
   pintarMenu();
+  document.body.dataset.sec = vista;
   delete $('vista').dataset.area;
   const ss = SUBS[vista],
     sn = $('subs');

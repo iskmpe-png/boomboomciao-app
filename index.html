@@ -17,12 +17,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&family=Hanken+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap">
-<link rel="stylesheet" href="inicio.css">
-<link rel="stylesheet" href="base.css">
-<link rel="stylesheet" href="componentes.css">
-<link rel="stylesheet" href="pantallas.css">
-<link rel="stylesheet" href="novedades.css">
-<link rel="stylesheet" href="retoques-movil.css">
+<link rel="stylesheet" href="inicio.css?v=21">
+<link rel="stylesheet" href="base.css?v=21">
+<link rel="stylesheet" href="componentes.css?v=21">
+<link rel="stylesheet" href="pantallas.css?v=21">
+<link rel="stylesheet" href="novedades.css?v=21">
+<link rel="stylesheet" href="retoques-movil.css?v=21">
+<link rel="stylesheet" href="zz-estilo.css?v=21">
 </head>
 <body>
 
@@ -56,7 +57,7 @@
   <div class="m-pie" id="m-des" hidden><span class="lbl">Último cambio</span><button class="btn small" id="btn-des-menu" type="button">Deshacer</button></div>
   <div class="m-pie" id="m-copia" hidden><span class="lbl">Copia de datos</span><span class="m-bts"><button class="btn small" id="btn-copia" type="button">Descargar</button><button class="btn small" id="btn-restaurar" type="button" hidden>Restaurar</button></span><input id="f-copia" type="file" accept=".json,application/json" hidden></div>
   <div class="m-pie"><span class="lbl">Apariencia</span><button class="btn small" id="btn-tema" type="button">Oscuro</button></div>
-  <div class="m-pie"><span class="lbl">Versión</span><span id="m-ver">Albahaca 2.0</span></div>
+  <div class="m-pie"><span class="lbl">Versión</span><span class="m-bts"><span id="m-ver">Albahaca 2.1</span><button class="btn small" id="btn-reparar" type="button" title="Borra la copia guardada en este dispositivo y descarga la última versión">Actualizar</button></span></div>
 </aside>
 <div id="toast" role="status" hidden></div>
 <div id="cocina" hidden></div>
@@ -67,94 +68,94 @@
 <div id="multi" hidden role="dialog" aria-modal="true" aria-label="Exportar varios"></div>
 
 <!-- Configuración del entorno y librería de la base de datos -->
-<script src="config.js"></script>
+<script src="config.js?v=21"></script>
 <script src="supabase.js"></script>
 <!-- La app, por partes. El orden importa: cada archivo usa lo que definen los anteriores. -->
-<script src="base.js"></script>
-<script src="modelo.js"></script>
-<script src="indices.js"></script>
-<script src="guardado.js"></script>
-<script src="calculo.js"></script>
-<script src="pintado.js"></script>
-<script src="carta.js"></script>
-<script src="ficha.js"></script>
-<script src="precios.js"></script>
-<script src="recetas.js"></script>
-<script src="dictado.js"></script>
-<script src="inventario.js"></script>
-<script src="mermas.js"></script>
-<script src="alergenos-y-utilidades.js"></script>
-<script src="alertas.js"></script>
-<script src="comparar.js"></script>
-<script src="panel.js"></script>
-<script src="sala.js"></script>
-<script src="ingenieria.js"></script>
-<script src="eventos.js"></script>
-<script src="modo-cocina.js"></script>
-<script src="produccion.js"></script>
-<script src="etiquetas.js"></script>
-<script src="appcc.js"></script>
-<script src="compras.js"></script>
-<script src="ficha-extra.js"></script>
-<script src="informes-extra.js"></script>
-<script src="detalle.js"></script>
-<script src="eventos-ampliacion.js"></script>
-<script src="permisos.js"></script>
-<script src="nombres.js"></script>
-<script src="precio-historial.js"></script>
-<script src="imagenes.js"></script>
-<script src="documentos.js"></script>
-<script src="asistente.js"></script>
-<script src="chat-flotante.js"></script>
-<script src="escaner.js"></script>
-<script src="ventas.js"></script>
-<script src="eventos-ia.js"></script>
-<script src="informes.js"></script>
-<script src="lienzo.js"></script>
-<script src="pdf.js"></script>
-<script src="excel.js"></script>
-<script src="varios.js"></script>
-<script src="eventos-principales.js"></script>
-<script src="tema.js"></script>
-<script src="navegacion.js"></script>
-<script src="recibir.js"></script>
-<script src="copia.js"></script>
-<script src="deshacer.js"></script>
-<script src="proveedores.js"></script>
-<script src="pedidos.js"></script>
-<script src="historial.js"></script>
-<script src="legal-y-copias.js"></script>
-<script src="grupo.js"></script>
-<script src="tarifas.js"></script>
-<script src="escandallos.js"></script>
-<script src="unidades.js"></script>
-<script src="seleccion.js"></script>
-<script src="grupos-carta.js"></script>
-<script src="fotos.js"></script>
-<script src="menus-carta.js"></script>
-<script src="zonas.js"></script>
-<script src="recordatorios.js"></script>
-<script src="turnos.js"></script>
-<script src="reparto.js"></script>
-<script src="cuadre.js"></script>
-<script src="aprobar.js"></script>
-<script src="consumo.js"></script>
-<script src="enlazar.js"></script>
-<script src="tablon.js"></script>
-<script src="etiquetas-acciones.js"></script>
-<script src="manual.js"></script>
-<script src="primeros-pasos.js"></script>
-<script src="buscador.js"></script>
-<script src="limite-ia.js"></script>
-<script src="sesion.js"></script>
-<script src="almacen-local.js"></script>
-<script src="archivos.js"></script>
-<script src="avisos.js"></script>
-<script src="limpieza.js"></script>
-<script src="sincronizacion.js"></script>
-<script src="acceso.js"></script>
-<script src="usuarios.js"></script>
-<script src="ia.js"></script>
-<script src="arranque.js"></script>
+<script src="base.js?v=21"></script>
+<script src="modelo.js?v=21"></script>
+<script src="indices.js?v=21"></script>
+<script src="guardado.js?v=21"></script>
+<script src="calculo.js?v=21"></script>
+<script src="pintado.js?v=21"></script>
+<script src="carta.js?v=21"></script>
+<script src="ficha.js?v=21"></script>
+<script src="precios.js?v=21"></script>
+<script src="recetas.js?v=21"></script>
+<script src="dictado.js?v=21"></script>
+<script src="inventario.js?v=21"></script>
+<script src="mermas.js?v=21"></script>
+<script src="alergenos-y-utilidades.js?v=21"></script>
+<script src="alertas.js?v=21"></script>
+<script src="comparar.js?v=21"></script>
+<script src="panel.js?v=21"></script>
+<script src="sala.js?v=21"></script>
+<script src="ingenieria.js?v=21"></script>
+<script src="eventos.js?v=21"></script>
+<script src="modo-cocina.js?v=21"></script>
+<script src="produccion.js?v=21"></script>
+<script src="etiquetas.js?v=21"></script>
+<script src="appcc.js?v=21"></script>
+<script src="compras.js?v=21"></script>
+<script src="ficha-extra.js?v=21"></script>
+<script src="informes-extra.js?v=21"></script>
+<script src="detalle.js?v=21"></script>
+<script src="eventos-ampliacion.js?v=21"></script>
+<script src="permisos.js?v=21"></script>
+<script src="nombres.js?v=21"></script>
+<script src="precio-historial.js?v=21"></script>
+<script src="imagenes.js?v=21"></script>
+<script src="documentos.js?v=21"></script>
+<script src="asistente.js?v=21"></script>
+<script src="chat-flotante.js?v=21"></script>
+<script src="escaner.js?v=21"></script>
+<script src="ventas.js?v=21"></script>
+<script src="eventos-ia.js?v=21"></script>
+<script src="informes.js?v=21"></script>
+<script src="lienzo.js?v=21"></script>
+<script src="pdf.js?v=21"></script>
+<script src="excel.js?v=21"></script>
+<script src="varios.js?v=21"></script>
+<script src="eventos-principales.js?v=21"></script>
+<script src="tema.js?v=21"></script>
+<script src="navegacion.js?v=21"></script>
+<script src="recibir.js?v=21"></script>
+<script src="copia.js?v=21"></script>
+<script src="deshacer.js?v=21"></script>
+<script src="proveedores.js?v=21"></script>
+<script src="pedidos.js?v=21"></script>
+<script src="historial.js?v=21"></script>
+<script src="legal-y-copias.js?v=21"></script>
+<script src="grupo.js?v=21"></script>
+<script src="tarifas.js?v=21"></script>
+<script src="escandallos.js?v=21"></script>
+<script src="unidades.js?v=21"></script>
+<script src="seleccion.js?v=21"></script>
+<script src="grupos-carta.js?v=21"></script>
+<script src="fotos.js?v=21"></script>
+<script src="menus-carta.js?v=21"></script>
+<script src="zonas.js?v=21"></script>
+<script src="recordatorios.js?v=21"></script>
+<script src="turnos.js?v=21"></script>
+<script src="reparto.js?v=21"></script>
+<script src="cuadre.js?v=21"></script>
+<script src="aprobar.js?v=21"></script>
+<script src="consumo.js?v=21"></script>
+<script src="enlazar.js?v=21"></script>
+<script src="tablon.js?v=21"></script>
+<script src="etiquetas-acciones.js?v=21"></script>
+<script src="manual.js?v=21"></script>
+<script src="primeros-pasos.js?v=21"></script>
+<script src="buscador.js?v=21"></script>
+<script src="limite-ia.js?v=21"></script>
+<script src="sesion.js?v=21"></script>
+<script src="almacen-local.js?v=21"></script>
+<script src="archivos.js?v=21"></script>
+<script src="avisos.js?v=21"></script>
+<script src="limpieza.js?v=21"></script>
+<script src="sincronizacion.js?v=21"></script>
+<script src="acceso.js?v=21"></script>
+<script src="usuarios.js?v=21"></script>
+<script src="ia.js?v=21"></script>
+<script src="arranque.js?v=21"></script>
 </body>
 </html>

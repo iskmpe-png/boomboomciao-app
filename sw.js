@@ -1,6 +1,6 @@
 /* Boom Boom Ciao: guarda la app en el dispositivo para que abra sin conexión.
    Sube el número de versión cada vez que publiques cambios. */
-const CACHE = 'bbc-v20';
+const CACHE = 'bbc-v21';
 const BASE = [
   "./",
   "index.html",
@@ -16,6 +16,7 @@ const BASE = [
   "pantallas.css",
   "novedades.css",
   "retoques-movil.css",
+  "zz-estilo.css",
   "base.js",
   "modelo.js",
   "indices.js",
@@ -104,7 +105,8 @@ const BASE = [
   "arranque.js"
 ];
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(BASE)).then(() => self.skipWaiting()));
+  // cache: 'reload' = siempre del servidor, nunca de la caché del navegador (así no se mezclan versiones)
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(BASE.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', (e) => {
   e.waitUntil(
