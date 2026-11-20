@@ -119,6 +119,7 @@ function vEtiquetas() {
     '</div></div>' +
     '<datalist id="dl-conserva">' + CONSERVA.map((c) => '<option value="' + esc(c) + '"></option>').join('') + '</datalist>' +
     '<div class="acciones full"><button class="btn primary et-big" type="button" id="et-imp" data-act="et-imp">Imprimir</button>' +
+    '<button class="btn" type="button" data-act="et-pdf">PDF de la etiqueta</button>' +
     (puedo ? '<button class="btn" type="button" data-act="et-guardar">' + (o && o.tipo === 'e' ? 'Guardar cambios' : 'Guardar como etiqueta') + '</button>' : '') +
     (o && o.tipo === 'e' && puedo ? '<button class="link" type="button" data-act="et-borrar" style="color:var(--crit)">Borrar</button>' : '') +
     (Object.keys(et.ed || {}).length && o ? '<button class="link" type="button" data-act="et-deshacer">Volver a los datos de la ficha</button>' : '') +
@@ -157,30 +158,53 @@ function imprimirMovil(d) {
   }
   st.textContent = '@page{size:' + ET_W + 'mm ' + ET_H + 'mm;margin:0}';
   document.body.classList.add('imp-et');
-  const fin = () => {
-    document.body.classList.remove('imp-et');
-    if (st.isConnected) st.remove();
-    z.innerHTML = '';
-    window.removeEventListener('afterprint', fin);
-  };
-  window.addEventListener('afterprint', fin);
+  /* En Android e iPhone el aviso de «impresión terminada» llega antes de que el móvil prepare
+     la hoja: si se limpiaba ahí, se imprimía la app entera. Ahora la etiqueta se queda preparada
+     hasta que vuelves a tocar la app. */
+  const t0 = Date.now(),
+    fin = (e) => {
+      if (e && Date.now() - t0 < 1500) return;
+      document.body.classList.remove('imp-et');
+      if (st.isConnected) st.remove();
+      z.innerHTML = '';
+      document.removeEventListener('pointerdown', fin, true);
+      document.removeEventListener('keydown', fin, true);
+    };
   setTimeout(() => {
+    document.addEventListener('pointerdown', fin, true);
+    document.addEventListener('keydown', fin, true);
     try {
       window.print();
     } catch (e) {
-      toast('Este navegador no deja imprimir. Exporta la etiqueta en PDF desde «Exportar».');
+      fin();
+      toast('Este navegador no deja imprimir. Usa «PDF de la etiqueta».');
     }
-    /* Algunos móviles no avisan al terminar: se limpia al volver a la app */
-    setTimeout(() => {
-      const v = () => {
-        if (!document.hidden) {
-          fin();
-          document.removeEventListener('visibilitychange', v);
-        }
-      };
-      document.addEventListener('visibilitychange', v);
-    }, 500);
-  }, 60);
+  }, 80);
+}
+/* PDF del tamaño exacto del rollo (51 × 26 mm), una página por copia: para imprimir desde
+   cualquier app del móvil (Compartir › Imprimir, Brother iPrint&Label…) o guardarlo */
+async function pdfEtiqueta(d) {
+  const cv = lienzoEt(d),
+    cvs = Array.from({ length: d.copias }, () => cv),
+    blob = pdfDe(cvs),
+    nombre = 'etiqueta-' + (norm(d.nombre).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'etiqueta') + '.pdf';
+  const f = new File([blob], nombre, { type: 'application/pdf' });
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      await navigator.share({ files: [f], title: d.nombre });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+  }
+  const u = URL.createObjectURL(blob),
+    a = document.createElement('a');
+  a.href = u;
+  a.download = nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 60000);
 }
 /* Imprime directo: deja el trabajo en la cola y el puente lo manda a la impresora */
 async function imprimirDirecto(d) {
@@ -232,6 +256,7 @@ function lienzoEt(d) {
     cv = document.createElement('canvas');
   cv.width = W;
   cv.height = H;
+  cv.mm = [ET_W, ET_H];
   const g = cv.getContext('2d'),
     M = 1.6 * K;
   g.fillStyle = '#fff';

@@ -75,3 +75,25 @@ if (!window.claude && 'serviceWorker' in navigator) {
     });
   });
 }
+
+/* «Actualizar»: si un móvil se queda con una versión vieja o mezclada, borra lo guardado de la app
+   (no los datos del restaurante, que están en la nube y en la cola de este móvil) y la descarga de nuevo */
+(() => {
+  const b = $('btn-reparar');
+  if (!b) return;
+  if (window.claude || !('serviceWorker' in navigator)) {
+    b.hidden = true;
+    return;
+  }
+  b.addEventListener('click', async () => {
+    b.disabled = true;
+    b.textContent = 'Actualizando…';
+    try {
+      const rs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(rs.map((r) => r.unregister()));
+      const ks = await caches.keys();
+      await Promise.all(ks.filter((k) => k.indexOf('bbc-') === 0).map((k) => caches.delete(k)));
+    } catch (e) {}
+    location.reload();
+  });
+})();

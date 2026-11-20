@@ -35,6 +35,10 @@ V.addEventListener('click', (e) => {
     d = datosEt();
   if (!d) return;
   if (a === 'et-imp') imprimirEt();
+  else if (a === 'et-pdf') {
+    if (!d.nombre.trim()) return toast('Escribe el nombre de la etiqueta.');
+    pdfEtiqueta(d);
+  }
   else if (a === 'et-alg') {
     const l = d.alg.slice(),
       k = l.indexOf(b.dataset.a);
