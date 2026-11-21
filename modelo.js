@@ -268,6 +268,17 @@ const nAnuncio = (a) => ({
 /* La colección «etiquetas» guarda tres cosas: etiquetas sueltas (tipo ''), listas por estación
    (tipo 'lista': nombres con cuántas copias de cada una) y formatos de impresión (tipo 'formato') */
 const CAMPOS_ET = ['elab', 'cad', 'alg', 'cons', 'nota', 'lote', 'resp'];
+/* Lo que se cambió a mano en una etiqueta de una lista (nombre, días, alérgenos…) */
+const edEt = (e) => {
+  if (!e || typeof e !== 'object') return null;
+  const o = {};
+  if (e.nombre !== undefined) o.nombre = String(e.nombre).slice(0, 60);
+  if (Number(e.dias) >= 0 && e.dias !== undefined && e.dias !== '') o.dias = Math.min(365, Math.round(Number(e.dias)));
+  if (Array.isArray(e.alg)) o.alg = e.alg.map(String);
+  if (e.conserva !== undefined) o.conserva = String(e.conserva).slice(0, 30);
+  if (e.nota !== undefined) o.nota = String(e.nota).slice(0, 24);
+  return Object.keys(o).length ? o : null;
+};
 const nEtiqueta = (e) => {
   const tipo = e.tipo === 'lista' || e.tipo === 'formato' ? e.tipo : '',
     x = { id: e.id, tipo: tipo, nombre: String(e.nombre || '').slice(0, 80), area: e.area === 'barra' ? 'barra' : '' };
@@ -279,6 +290,8 @@ const nEtiqueta = (e) => {
         const o = { ref: String(i.ref), n: Math.min(50, Math.max(0, Math.round(Number(i.n) || 0))) };
         if (i.nombre) o.nombre = String(i.nombre).slice(0, 60);
         if (i.f) o.f = String(i.f).slice(0, 40);
+        const ed = edEt(i.ed);
+        if (ed) o.ed = ed;
         return o;
       });
     x.formato = String(e.formato || '');

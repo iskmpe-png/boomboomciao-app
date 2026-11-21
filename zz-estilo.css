@@ -443,3 +443,10 @@ a.row:hover {
 @media (max-width: 860px) {
   .et-fmt { order: -1; }
 }
+/* Sugerencias al escribir el nombre de la etiqueta */
+#form-et .field.wide { position: relative; }
+.et-sug { position: absolute; left: 0; right: 0; top: 100%; z-index: 30; margin-top: 4px; display: flex; flex-direction: column; background: var(--campo); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--sombra-alta); overflow: hidden; max-height: 340px; overflow-y: auto; }
+.et-sug button { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 44px; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.et-sug button:last-child { border-bottom: 0; }
+.et-sug button:hover, .et-sug button:focus-visible { background: var(--sec-soft); }
+.et-sug small { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }

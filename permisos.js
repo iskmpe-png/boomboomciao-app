@@ -84,7 +84,7 @@ const ACT2 = new Set([
   'tu-copiar',
   'av-borrar',
 ]);
-const ACT1 = new Set(['et-guardar', 'et-borrar', 'arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
+const ACT1 = new Set(['et-guardar', 'et-borrar', 'et-tn-guardar', 'et-tn-nueva', 'et-tn-borrar', 'et-fm-nuevo', 'et-fm-editar', 'et-fm-guardar', 'et-fm-borrar', 'arch-add', 'cerrar-inv', 'sumar-inv', 'sumar-merma', 'escanear', 'plan-sugerir', 'sc-guardar']);
 const FORMNIV = {
   'form-enl': 2,
   'form-anuncio': 2,
