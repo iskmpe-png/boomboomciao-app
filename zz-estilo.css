@@ -401,3 +401,45 @@ a.row:hover {
     flex: 1 1 200px;
   }
 }
+
+/* ---- Etiquetas 2.3: formatos (nombre grande, solo nombre…), tanda y listas por estación ---- */
+.et51 .e-n { display: flex; flex-direction: column; justify-content: flex-start; flex: 1 1 auto; min-height: 0; line-height: 1.08; -webkit-line-clamp: unset; overflow: hidden; overflow-wrap: normal; }
+.et51 .e-n span { display: block; white-space: nowrap; }
+.et51.centro .e-n { justify-content: center; align-items: center; text-align: center; }
+.et51.solo .e-n { justify-content: center; }
+.et51 .e-f { margin-top: 0; }
+.et51 .e-f.sin-elab { justify-content: flex-end; }
+.et51.centro .e-f.sin-elab { justify-content: center; }
+.et-tanda { display: flex; flex-direction: column; gap: 12px; }
+.et-tanda h3, .et-fmt h3 { margin: 0; }
+.tn-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.tn-listas { display: flex; flex-direction: column; gap: 6px; }
+.tn-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tn-fila { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 14px; background: var(--campo); border: 1px solid var(--line); }
+.tn-fila.cero { opacity: 0.55; }
+.tn-fila.rota .tn-nom b { text-decoration: line-through; }
+.tn-nom { display: flex; flex-direction: column; min-width: 0; }
+.tn-nom b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tn-nom small { color: var(--muted); font-size: 0.75rem; }
+.tn-fmt { max-width: 150px; min-height: 40px; font-size: 0.85rem; }
+.tn-cant { display: inline-flex; align-items: center; gap: 4px; }
+.tn-b { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 1.2rem; font-weight: 700; cursor: pointer; }
+.tn-n { width: 52px; min-height: 40px; text-align: center; font-weight: 700; font-size: 1.05rem; }
+.tn-x { font-size: 1rem; padding: 6px; color: var(--muted); }
+.tn-acc { flex-wrap: wrap; }
+.tn-nueva { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.tn-nueva .field { flex: 1 1 220px; }
+.et-fmt { display: flex; flex-direction: column; gap: 10px; }
+.et-fmt .seg { margin: 0; }
+.et-fmt .chk { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.et-fmt .chk input { width: 20px; height: 20px; }
+@media (max-width: 560px) {
+  .tn-fila { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'nom cant x' 'fmt fmt fmt'; }
+  .tn-nom { grid-area: nom; }
+  .tn-cant { grid-area: cant; }
+  .tn-x { grid-area: x; }
+  .tn-fmt { grid-area: fmt; max-width: none; width: 100%; }
+}
+@media (max-width: 860px) {
+  .et-fmt { order: -1; }
+}

@@ -265,15 +265,37 @@ const nAnuncio = (a) => ({
   fijado: !!a.fijado,
 });
 /* Etiquetas guardadas: elaboraciones que no están en la carta, o etiquetas con datos propios */
-const nEtiqueta = (e) => ({
-  id: e.id,
-  nombre: String(e.nombre || '').slice(0, 80),
-  dias: Number(e.dias) > 0 ? Math.min(365, Math.round(Number(e.dias))) : 3,
-  alergenos: (Array.isArray(e.alergenos) ? e.alergenos : []).map(String),
-  conserva: String(e.conserva || ''),
-  nota: String(e.nota || '').slice(0, 60),
-  area: e.area === 'barra' ? 'barra' : '',
-});
+/* La colección «etiquetas» guarda tres cosas: etiquetas sueltas (tipo ''), listas por estación
+   (tipo 'lista': nombres con cuántas copias de cada una) y formatos de impresión (tipo 'formato') */
+const CAMPOS_ET = ['elab', 'cad', 'alg', 'cons', 'nota', 'lote', 'resp'];
+const nEtiqueta = (e) => {
+  const tipo = e.tipo === 'lista' || e.tipo === 'formato' ? e.tipo : '',
+    x = { id: e.id, tipo: tipo, nombre: String(e.nombre || '').slice(0, 80), area: e.area === 'barra' ? 'barra' : '' };
+  if (tipo === 'lista') {
+    x.items = (Array.isArray(e.items) ? e.items : [])
+      .filter((i) => i && i.ref)
+      .slice(0, 80)
+      .map((i) => {
+        const o = { ref: String(i.ref), n: Math.min(50, Math.max(0, Math.round(Number(i.n) || 0))) };
+        if (i.nombre) o.nombre = String(i.nombre).slice(0, 60);
+        if (i.f) o.f = String(i.f).slice(0, 40);
+        return o;
+      });
+    x.formato = String(e.formato || '');
+  } else if (tipo === 'formato') {
+    const c = e.campos || {};
+    x.campos = {};
+    CAMPOS_ET.forEach((k) => (x.campos[k] = !!c[k]));
+    x.tit = ['m', 'l', 'xl'].indexOf(e.tit) >= 0 ? e.tit : 'l';
+    x.centro = !!e.centro;
+  } else {
+    x.dias = Number(e.dias) > 0 ? Math.min(365, Math.round(Number(e.dias))) : 3;
+    x.alergenos = (Array.isArray(e.alergenos) ? e.alergenos : []).map(String);
+    x.conserva = String(e.conserva || '');
+    x.nota = String(e.nota || '').slice(0, 60);
+  }
+  return x;
+};
 const NORM = {
   anuncios: nAnuncio,
   etiquetas: nEtiqueta,
