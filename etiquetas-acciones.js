@@ -6,6 +6,7 @@ V.addEventListener('input', (e) => {
     et.ed = et.ed || {};
     et.ed[t.dataset.et] = t.dataset.et === 'dias' ? Math.max(0, Math.round(parse(t.value))) : t.value;
     pintarEt();
+    if (t.id === 'et-n') pintarSug(t.value);
   } else if (t.id === 'et-resp') {
     et.resp = t.value;
     mem('bbc.resp', et.resp);
@@ -188,8 +189,10 @@ V.addEventListener('click', (e) => {
 /* Lo que se guarda de la tanda en una lista: qué etiqueta y cuántas copias */
 const itemsLista = (t) =>
   t.items.filter((i) => datosDe(i.ref, i.ed, 1)).map((i) => {
-    const o = { ref: i.ref, n: i.n, f: i.f };
-    if (i.ref === 'nueva' && i.ed && i.ed.nombre) o.nombre = i.ed.nombre;
+    const o = { ref: i.ref, n: i.n, f: i.f },
+      ed = edEt(i.ed);
+    /* Todo lo que se cambió a mano (nombre, días, alérgenos…) se guarda en la lista */
+    if (ed) o.ed = ed;
     return o;
   });
 V.addEventListener('click', (e) => {
@@ -198,6 +201,14 @@ V.addEventListener('click', (e) => {
   const a = b.dataset.act,
     d = datosEt();
   if (!d) return;
+  if (a === 'et-sug') {
+    /* Elegida una sugerencia: la etiqueta sale de esa ficha, producto o etiqueta guardada */
+    et.id = b.dataset.ref;
+    et.ed = {};
+    vEtiquetas();
+    if ($('et-cop')) $('et-cop').focus();
+    return;
+  }
   if (a === 'et-imp') imprimirEt();
   else if (a === 'et-pdf') {
     if (!d.nombre.trim()) return toast('Escribe el nombre de la etiqueta.');
@@ -279,4 +290,13 @@ V.addEventListener('submit', (e) => {
   if (e.target.id !== 'form-et') return;
   e.preventDefault();
   imprimirEt();
+});
+
+/* Las sugerencias se cierran al tocar fuera o con Escape */
+document.addEventListener('pointerdown', (e) => {
+  const o = $('et-sug');
+  if (o && !o.hidden && !e.target.closest('#et-sug,#et-n')) o.hidden = true;
+});
+V.addEventListener('keydown', (e) => {
+  if (e.target.id === 'et-n' && e.key === 'Escape' && $('et-sug')) $('et-sug').hidden = true;
 });

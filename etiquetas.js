@@ -114,6 +114,10 @@ function origenDe(ref) {
     const x = S.etiquetas.find((e) => e.id === ref.slice(2) && !e.tipo);
     return x ? { tipo: 'e', x: x } : null;
   }
+  if (ref.indexOf('pr:') === 0) {
+    const x = prod(ref.slice(3));
+    return x ? { tipo: 'r', x: x } : null;
+  }
   const p = plato(ref);
   return p ? { tipo: 'p', x: p } : null;
 }
@@ -126,7 +130,9 @@ function datosDe(ref, ed, copias) {
     ? { nombre: '', dias: 3, alg: [], conserva: CONSERVA[0], nota: '' }
     : o.tipo === 'e'
       ? { nombre: o.x.nombre, dias: o.x.dias, alg: o.x.alergenos.slice(), conserva: o.x.conserva || CONSERVA[0], nota: o.x.nota }
-      : { nombre: o.x.nombre, dias: o.x.caducidad > 0 ? o.x.caducidad : 3, alg: algDe(o.x), conserva: CONSERVA[0], nota: '' };
+      : o.tipo === 'r'
+        ? { nombre: o.x.nombre, dias: 3, alg: (o.x.alergenos || []).slice(), conserva: CONSERVA[0], nota: '' }
+        : { nombre: o.x.nombre, dias: o.x.caducidad > 0 ? o.x.caducidad : 3, alg: algDe(o.x), conserva: CONSERVA[0], nota: '' };
   const d = Object.assign(b, ed),
     dias = Math.max(0, Math.round(Number(d.dias) || 0));
   return {
@@ -186,11 +192,46 @@ function opcionesEt(sel) {
   const guard = ordenados(S.etiquetas.filter((e) => !e.tipo && enArea(e)));
   return (
     '<option value="nueva"' + (sel === 'nueva' ? ' selected' : '') + '>＋ Etiqueta nueva</option>' +
+    (sel && sel.indexOf('pr:') === 0 && prod(sel.slice(3)) ? '<optgroup label="Producto"><option value="' + esc(sel) + '" selected>' + esc(prod(sel.slice(3)).nombre) + '</option></optgroup>' : '') +
     (guard.length
       ? '<optgroup label="Etiquetas guardadas">' + guard.map((e) => '<option value="e:' + esc(e.id) + '"' + ('e:' + e.id === sel ? ' selected' : '') + '>' + esc(e.nombre) + '</option>').join('') + '</optgroup>'
       : '') +
     opcionesPlatos(sel)
   );
+}
+
+/* ---- Al escribir el nombre: sugerencias de platos, elaboraciones, productos y etiquetas guardadas ---- */
+function sugerenciasEt(q) {
+  q = norm(q || '').trim();
+  if (!q) return [];
+  const todo = []
+    .concat(S.etiquetas.filter((e) => !e.tipo && enArea(e)).map((e) => ({ ref: 'e:' + e.id, n: e.nombre, t: 'Etiqueta guardada' })))
+    .concat(S.platos.filter((p) => enArea(p)).map((p) => ({ ref: p.id, n: p.nombre, t: p.base ? 'Elaboración' : 'Plato' })))
+    .concat(S.productos.filter((p) => enArea(p)).map((p) => ({ ref: 'pr:' + p.id, n: p.nombre, t: 'Producto' })));
+  const empieza = [],
+    palabra = [],
+    contiene = [];
+  todo.forEach((x) => {
+    const n = norm(x.n);
+    if (n.indexOf(q) === 0) empieza.push(x);
+    else if (n.indexOf(' ' + q) >= 0) palabra.push(x);
+    else if (q.length > 2 && n.indexOf(q) > 0) contiene.push(x);
+  });
+  const orden = (l) => l.sort((a, z) => a.n.localeCompare(z.n, 'es'));
+  return orden(empieza).concat(orden(palabra), orden(contiene)).slice(0, 8);
+}
+function pintarSug(q) {
+  const o = $('et-sug');
+  if (!o) return;
+  const l = sugerenciasEt(q),
+    o2 = origenEt();
+  if (!l.length || (l.length === 1 && o2 && l[0].ref === et.id && norm(l[0].n) === norm(q))) {
+    o.hidden = true;
+    o.innerHTML = '';
+    return;
+  }
+  o.innerHTML = l.map((x) => '<button type="button" role="option" data-act="et-sug" data-ref="' + esc(x.ref) + '"><b>' + esc(x.n) + '</b><small>' + x.t + '</small></button>').join('');
+  o.hidden = false;
 }
 
 /* ---- Tanda: varias etiquetas distintas, cada una con sus copias, que salen de una vez ----
@@ -220,7 +261,7 @@ function aTanda(ref, ed, n, f) {
 function cargarLista(l) {
   et.tanda = {
     lista: l.id,
-    items: l.items.map((i) => ({ ref: i.ref, ed: i.nombre ? { nombre: i.nombre } : {}, n: i.n, f: i.f || l.formato || 'std' })),
+    items: l.items.map((i) => ({ ref: i.ref, ed: Object.assign(i.nombre ? { nombre: i.nombre } : {}, i.ed || {}), n: i.n, f: i.f || l.formato || 'std' })),
   };
   guardaTanda();
 }
@@ -345,7 +386,7 @@ function vEtiquetas() {
     '</div>' +
     tandaHTML() +
     '<div class="dos et-dos"><section class="card"><form id="form-et" class="ficha" novalidate>' +
-    '<div class="field wide"><label for="et-n">Nombre en la etiqueta</label><input id="et-n" data-et="nombre" type="text" maxlength="60" autocomplete="off" value="' + esc(d.nombre) + '" placeholder="Salsa de tomate"></div>' +
+    '<div class="field wide"><label for="et-n">Nombre en la etiqueta</label><input id="et-n" data-et="nombre" type="text" maxlength="60" autocomplete="off" value="' + esc(d.nombre) + '" placeholder="Escribe: A, Abanico…" aria-autocomplete="list" aria-controls="et-sug"><div class="et-sug" id="et-sug" role="listbox" hidden></div></div>' +
     '<div class="field"><label for="et-fecha">Elaborado el</label><input id="et-fecha" type="date" value="' + esc(et.fecha) + '"></div>' +
     '<div class="field"><label for="et-dias">Días de vida</label><input class="num" id="et-dias" data-et="dias" type="text" inputmode="numeric" value="' + d.dias + '"></div>' +
     '<div class="field"><label for="et-cons">Conservación</label><input id="et-cons" data-et="conserva" type="text" list="dl-conserva" maxlength="30" value="' + esc(d.conserva) + '"></div>' +
