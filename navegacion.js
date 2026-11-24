@@ -42,7 +42,7 @@ const SECI = {
    Dueño y encargados lo ven todo. El equipo (cocina, barra, solo consulta) ve solo lo que usa en el día a día:
    sin precios, costes, ingeniería, menús ni comparaciones. */
 const SUBS_TODO = JSON.parse(JSON.stringify(SUBS));
-const MENU_EQUIPO = { inicio: ['panel', 'turnos', 'manual'], cocina: ['recetas', 'produccion', 'etiquetas', 'appcc'], almacen: ['inventario', 'compras', 'mermas'] };
+const MENU_EQUIPO = { inicio: ['panel', 'turnos'], cocina: ['recetas', 'produccion', 'etiquetas', 'appcc'], almacen: ['inventario', 'compras', 'mermas'] };
 function aplicarMenuRol() {
   const eq = !puede(2),
     extra = (SUBS.inicio || []).filter((x) => !SUBS_TODO.inicio.some((y) => y[0] === x[0]));
@@ -64,6 +64,7 @@ function aplicarMenuRol() {
     if (!SUBS[k].some((x) => x[0] === sub[k])) sub[k] = SUBS[k][0][0];
   });
   construirMenu();
+  if (typeof pintarTabbar === 'function') pintarTabbar();
 }
 function construirMenu() {
   $('menu-nav').innerHTML = Object.keys(SUBS)

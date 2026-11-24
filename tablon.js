@@ -113,12 +113,17 @@ function solicitudesHTML() {
   );
 }
 function vTablon() {
+  if ($('dl-equipo')) $('dl-equipo').innerHTML = nombresEquipo().map((n) => '<option value="' + esc(n) + '"></option>').join('');
   $('vista').innerHTML =
+    tareasHTML() +
     '<div class="tablon"><div class="col">' + anunciosHTML() + avisosSemanaHTML() + '</div><div class="col">' + miHoyHTML() + limpiezaTablonHTML() + albaranesHTML() + '</div></div>';
   pintaGaleria();
 }
 /* Lo que el dueño ve encima de su panel */
-const tablonGestionHTML = () => solicitudesHTML() + '<div class="tablon">' + '<div class="col">' + anunciosHTML() + '</div><div class="col">' + limpiezaTablonHTML() + albaranesHTML() + '</div></div>';
+const tablonGestionHTML = () => {
+  if ($('dl-equipo')) $('dl-equipo').innerHTML = nombresEquipo().map((n) => '<option value="' + esc(n) + '"></option>').join('');
+  return solicitudesHTML() + tareasHTML() + '<div class="tablon">' + '<div class="col">' + anunciosHTML() + '</div><div class="col">' + limpiezaTablonHTML() + albaranesHTML() + '</div></div>';
+};
 
 V.addEventListener('click', (e) => {
   const b = e.target.closest('[data-act^="an-"],[data-act^="tb-"]');

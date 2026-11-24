@@ -215,8 +215,5 @@ V.addEventListener('change', (e) => {
     S.ajustes.horasFotos = +e.target.value;
     guardar('ajustes', S.ajustes, true);
     toast('Las fotos de limpieza se guardarán ' + S.ajustes.horasFotos + ' horas.');
-  } else if (e.target.id === 'ap-fotos') {
-    const n = e.target.files.length;
-    $('ap-fn').textContent = n ? n + (n === 1 ? ' foto elegida' : ' fotos elegidas') : '';
   }
 });

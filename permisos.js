@@ -26,6 +26,7 @@ const COLNIV = {
   pedidos: 1,
   anuncios: 2,
   etiquetas: 1,
+  tareas: 1,
 };
 const ACT2 = new Set([
   'enl-abrir', 'enl-todas',
@@ -42,6 +43,7 @@ const ACT2 = new Set([
   'sel-mover',
   'sel-aplicar',
   'ei-importar',
+  'ei-texto',
   'ei-aplicar',
   'tf-aplicar',
   'man-nuevo',
@@ -172,6 +174,11 @@ function aplicarArea(r) {
     if ((ACT2.has(b.dataset.act) || AREA_ACT.has(b.dataset.act)) && bloque(b)) b.hidden = true;
   });
 }
+/* Lo que cada uno subió (un registro de limpieza, una merma, una compra) lo puede borrar él mismo
+   aunque su usuario no pueda borrar lo de los demás. La base de datos lo comprueba también. */
+const ACT_MIO = new Set(['ap-borrar', 'borrar-merma', 'co-borrar']);
+const esMio = (x) => !!(miId && x && x.por && x.por === miId);
+const mioOk = (b, a) => ACT_MIO.has(a) && b && b.dataset && b.dataset.mio === '1' && puede(1);
 const AREA_ACT = new Set(['borrar-prod', 'add-ing', 'quitar-ing', 'borrar-plato', 'duplicar', 'guardar-prod', 'conv-ud']);
 function aplicarPermisos() {
   const r = $('vista');
@@ -187,6 +194,7 @@ function aplicarPermisos() {
   r.querySelectorAll('[data-act]').forEach((b) => {
     const a = b.dataset.act;
     if (b.classList.contains('row')) return;
+    if (mioOk(b, a)) return;
     if ((ACT2.has(a) && !puede(2)) || (ACT1.has(a) && !puede(1))) b.hidden = true;
   });
   r.querySelectorAll('form').forEach((f) => {
@@ -229,6 +237,7 @@ function vigilarVista() {
   }
 }
 function permClick(b, a) {
+  if (mioOk(b, a)) return false;
   if ((ACT2.has(a) && !puede(2)) || (ACT1.has(a) && !puede(1))) {
     toast('Tu usuario no tiene permiso para esto.');
     return true;

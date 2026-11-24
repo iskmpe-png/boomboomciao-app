@@ -37,7 +37,7 @@ function listaMermas() {
             '</span></div>' +
             '<div class="d"><b>' +
             fEur.format(valM(m)) +
-            '</b><button class="icon" type="button" data-act="borrar-merma" aria-label="Eliminar apunte" style="width:34px;height:34px">×</button></div></div>',
+            '</b><button class="icon" type="button" data-act="borrar-merma"' + (esMio(m) ? ' data-mio="1"' : '') + ' aria-label="Eliminar apunte" style="width:34px;height:34px">×</button></div></div>',
         )
         .join('') + masHTML('mermas', l.length)
     : '<p class="hint" style="padding:10px 0">Sin mermas apuntadas en ' +

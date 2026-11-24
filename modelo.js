@@ -115,6 +115,8 @@ const nProd = (p) => ({
   alergenos: Array.isArray(p.alergenos) ? p.alergenos.map(String) : [],
   minimo: Number(p.minimo) || 0,
   familia: String(p.familia || ''),
+  /* Grupo para comparar que asigna la IA (producto + variedad + presentación) y el nombre que tenía entonces */
+  ...(p.clave ? { clave: String(p.clave).slice(0, 60), claveDe: String(p.claveDe || '') } : {}),
   area: p.area === 'barra' ? 'barra' : '',
   /* Uso general de la cocina (aceite de freidora, gas del soplete…): no va en ningún escandallo */
   general: !!p.general,
@@ -177,6 +179,9 @@ const nCompra = (c) => ({
     cantidad: Number(l.cantidad) || 0,
     unidad: uni(l.unidad),
     precio: Number(l.precio) || 0,
+    /* Lo que ponía el albarán y cómo se pasó a kg/L (10 ud × 250 ml a 5 €): para revisarlo después */
+    ...(l.desc ? { desc: String(l.desc).slice(0, 160) } : {}),
+    ...(l.conv && Number(l.conv.c) > 0 ? { conv: { n: Number(l.conv.n) || 0, c: Number(l.conv.c), u: l.conv.u === 'l' ? 'l' : 'kg', pud: Number(l.conv.pud) || 0 } } : {}),
   })),
   /* Cambios que pidió cocina al subir el albarán y que el encargado tiene que aprobar:
      producto nuevo, cambio de precio o de formato (unidad) */
@@ -265,6 +270,23 @@ const nAnuncio = (a) => ({
   fijado: !!a.fijado,
 });
 /* Etiquetas guardadas: elaboraciones que no están en la carta, o etiquetas con datos propios */
+/* Tareas del día del tablón: qué hay que hacer, cuánto se hizo y quién lo hizo */
+const nTarea = (t) => ({
+  id: t.id,
+  fecha: /^\d{4}-\d{2}-\d{2}$/.test(t.fecha || '') ? t.fecha : hoy(),
+  texto: String(t.texto || '').slice(0, 120),
+  cant: String(t.cant || '').slice(0, 40),
+  area: t.area === 'barra' ? 'barra' : '',
+  orden: Number(t.orden) || 0,
+  hecha: !!t.hecha,
+  hechaCant: String(t.hechaCant || '').slice(0, 40),
+  hechaPor: String(t.hechaPor || '').slice(0, 60),
+  hechaEn: String(t.hechaEn || ''),
+  /* Si viene de otro día (no se terminó), la fecha en que se apuntó por primera vez */
+  desde: /^\d{4}-\d{2}-\d{2}$/.test(t.desde || '') ? t.desde : '',
+  por: String(t.por || ''),
+  porNombre: String(t.porNombre || '').slice(0, 60),
+});
 /* La colección «etiquetas» guarda tres cosas: etiquetas sueltas (tipo ''), listas por estación
    (tipo 'lista': nombres con cuántas copias de cada una) y formatos de impresión (tipo 'formato') */
 const CAMPOS_ET = ['elab', 'cad', 'alg', 'cons', 'nota', 'lote', 'resp'];
@@ -311,6 +333,7 @@ const nEtiqueta = (e) => {
 };
 const NORM = {
   anuncios: nAnuncio,
+  tareas: nTarea,
   etiquetas: nEtiqueta,
   manual: nManual,
   dudas: nDuda,

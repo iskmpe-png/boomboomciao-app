@@ -5,6 +5,20 @@
    compensa con los baratos. */
 const ICO_MENU =
   '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>';
+/* Los menús salen plegados: solo el menú. Sus platos se ven al tocar «Ver platos». */
+const menusAbiertos = new Set();
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act="menu-ver"]');
+  if (!b) return;
+  const id = b.dataset.id,
+    caja = b.parentElement && b.parentElement.querySelector('.menu-platos[data-menu="' + CSS.escape(id) + '"]'),
+    ab = !menusAbiertos.has(id);
+  if (ab) menusAbiertos.add(id);
+  else menusAbiertos.delete(id);
+  if (caja) caja.hidden = !ab;
+  b.setAttribute('aria-expanded', String(ab));
+  b.textContent = (ab ? 'Ocultar platos' : 'Ver ' + b.dataset.n + (b.dataset.n === '1' ? ' plato' : ' platos')) + (ab ? ' ▴' : ' ▾');
+});
 function menusHTML() {
   const l = menusCarta().filter((e) => !e.platos.length || e.platos.some((x) => { const p = plato(x.id); return p && enArea(p); }));
   if (!l.length) return '';
@@ -18,7 +32,14 @@ function menusHTML() {
           '<span class="n"><b>' + esc(e.nombre || 'Menú sin nombre') + '</b><span>' + resumenMenu(e) +
           (e.precio > 0 ? ' · ' + fEur.format(e.precio) + ' por persona' : ' · falta el precio') + '</span></span>' +
           '<span class="d"><b>' + fEur.format(c) + '</b>' + evPill(e) + '</span></button>' +
-          '<div class="menu-platos">' +
+          (function () {
+            const n = e.platos.filter((x) => plato(x.id)).length,
+              ab = menusAbiertos.has(e.id);
+            return n
+              ? '<button class="link menu-ver" type="button" data-act="menu-ver" data-id="' + esc(e.id) + '" data-n="' + n + '" aria-expanded="' + ab + '">' + (ab ? 'Ocultar platos ▴' : 'Ver ' + n + (n === 1 ? ' plato' : ' platos') + ' ▾') + '</button>'
+              : '';
+          })() +
+          '<div class="menu-platos" data-menu="' + esc(e.id) + '"' + (menusAbiertos.has(e.id) ? '' : ' hidden') + '>' +
           ordenLineasMenu(e)
             .map(([x]) => {
               const p = plato(x.id);

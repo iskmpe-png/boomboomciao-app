@@ -1,6 +1,6 @@
 /* Boom Boom Ciao: guarda la app en el dispositivo para que abra sin conexión.
    Sube el número de versión cada vez que publiques cambios. */
-const CACHE = 'bbc-v23';
+const CACHE = 'bbc-v30';
 const BASE = [
   "./",
   "index.html",
@@ -11,17 +11,27 @@ const BASE = [
   "icon-192.png",
   "icon-512.png",
   "inicio.css",
+  "fuentes.css",
+  "plus-jakarta-sans-latin-400-normal.woff2",
+  "plus-jakarta-sans-latin-500-normal.woff2",
+  "plus-jakarta-sans-latin-600-normal.woff2",
+  "plus-jakarta-sans-latin-700-normal.woff2",
+  "plus-jakarta-sans-latin-800-normal.woff2",
+  "bricolage-grotesque-latin-700-normal.woff2",
+  "bricolage-grotesque-latin-800-normal.woff2",
   "base.css",
   "componentes.css",
   "pantallas.css",
   "novedades.css",
   "retoques-movil.css",
   "zz-estilo.css",
+  "zzz-pomodoro.css",
   "base.js",
   "modelo.js",
   "indices.js",
   "guardado.js",
   "calculo.js",
+  "formatos.js",
   "pintado.js",
   "carta.js",
   "ficha.js",
@@ -64,6 +74,7 @@ const BASE = [
   "eventos-principales.js",
   "tema.js",
   "navegacion.js",
+  "interfaz.js",
   "recibir.js",
   "copia.js",
   "deshacer.js",
@@ -71,6 +82,7 @@ const BASE = [
   "pedidos.js",
   "historial.js",
   "legal-y-copias.js",
+  "legal.js",
   "grupo.js",
   "tarifas.js",
   "escandallos.js",
@@ -87,7 +99,9 @@ const BASE = [
   "aprobar.js",
   "consumo.js",
   "enlazar.js",
+  "repaso-kgl.js",
   "tablon.js",
+  "tareas.js",
   "etiquetas-acciones.js",
   "manual.js",
   "primeros-pasos.js",
@@ -100,6 +114,7 @@ const BASE = [
   "limpieza.js",
   "sincronizacion.js",
   "acceso.js",
+  "mi-cuenta.js",
   "usuarios.js",
   "ia.js",
   "arranque.js"
@@ -117,8 +132,7 @@ self.addEventListener('fetch', (e) => {
   const r = e.request;
   if (r.method !== 'GET') return;
   const u = new URL(r.url);
-  const fuentes = /(^|\.)(googleapis\.com|gstatic\.com)$/.test(u.hostname);
-  if (u.origin !== location.origin && !fuentes) return; // la base de datos nunca se guarda aquí
+  if (u.origin !== location.origin) return; // la base de datos nunca se guarda aquí
   const guarda = (res) => {
     if (res && (res.ok || res.type === 'opaque')) {
       const copia = res.clone();
@@ -140,7 +154,6 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
-  e.respondWith(caches.match(r).then((m) => m || fetch(r).then(guarda)));
 });
 // Avisos al móvil: llegan del servidor aunque la app esté cerrada
 self.addEventListener('push', (e) => {
