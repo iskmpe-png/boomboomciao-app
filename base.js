@@ -47,13 +47,10 @@ const SUBS = {
   inicio: [
     ['panel', 'Panel'],
     ['turnos', 'Turnos y avisos'],
-    ['manual', 'Manual'],
   ],
   carta: [
     ['platos', 'Platos'],
     ['elaboraciones', 'Elaboraciones'],
-    ['sala', 'Sala y alérgenos'],
-    ['ingenieria', 'Ingeniería'],
     ['eventos', 'Menús'],
   ],
   precios: [
@@ -67,7 +64,11 @@ const SUBS = {
     ['etiquetas', 'Etiquetas'],
     ['appcc', 'APPCC'],
   ],
-  control: [['consumo', 'Consumo y stock']],
+  control: [
+    ['consumo', 'Consumo y stock'],
+    ['ingenieria', 'Ingeniería de menú'],
+    ['manual', 'Manual del asistente'],
+  ],
   almacen: [
     ['inventario', 'Inventario'],
     ['pedidos', 'Pedidos'],
@@ -91,6 +92,10 @@ const ALIAS = {
   recetas: 'cocina-recetas',
   inventario: 'almacen-inventario',
   mermas: 'almacen-mermas',
+  /* Direcciones antiguas (3.0: Ingeniería y el Manual pasan a Control; Sala y alérgenos se quita) */
+  'carta-ingenieria': 'control-ingenieria',
+  'inicio-manual': 'control-manual',
+  'carta-sala': 'carta-platos',
 };
 const PER = { diario: 'Diario', quincenal: 'Quincenal', mensual: 'Mensual' };
 const MOTIVOS = ['Caducado', 'Mal estado', 'Quemado', 'Error de cocina', 'Devolución de sala', 'Rotura o caída', 'Otro'];
@@ -116,6 +121,7 @@ const S = {
   pedidos: [],
   anuncios: [],
   etiquetas: [],
+  tareas: [],
   ajustes: { id: 'empresa', nombre: 'Boom Boom Ciao', periodo: 'mensual', grupos: [], gruposElab: [], diasAlbaranes: 30, archivados: [], horasFotos: 24, avisos: [] },
 };
 const COLS = [
@@ -136,6 +142,7 @@ const COLS = [
   'pedidos',
   'anuncios',
   'etiquetas',
+  'tareas',
 ];
 const cargado = {};
 let vista = 'inicio',

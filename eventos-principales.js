@@ -153,10 +153,12 @@ function confirmar(b, txt) {
   b.dataset.ok = '1';
   const o = b.textContent;
   b.textContent = txt;
+  b.classList.add('confirmando');
   setTimeout(() => {
     if (b.isConnected) {
       delete b.dataset.ok;
       b.textContent = o;
+      b.classList.remove('confirmando');
     }
   }, 4000);
   return false;

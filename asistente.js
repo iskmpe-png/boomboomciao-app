@@ -222,6 +222,31 @@ function vAsistente() {
   abrirChat();
   location.replace('#inicio-panel');
 }
+/* Respuestas guardadas: la misma pregunta con los mismos datos de la app no se vuelve a pagar.
+   Duran 6 horas y se guardan las 30 últimas en este dispositivo. */
+const hashTxt = (t) => {
+  let h = 5381;
+  for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36) + ':' + t.length;
+};
+function cacheIA(k, v) {
+  let c = {};
+  try {
+    c = JSON.parse(mem('bbc.iaCache') || '{}') || {};
+  } catch (e) {}
+  const ahora = Date.now();
+  if (v === undefined) {
+    const x = c[k];
+    return x && ahora - x.t < 6 * 3600e3 ? x.a : null;
+  }
+  c[k] = { t: ahora, a: v };
+  const ks = Object.keys(c).sort((a, z) => c[z].t - c[a].t).slice(0, 30),
+    n = {};
+  ks.forEach((x) => (n[x] = c[x]));
+  try {
+    mem('bbc.iaCache', JSON.stringify(n));
+  } catch (e) {}
+}
 function preguntar(q) {
   q = q.trim();
   if (!q || asCtl) return;
@@ -231,13 +256,23 @@ function preguntar(q) {
   pintarChat();
   let turnos = chat
     .slice(0, -1)
-    .filter((m) => m.content)
-    .slice(-10);
+    .filter((m) => m.content && !m.error)
+    .slice(-6);
   while (turnos.length && turnos[0].role !== 'user') turnos.shift();
+  /* Lo fijo (instrucciones y datos) va siempre delante: así Google reaprovecha la parte repetida
+     de la consulta (caché de prompts) y cuesta menos. Las respuestas viejas largas se recortan. */
   turnos = turnos.map((m, k) => ({
     role: m.role,
-    content: k === 0 ? instr() + '\n\n' + contexto() + '\n\nPREGUNTA: ' + m.content : m.content,
+    content: k === 0 ? instr() + '\n\n' + contexto() + '\n\nPREGUNTA: ' + m.content : m.role === 'assistant' && m.content.length > 1500 ? m.content.slice(0, 1500) + '…' : m.content,
   }));
+  const clave = turnos.length === 1 ? hashTxt(turnos[0].content) : '',
+    guardada = clave ? cacheIA(clave) : null;
+  if (guardada) {
+    r.content = guardada;
+    r.cache = true;
+    pintarChat();
+    return;
+  }
   asCtl = new AbortController();
   const env = $('as-env');
   if (env) env.textContent = 'Detener';
@@ -264,6 +299,7 @@ function preguntar(q) {
     .then(
       (x) => {
         r.content = x.text;
+        if (clave && x.text && x.text.length > 20) cacheIA(clave, x.text);
         apuntarDuda(q, r);
       },
       (e) => {

@@ -84,9 +84,17 @@ function volcar(key) {
     }
   });
 }
+/* Borrar: el encargado y el dueño, todo. El resto, solo lo que subió él mismo (y en etiquetas,
+   las listas y formatos compartidos de su cocina). La base de datos aplica la misma regla. */
+const BORRA_EQUIPO = new Set(['etiquetas']);
+function puedeBorrar(col, id) {
+  if (puede(2) || deshaciendo) return true;
+  const x = (S[col] || []).find((d) => d.id === id);
+  return puede(COLNIV[col] == null ? 2 : COLNIV[col]) && (BORRA_EQUIPO.has(col) || esMio(x));
+}
 function borrar(col, id) {
-  if (!puede(2) && !deshaciendo) {
-    toast('Solo el encargado puede eliminar.');
+  if (!puedeBorrar(col, id)) {
+    toast('Solo puedes eliminar lo que subiste tú. Lo demás lo elimina el encargado.');
     return;
   }
   anotarBaja(col, id);

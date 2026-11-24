@@ -76,7 +76,7 @@ function iaNube() {
     return { text: text, truncated: false };
   };
   async function jsonUnaVez(prompt, imgs, opts) {
-    const r = await llamar({ modo: 'json', texto: prompt, imagenes: imgs }, opts.signal),
+    const r = await llamar({ modo: 'json', texto: prompt, imagenes: imgs, nivel: opts.nivel || '' }, opts.signal),
       j = await r.json().catch(() => null);
     const t = String((j && j.text) || '')
       .trim()

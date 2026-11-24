@@ -102,7 +102,7 @@ function filaProd(p) {
       esc(show(p.minimo)) +
       '"></div>' +
       '<div class="field"><label for="ep-z">Zona</label><select id="ep-z" data-c="area"><option value="">Cocina</option><option value="barra"' + (p.area === 'barra' ? ' selected' : '') + '>Barra</option></select></div>' +
-      '<div class="field"><label for="ep-f">Grupo para comparar</label><input id="ep-f" data-c="familia" type="text" autocomplete="off" placeholder="' + esc(famAuto(p.nombre)) + '" value="' + esc(p.familia) + '"></div>' +
+      '<div class="field"><label for="ep-f">Grupo para comparar</label><input id="ep-f" data-c="familia" type="text" autocomplete="off" placeholder="' + esc(claveIA(p) || famAuto(p.nombre)) + '" value="' + esc(p.familia) + '"></div>' +
       '<div class="acciones"><button class="btn primary small" type="button" data-act="cerrar-prod">Listo</button><button class="btn small" type="button" data-act="conv-ud" data-id="' + esc(p.id) + '">Cambiar unidad</button><button class="link" type="button" data-act="borrar-prod" style="color:var(--crit)">Eliminar</button></div>' +
       '<div class="full col" style="gap:8px"><span class="lbl">Alérgenos</span><div class="togs">' +
       algBtns(p.alergenos, 'alg-prod') +
@@ -143,6 +143,7 @@ function filaProd(p) {
   );
 }
 function vAlertas() {
+  if (puede(2)) agruparSiToca();
   const l = alertas();
   $('vista').innerHTML =
     '<div class="bar"><span class="hint grow">Cambios de precio de los últimos 90 días y los platos a los que afectan.</span>' +
@@ -174,6 +175,11 @@ function vAlertas() {
               (pct > 0 ? '+' : '') +
               fNum(pct) +
               ' %</span><button class="link" type="button" data-act="visto-alerta">Visto</button></div></div>' +
+              /* Saltos así casi siempre son un error de lectura o de formato, no una subida real */
+              (pct > 80 || pct < -45
+                ? '<p class="hint" style="color:var(--warn)">Revisa este precio: un cambio tan grande suele ser un error de lectura del albarán o de formato (por unidad en vez de por kg o L).' +
+                  (p.unidad === 'ud' ? ' Este producto va por unidades: pásalo a kg o L para que el precio sea comparable.' : '') + '</p>'
+                : '') +
               (af.length
                 ? '<div class="rows">' +
                   af

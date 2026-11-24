@@ -53,12 +53,12 @@ function vCarta() {
       ? vacio(
           'Aún no hay elaboraciones de la casa',
           'Aquí va lo que producís vosotros para usarlo en otros escandallos: una mayonesa de limón, una masa, un fondo. Calcula lo que cuesta el kilo, el litro o la unidad, y después lo eliges como un ingrediente más en cualquier ficha. No aparece en la carta ni en la ingeniería de menú.',
-          '<div class="acciones" style="justify-content:center"><button class="btn primary" type="button" data-act="nuevo-plato">Crear elaboración</button><button class="btn" type="button" data-act="ei-importar">Importar escandallos</button></div>',
+          '<div class="acciones" style="justify-content:center"><button class="btn primary" type="button" data-act="nuevo-plato">Crear elaboración</button><button class="btn" type="button" data-act="ei-texto">Receta con IA</button><button class="btn" type="button" data-act="ei-importar">Importar escandallos</button></div>',
         )
       : vacio(
           'Aún no hay ningún plato',
           'Crea el primero: añade sus ingredientes y verás el coste por ración y el precio de venta recomendado.',
-          '<div class="acciones" style="justify-content:center"><button class="btn primary" type="button" data-act="nuevo-plato">Crear plato</button><button class="btn" type="button" data-act="ei-importar">Importar escandallos</button></div>',
+          '<div class="acciones" style="justify-content:center"><button class="btn primary" type="button" data-act="nuevo-plato">Crear plato</button><button class="btn" type="button" data-act="ei-texto">Receta con IA</button><button class="btn" type="button" data-act="ei-importar">Importar escandallos</button></div>',
         );
     return;
   }
@@ -82,7 +82,7 @@ function vCarta() {
       : '<button class="btn primary" type="button" data-act="nuevo-plato">' + (elab ? 'Nueva' : 'Nuevo') + '</button>' +
         expHTML(
           1,
-          mOp('sel-ini', 'Seleccionar varios', ' data-m="carta"') + mOp('ei-importar', 'Importar escandallos') + mOp('gr-editar', 'Editar grupos'),
+          mOp('sel-ini', 'Seleccionar varios', ' data-m="carta"') + mOp('ei-texto', 'Receta con IA (escribir o pegar)') + mOp('ei-importar', 'Importar escandallos (fotos, PDF, Excel)') + mOp('gr-editar', 'Editar grupos'),
         )) +
     '</div>' +
     '<div class="gruposc" id="gruposc">' + chip('', 'Todo', visibles.length + nm) + (nm ? chip(MENUS, 'Menús', nm) : '') + ks.map((g) => chip(g, g, cuenta(g))).join('') + (sueltos && ks.length ? chip(SIN_GRUPO, 'Sin grupo', sueltos) : '') +

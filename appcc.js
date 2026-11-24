@@ -32,7 +32,7 @@ function listaAppcc() {
             (a.ok ? 'ok' : 'crit') +
             '">' +
             (a.ok ? 'Correcto' : 'Incidencia') +
-            '</span><button class="icon" type="button" data-act="ap-borrar" aria-label="Eliminar registro" style="width:34px;height:34px">×</button></div></div>',
+            '</span><button class="icon" type="button" data-act="ap-borrar"' + (esMio(a) ? ' data-mio="1"' : '') + ' aria-label="Eliminar registro" style="width:34px;height:34px">×</button></div></div>',
         )
         .join('') + masHTML('appcc', l.length)
     : '<p class="hint" style="padding:10px 0">Sin registros ' + (apPer === 'mes' ? 'este mes' : 'este día') + '.</p>';
@@ -79,7 +79,7 @@ function vAppcc() {
     (apTipo === 'recepcion' ? 'Producto y observaciones' : 'Observaciones') +
     '</label><input id="ap-nota" type="text" autocomplete="off"></div>' +
     (apTipo === 'limpieza'
-      ? '<div class="field wide"><label for="ap-fotos">Fotos de la zona (todas las que quieras)</label><input id="ap-fotos" type="file" accept="image/*" multiple><span class="hint" id="ap-fn"></span></div>'
+      ? fotosCampoHTML('ap-fotos', 'Fotos de la zona (todas las que quieras)')
       : '') +
     (apTipo === 'temp'
       ? ''
@@ -97,6 +97,7 @@ function vAppcc() {
     (apTipo === 'limpieza' ? '<div id="lf-hoy">' + limpiezaHoyHTML() + '</div>' + galeriaHTML() : '') +
     '<section class="card"><div class="rows" id="lista-ap"></div></section>';
   listaAppcc();
+  if ($('ap-fotos')) pintaFotosCampo('ap-fotos');
   if (apTipo === 'limpieza') {
     pintaGaleria();
     setTimeout(caducarFotos, 2500);

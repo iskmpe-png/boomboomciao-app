@@ -59,7 +59,7 @@ function compraHTML(c) {
       )
       .join('') +
     (puede(1) ? '<button class="btn small" type="button" data-act="arch-add">Añadir prueba</button>' : '') +
-    (puede(2) ? '<button class="btn small peligro" type="button" data-act="co-borrar">Eliminar compra</button>' : '') +
+    (puede(2) || esMio(c) ? '<button class="btn small peligro" type="button" data-act="co-borrar"' + (esMio(c) ? ' data-mio="1"' : '') + '>Eliminar compra</button>' : '') +
     '</div></div></details>'
   );
 }
@@ -145,6 +145,7 @@ function vCompras() {
     expHTML() +
     '</div>' +
     pendientesHTML() +
+    avisoKgLHTML() +
     '<div class="dos"><div class="col"><section class="card"><details class="nueva-compra"><summary>Apuntar una compra a mano</summary><form id="form-compra" class="editor m6" style="margin:0" novalidate>' +
     '<div class="field"><label for="co-fecha">Fecha</label><input id="co-fecha" type="date" value="' + hoy() + '"></div><div class="field"><label for="co-prov">Proveedor</label><input id="co-prov" type="text" list="dl-proveedores" autocomplete="off"></div>' +
     '<div class="field"><label for="co-alb">Nº de albarán</label><input id="co-alb" type="text" autocomplete="off" placeholder="opcional"></div><div class="field"><label for="co-imp">Importe sin IVA €</label><input class="num" id="co-imp" type="text" inputmode="decimal" placeholder="0,00"></div>' +

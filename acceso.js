@@ -1,4 +1,25 @@
 /* Pantalla de entrada */
+let codigoNuevo = '',
+  trasCodigo = null;
+/* Captcha contra bots en el registro (Cloudflare Turnstile). Solo se activa si en config.js hay
+   «turnstile: 'clave del sitio'» y la función «cuentas» tiene el secreto TURNSTILE_SECRET. */
+function captchaHTML() {
+  const k = CFG && CFG.turnstile;
+  if (!k) return '';
+  if (!document.getElementById('cf-ts')) {
+    const sc = document.createElement('script');
+    sc.id = 'cf-ts';
+    sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    sc.async = true;
+    sc.defer = true;
+    document.head.appendChild(sc);
+  }
+  return '<div class="cf-turnstile" data-sitekey="' + esc(k) + '" data-language="es"></div>';
+}
+const captchaTok = () => {
+  const i = document.querySelector('#acceso [name="cf-turnstile-response"]');
+  return i ? i.value : '';
+};
 const OJO =
   '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 function acceso(modo, msg) {
@@ -15,7 +36,18 @@ function acceso(modo, msg) {
       '</div>';
   else if (modo === 'olvido')
     h +=
-      '<h2>Recuperar contraseña</h2><p>Si entras con <b>usuario</b> (sin correo), pide al dueño o al encargado que te ponga una contraseña nueva desde Usuarios.</p><p>Si entras con correo, escríbelo y te enviamos un enlace.</p><form id="form-olvido" class="col" novalidate><div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div><button class="btn primary" type="submit">Enviar enlace</button></form><button class="link" type="button" data-ac="entrar">Volver a entrar</button>';
+      '<h2>Recuperar contraseña</h2>' +
+      '<details class="ac-rec" open><summary><b>Entro con usuario</b> (sin correo)</summary><p class="hint">Usa tu <b>código de recuperación</b> (lo creas en Menú › Mi cuenta). Si no tienes, pide al encargado que te ponga una contraseña nueva desde Usuarios.</p><form id="form-recuperar" class="col" novalidate>' +
+      '<div class="field"><label for="ac-usu">Usuario</label><input id="ac-usu" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required></div>' +
+      '<div class="field"><label for="ac-rcod">Código de recuperación</label><input id="ac-rcod" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX" required></div>' +
+      '<div class="field"><label for="ac-pass">Contraseña nueva (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div>' +
+      '<div class="field"><label for="ac-pass2">Repítela</label><input id="ac-pass2" type="password" autocomplete="new-password" required></div>' +
+      '<button class="btn primary" type="submit">Poner contraseña nueva</button></form></details>' +
+      '<details class="ac-rec"><summary><b>Entro con correo</b></summary><p class="hint">Escríbelo y te enviamos un enlace.</p><form id="form-olvido" class="col" novalidate><div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div><button class="btn primary" type="submit">Enviar enlace</button></form></details>' +
+      '<button class="link" type="button" data-ac="entrar">Volver a entrar</button>';
+  else if (modo === 'codigo')
+    h +=
+      '<h2>Guarda tu código de recuperación</h2><p>Si algún día olvidas la contraseña, con tu usuario y este código pones una nueva tú solo.</p><p class="mc-codigo"><code>' + esc(codigoNuevo) + '</code></p><p class="hint"><b>Hazle una foto o apúntalo ahora:</b> no se vuelve a enseñar. Puedes crear otro cuando quieras en Menú › Mi cuenta.</p><button class="btn primary" type="button" data-ac="seguir">Ya lo he guardado: entrar</button>';
   else if (modo === 'nueva')
     h +=
       '<h2>Contraseña nueva</h2><form id="form-nueva" class="col" novalidate><div class="field"><label for="ac-pass">Contraseña nueva (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div><div class="field"><label for="ac-pass2">Repítela</label><input id="ac-pass2" type="password" autocomplete="new-password" required></div><button class="btn primary" type="submit">Guardar contraseña</button></form>' +
@@ -26,13 +58,13 @@ function acceso(modo, msg) {
       '<div class="field"><label for="ac-cod">Código del restaurante</label><input id="ac-cod" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-2345" required></div>' +
       '<div class="field"><label for="ac-nombre">Tu nombre y apellido</label><input id="ac-nombre" type="text" autocomplete="name" required></div>' +
       '<div class="field"><label for="ac-email">Usuario para entrar</label><input id="ac-email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="sandra.perez" required><span class="hint">Sin espacios. Si prefieres, puedes poner tu correo.</span></div>' +
-      '<div class="field"><label for="ac-pass">Contraseña (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn primary" type="submit">Crear cuenta</button><p class="hint">Al crear la cuenta aceptas el <button class="link" type="button" data-ac="legal">aviso legal y de privacidad</button>.</p></form>' +
+      '<div class="field"><label for="ac-pass">Contraseña (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div>' + casillaLegalHTML() + captchaHTML() + '<button class="btn primary" type="submit">Crear cuenta</button></form>' +
       '<button class="link" type="button" data-ac="entrar">Ya tengo cuenta: entrar</button><button class="link" type="button" data-ac="crear-dueno">Soy el dueño y aún no hay restaurante</button>';
   else if (modo === 'crear-dueno')
     h +=
       '<h2>Cuenta del dueño</h2><form id="form-crear" class="col" novalidate><div class="field"><label for="ac-nombre">Tu nombre</label><input id="ac-nombre" type="text" autocomplete="name" required></div>' +
       '<div class="field"><label for="ac-email">Correo</label><input id="ac-email" type="email" autocomplete="email" inputmode="email" required></div>' +
-      '<div class="field"><label for="ac-pass">Contraseña (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div><button class="btn primary" type="submit">Crear cuenta</button><p class="hint">Al crear la cuenta aceptas el <button class="link" type="button" data-ac="legal">aviso legal y de privacidad</button>.</p></form>' +
+      '<div class="field"><label for="ac-pass">Contraseña (8 caracteres o más)</label><input id="ac-pass" type="password" autocomplete="new-password" minlength="8" required></div>' + casillaLegalHTML() + '<button class="btn primary" type="submit">Crear cuenta</button></form>' +
       '<button class="link" type="button" data-ac="crear">Volver</button>';
   else if (modo === 'espera')
     h +=
@@ -55,7 +87,7 @@ function acceso(modo, msg) {
     esc(msg || '') +
     '</p>' +
     (modo === 'entrar'
-      ? '<button class="link" type="button" data-ac="legal" style="font-weight:500">Aviso legal y privacidad</button>'
+      ? '<button class="link" type="button" data-ac="legal" style="font-weight:500">Privacidad, términos y cookies</button>'
       : '') +
     '</div>';
   /* Ojo para ver u ocultar la contraseña mientras se escribe */
@@ -95,6 +127,13 @@ $('acceso').addEventListener('click', (e) => {
   }
   if (a === 'crear' || a === 'entrar' || a === 'olvido' || a === 'crear-dueno') acceso(a);
   else if (a === 'legal') verLegal();
+  else if (a === 'seguir' && trasCodigo) {
+    const f = trasCodigo;
+    trasCodigo = null;
+    codigoNuevo = '';
+    acceso('cargando');
+    f().then((q) => q && q.error && acceso('entrar', errTxt(q.error)));
+  }
   else if (a === 'sinred') entrarSinRed(cacheYo());
   else if (a === 'cerrar') {
     $('acceso').hidden = true;
@@ -123,12 +162,37 @@ $('acceso').addEventListener('submit', async (e) => {
       if (!v('ac-nombre')) return acMsg('Escribe tu nombre.');
       if (!usu.includes('@') && usuarioLimpio(usu).length < 3) return acMsg('Elige un usuario de 3 letras o más, sin espacios.');
       if (pass.length < 8) return acMsg('La contraseña debe tener 8 caracteres o más.');
+      if (!$('ac-legal').checked) return acMsg('Para crear la cuenta, lee y acepta los términos de uso y la política de privacidad.');
       bt.disabled = true;
       acMsg('Creando la cuenta…');
-      const r = await llamarCuentas({ accion: 'registro', codigo: cod, usuario: usu, nombre: v('ac-nombre'), clave: pass });
+      const r = await llamarCuentas({ accion: 'registro', codigo: cod, usuario: usu, nombre: v('ac-nombre'), clave: pass, acepta: true, legal: LEGAL_V, captcha: captchaTok() });
+      /* Antes de entrar se enseña el código de recuperación (solo esta vez) */
+      if (r.codigo) {
+        codigoNuevo = r.codigo;
+        trasCodigo = () => sb.auth.signInWithPassword({ email: r.email, password: pass });
+        acceso('codigo');
+        return;
+      }
       acMsg('Cuenta creada. Entrando…');
       const q = await sb.auth.signInWithPassword({ email: r.email, password: pass });
       if (q.error) throw q.error;
+      return;
+    }
+    if (f.id === 'form-recuperar') {
+      const usu = v('ac-usu'),
+        cod = v('ac-rcod'),
+        p1 = $('ac-pass').value;
+      if (usuarioLimpio(usu).length < 3) return acMsg('Escribe tu usuario.');
+      if (cod.replace(/[^A-Za-z0-9]/g, '').length < 12) return acMsg('Escribe el código de recuperación completo.');
+      if (p1.length < 8) return acMsg('La contraseña debe tener 8 caracteres o más.');
+      if (p1 !== $('ac-pass2').value) return acMsg('Las dos contraseñas no coinciden.');
+      bt.disabled = true;
+      acMsg('Comprobando…');
+      const r = await llamarCuentas({ accion: 'recuperar', usuario: usu, codigo: cod, clave: p1 });
+      acMsg('Contraseña cambiada. Entrando…');
+      const q = await sb.auth.signInWithPassword({ email: r.email, password: p1 });
+      if (q.error) throw q.error;
+      toast('Contraseña cambiada. Crea un código de recuperación nuevo en Mi cuenta: el que usaste ya no vale.');
       return;
     }
     if (f.id === 'form-codigo') {
@@ -212,6 +276,9 @@ $('acceso').addEventListener('submit', async (e) => {
         acMsg('La contraseña debe tener 8 caracteres o más.');
         return;
       }
+      if (!$('ac-legal').checked) return acMsg('Para crear la cuenta, lee y acepta los términos de uso y la política de privacidad.');
+      /* La aceptación se registra en el servidor al entrar por primera vez (con fecha del servidor) */
+      mem('bbc.legalPend', LEGAL_V);
       bt.disabled = true;
       acMsg('Creando la cuenta…');
       const q = await sb.auth.signUp({
@@ -274,6 +341,7 @@ const cacheYo = () => {
   }
 };
 function salirNube() {
+  legalMirado = false;
   acMsg('Saliendo…');
   const u = cacheYo();
   try {
@@ -433,7 +501,13 @@ async function entrarNube(verificar) {
   }
 }
 let nubeViva = false;
+let legalMirado = false;
 function iniciarNube(mio) {
+  /* Una vez por sesión: comprobar que esta persona aceptó la versión actual de los términos */
+  if (!legalMirado) {
+    legalMirado = true;
+    setTimeout(comprobarLegal, 1500);
+  }
   if (nubeViva) {
     location.reload();
     return;
@@ -519,15 +593,8 @@ $('cu-rest').addEventListener('change', (e) => {
 $('btn-salir').addEventListener('click', () => {
   if (sb) salirNube();
 });
-$('btn-clave').addEventListener('click', () => {
-  if (sinRed) {
-    toast('Necesitas conexión para cambiar la contraseña.');
-    return;
-  }
-  menu(false);
-  acceso('nueva');
-});
-$('btn-legal').addEventListener('click', verLegal);
+$('btn-clave').addEventListener('click', () => verCuentaPanel());
+$('btn-legal').addEventListener('click', () => verLegal());
 $('btn-copias').addEventListener('click', () => {
   copias = null;
   verCopias();

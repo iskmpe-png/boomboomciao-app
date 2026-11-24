@@ -20,9 +20,15 @@ function nuevoInput2(e) {
       l.nombre = t.value;
       const p = prodPorNombre(t.value);
       l.pid = p ? p.id : '';
-      l.act = !!(p && puede(2) && p.unidad === l.unidad && l.precio > 0 && Math.abs(p.precio - l.precio) >= 0.005);
-    } else if (c === 'unidad') l.unidad = uni(t.value);
-    else l[c] = parse(t.value);
+      l.pasar = !!(p && puedeArea(p) && p.unidad === 'ud' && l.conv && l.unidad !== 'ud');
+      l.act = !!(p && puedeArea(p) && (p.unidad === l.unidad || l.pasar) && l.precio > 0 && Math.abs(p.precio - l.precio) >= 0.005);
+    } else {
+      if (c === 'unidad') l.unidad = uni(t.value);
+      else l[c] = parse(t.value);
+      /* Corregido a mano: la cuenta de la IA ya no vale */
+      delete l.conv;
+      l.pasar = false;
+    }
     q(f, '[data-out="n"]').innerHTML = notaLinea(l);
     pintaScExtra();
     return true;

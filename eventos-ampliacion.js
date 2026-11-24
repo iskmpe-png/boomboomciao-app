@@ -192,8 +192,7 @@ function nuevoSubmit(f) {
     });
     S.appcc.push(a);
     guardar('appcc', a, true);
-    const fi = $('ap-fotos'),
-      fts = fi ? Array.from(fi.files || []) : [],
+    const fts = fotosSel('ap-fotos').slice(),
       btn = f.querySelector('button[type=submit]'),
       txtBtn = btn ? btn.textContent : '';
     /* Limpieza: se bloquea el botón hasta que las fotos estén subidas y 5 segundos más,
@@ -205,7 +204,7 @@ function nuevoSubmit(f) {
         (r && r.pendientes ? '. Sin conexión: las fotos se terminarán de subir solas.' : '.');
       toast(t);
       if ($('ap-msg')) $('ap-msg').textContent = t;
-      if ($('ap-fn')) $('ap-fn').textContent = '';
+      if ($('ap-fotos-msg')) $('ap-fotos-msg').textContent = '';
       if (btn) btn.textContent = 'Subida ✓';
       setTimeout(() => {
         if (btn && btn.isConnected) {
@@ -217,11 +216,11 @@ function nuevoSubmit(f) {
     };
     if (apTipo === 'limpieza' && btn) btn.disabled = true;
     if (fts.length) {
-      fi.value = '';
+      vaciarFotosCampo('ap-fotos');
       if (btn) btn.textContent = 'Subiendo…';
-      $('ap-fn').textContent = 'Subiendo 0 de ' + fts.length + (fts.length === 1 ? ' foto…' : ' fotos…');
+      $('ap-fotos-msg').textContent = 'Subiendo 0 de ' + fts.length + (fts.length === 1 ? ' foto…' : ' fotos…');
       fotosA(a, fts, (h, n) => {
-        if ($('ap-fn')) $('ap-fn').textContent = 'Subiendo ' + h + ' de ' + n + (n === 1 ? ' foto…' : ' fotos…');
+        if ($('ap-fotos-msg')) $('ap-fotos-msg').textContent = 'Subiendo ' + h + ' de ' + n + (n === 1 ? ' foto…' : ' fotos…');
       }).then(fin, () => fin(null));
     } else if (apTipo === 'limpieza') setTimeout(() => fin(null), 0);
     apDia = hoy();
@@ -336,16 +335,28 @@ function nuevoClick(b, a) {
     return true;
   }
   if (a === 'ap-borrar') {
-    borrar('appcc', b.closest('.row').dataset.id);
+    if (!confirmar(b, '¿Eliminar?')) return true;
+    const id = b.closest('.row').dataset.id,
+      r = S.appcc.find((x) => x.id === id);
+    borrar('appcc', id);
+    /* Si era tuyo y llevaba fotos, se borran ya (era un error); el resto se borra solo a su hora */
+    if (r && esMio(r) && r.fotos.length && enNube()) sb.storage.from(LIMP).remove(r.fotos.map((f) => f.ruta)).catch(() => {});
     listaAppcc();
+    if (apTipo === 'limpieza') pintaGaleria();
+    toast('Registro eliminado.');
     return true;
   }
   if (a === 'co-borrar') {
     if (!confirmar(b, 'Pulsa otra vez')) return true;
     const id = b.closest('[data-id]').dataset.id,
       c = S.compras.find((x) => x.id === id);
-    /* Las pruebas se quedan en el almacén hasta el ZIP del mes, por si hay que recuperar la compra */
+    /* Las pruebas se quedan en el almacén hasta el ZIP del mes, por si hay que recuperar la compra.
+       Si la subiste tú y la borras, era un error: sus archivos se borran ya. */
     borrar('compras', id);
+    if (c && esMio(c) && !puede(2) && c.archivos.length) {
+      borrarArchivos(c.archivos.map((x) => x.ruta)).catch(() => {});
+      c.archivos = [];
+    }
     listaCompras();
     if (c && c.archivos.length) toast('Compra eliminada. Sus archivos se guardan hasta que pase el plazo del archivo.');
     return true;
@@ -357,7 +368,7 @@ function nuevoClick(b, a) {
   if (a === 'arch-add') {
     const c = S.compras.find((x) => x.id === b.closest('[data-id]').dataset.id);
     if (c)
-      pedirArchivo('image/*,.pdf,.xlsx,.xls,.csv', true).then((fs) =>
+      elegirArchivos('image/*,.pdf,.xlsx,.xls,.csv', true).then((fs) =>
         adjuntarA(c, fs).then((n) => {
           if (n) {
             toast(n === 1 ? 'Prueba guardada.' : n + ' pruebas guardadas.');
